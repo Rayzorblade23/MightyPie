@@ -22,17 +22,8 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
     QGraphicsDropShadowEffect,
 )
-from PyQt6.QtCore import (
-    Qt,
-    QRectF,
-    QTimer,
-    QEvent,
-    QSize,
-    Qt,
-    pyqtSlot,
-    pyqtSignal,
-)
-from PyQt6.QtGui import QColor, QPen, QPainter, QMouseEvent, QKeyEvent
+from PyQt6.QtCore import Qt, QRectF, QTimer, QEvent, QSize, Qt, pyqtSlot, pyqtSignal
+from PyQt6.QtGui import QColor, QPen, QPainter, QMouseEvent, QKeyEvent, QCursor
 import keyboard
 from window_controls import create_window_controls
 from config import CONFIG
@@ -58,9 +49,8 @@ class PieTaskSwitcherWindow(QWidget):
 
         # Initialize these attributes BEFORE calling setup methods
         self.button_window_mapping = {}
-        self.button_text_mapping = {}
         self.button_mapping_lock = Lock()
-        self.pie_button_names = ["Empty" for _ in range(CONFIG.MAX_BUTTONS)]
+        self.pie_button_texts = ["Empty" for _ in range(CONFIG.MAX_BUTTONS)]
         self.pie_buttons = []
         self.last_window_list = []
 
@@ -207,7 +197,7 @@ class PieTaskSwitcherWindow(QWidget):
         angle_in_degrees = 0  # Start at 0 degrees
 
         # Create 8 buttons in a circular pattern, starting with top middle
-        for i, name in enumerate(self.pie_button_names):
+        for i, name in enumerate(self.pie_button_texts):
             angle_in_degrees = (
                 i / 8 * 360
             )  # Calculate button's position using angle_in_radians
@@ -274,13 +264,11 @@ class PieTaskSwitcherWindow(QWidget):
 
         def background_task():
             windows = get_window_list()
-            current_window_mapping = {}
-            current_button_text_mapping = {}
 
             final_button_updates = []
 
             temp_pie_button_names = (
-                self.pie_button_names
+                self.pie_button_texts
             )  # because the names need to be evaluated here
 
             for i, window_title in enumerate(windows):
@@ -289,6 +277,9 @@ class PieTaskSwitcherWindow(QWidget):
                     continue
 
                 app_name = get_application_name(window_title)
+                print(app_name)
+                if app_name == "AutoHotkey":
+                    continue
                 button_title = (
                     window_title
                     if f" - {app_name}" not in window_title
@@ -324,12 +315,7 @@ class PieTaskSwitcherWindow(QWidget):
                         "window_handle": window_handle,
                     }
                 )
-
-                current_window_mapping[window_handle] = button_index
-                current_button_text_mapping[window_handle] = button_text
-
-                print(current_button_text_mapping)
-
+            print(self.button_window_mapping)
             # Emit the signal instead of using invokeMethod
             self.update_buttons_signal.emit(final_button_updates)
 
@@ -343,7 +329,7 @@ class PieTaskSwitcherWindow(QWidget):
             button_text = update["text"]
             window_handle = update["window_handle"]
 
-            self.pie_button_names[button_index] = button_text
+            self.pie_button_texts[button_index] = button_text
             self.pie_buttons[button_index].setText(button_text)
 
             # Disconnect any previous connections first
@@ -360,10 +346,11 @@ class PieTaskSwitcherWindow(QWidget):
                 )
             )
 
-        # Handle empty buttons
+        print(self.pie_button_texts)
+        # Clear button attributes when button index not among updates
         for i in range(CONFIG.MAX_BUTTONS):
             if i not in [update["index"] for update in button_updates]:
-                self.pie_button_names[i] = "Empty"
+                self.pie_button_texts[i] = "Empty"
                 try:
                     self.pie_buttons[i].clicked.disconnect()
                 except TypeError:
@@ -401,6 +388,16 @@ def show_window(window: QWidget):
     try:
         # Get the window handle
         hwnd = int(window.winId())
+
+        # Get the current mouse position
+        cursor_pos = QCursor.pos()
+
+        # Calculate the new position so the window is centered at the cursor
+        new_x = cursor_pos.x() - (window.width() // 2)
+        new_y = cursor_pos.y() - (window.height() // 2)
+
+        # Set the position of the window
+        window.move(new_x, new_y)
 
         # Ensure the window is visible and restored
         if not window.isVisible():
@@ -614,7 +611,7 @@ if __name__ == "__main__":
     hotkey_thread.start()
 
     # Initial Refresh and Auto-refresh
-    window.refresh()
+    # window.refresh()
     window.auto_refresh()
 
     sys.exit(app.exec())

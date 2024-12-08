@@ -3,7 +3,8 @@
 
 - code hover-release functionality
 
-- make window appear at cursor but beware of the edges
+- make window appear at cursor (DONE) but beware of the edges
+- also if window needs to be opened away from edge, make mouse cursor jump to window position
 
 - save previous condition of minimized windows (i. e.: maximized or normal)
 
