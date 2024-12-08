@@ -277,7 +277,6 @@ class PieTaskSwitcherWindow(QWidget):
                     continue
 
                 app_name = get_application_name(window_title)
-                print(app_name)
                 if app_name == "AutoHotkey":
                     continue
                 button_title = (
@@ -288,6 +287,7 @@ class PieTaskSwitcherWindow(QWidget):
                 button_text = f"{button_title}\n{app_name}"
 
                 ### if windows doesn't already have a button, find a free button for new window ###
+                # if the window is already on a button, take the index so it keeps its place
                 if window_handle in self.button_window_mapping:
                     button_index = self.button_window_mapping[window_handle]
                 else:
@@ -298,7 +298,7 @@ class PieTaskSwitcherWindow(QWidget):
                             button_index = j
                             break
                     if button_index is None:
-                        continue  # no free button :(
+                        continue  # no free button for you :(
 
                     self.button_window_mapping[window_handle] = button_index
 
@@ -315,6 +315,21 @@ class PieTaskSwitcherWindow(QWidget):
                         "window_handle": window_handle,
                     }
                 )
+
+            # Clean button_window_mapping dict of old windows
+            if len(self.button_window_mapping) > 20:
+                # Step 1: Extract valid window_handles from button_updates
+                valid_window_handles = {
+                    update["window_handle"] for update in final_button_updates
+                }
+
+                # Step 2: Filter button_window_mapping to only keep pairs where the window_handle is in valid_window_handles
+                self.button_window_mapping = {
+                    handle: button_id
+                    for handle, button_id in self.button_window_mapping.items()
+                    if handle in valid_window_handles
+                }
+
             print(self.button_window_mapping)
             # Emit the signal instead of using invokeMethod
             self.update_buttons_signal.emit(final_button_updates)
@@ -346,7 +361,6 @@ class PieTaskSwitcherWindow(QWidget):
                 )
             )
 
-        print(self.pie_button_texts)
         # Clear button attributes when button index not among updates
         for i in range(CONFIG.MAX_BUTTONS):
             if i not in [update["index"] for update in button_updates]:
