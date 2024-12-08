@@ -1,0 +1,19 @@
+{
+    "explorer.exe": "Windows Explorer",
+    "autohotkey.exe": "AutoHotkey",
+    "python.exe": "Python",
+    "code.exe": "Visual Studio Code",
+    "vivaldi.exe": "Vivaldi",
+    "applicationframehost.exe": "Application Frame Host",
+    "textinputhost.exe": "Unknown App",
+    "spotify.exe": "Spotify",
+    "taskmgr.exe": "Task Manager",
+    "notepad.exe": "Notepad",
+    "flux.exe": "f.lux",
+    "alttabter.exe": "Alt-Tab Terminator",
+    "powershell.exe": "Windows PowerShell",
+    "blender.exe": "Blender",
+    "illustrator.exe": "Adobe Illustrator 2024",
+    "msedge.exe": "Microsoft Edge",
+    "telegram.exe": "Telegram Desktop"
+}

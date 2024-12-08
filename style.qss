@@ -1,0 +1,54 @@
+/* Style the window background */
+QWidget {
+    background-color: rgba(255, 255, 255, 20); /* Semi-transparent white */
+    border-radius: 15px;       /* Rounded corners */
+}
+
+/* Style the Title Bar Button Widget */
+#buttonWidget {
+    background-color: transparent;  /* Light background for the layout container */
+    border-radius: 15px;
+}
+
+/* Style the button */
+QPushButton {
+    background-color: #0078d7; /* Blue */
+    color: white;              /* White text */
+    font-size: 12px;           /* Font size */
+    border: none;              /* No border */
+    /* padding: 10px;             Padding */
+    border-radius: 5px;        /* Rounded corners */
+    opacity:1.0;
+}
+
+QPushButton:hover {
+    background-color: #005a9e; /* Darker blue on hover */
+}
+
+QPushButton:pressed {
+    background-color: #003c6b; /* Even darker blue when pressed */
+}
+
+#minimizeButton, #maximizeButton {
+    background-color: rgba(27, 27, 27, 255);
+    color: white;
+    border: none;
+    font-size: 12px;
+    border-radius: 2px;
+}
+
+#closeButton {
+    background-color: rgba(206, 63, 63, 255);
+    color: white;
+    border: none;
+    font-size: 12px;
+    border-radius: 2px;
+}
+
+#minimizeButton:hover, #maximizeButton:hover {
+    background-color: rgba(54, 54, 54, 255);
+}
+
+#closeButton:hover {
+    background-color: rgba(255, 0, 0, 255);
+}

@@ -1,0 +1,14 @@
+
+- style the second line on the button differently, like italics or something
+
+- code hover-release functionality
+
+- make window appear at cursor but beware of the edges
+
+- save previous condition of minimized windows (i. e.: maximized or normal)
+
+
+- maybe scrolling text in buttons
+
+IDEA:
+Remove Windows button but open when clicking bottom left of screen
