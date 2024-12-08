@@ -21,9 +21,19 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QSizePolicy,
     QGraphicsDropShadowEffect,
+    QMainWindow,
 )
 from PyQt6.QtCore import Qt, QRectF, QTimer, QEvent, QSize, Qt, pyqtSlot, pyqtSignal
-from PyQt6.QtGui import QColor, QPen, QPainter, QMouseEvent, QKeyEvent, QCursor
+from PyQt6.QtGui import (
+    QColor,
+    QBrush,
+    QPen,
+    QPainter,
+    QMouseEvent,
+    QKeyEvent,
+    QCursor,
+    QGuiApplication,
+)
 import keyboard
 from window_controls import create_window_controls
 from config import CONFIG
@@ -124,18 +134,31 @@ class PieTaskSwitcherWindow(QWidget):
                 painter.drawEllipse(self.rect())
 
         # Use the subclass instead of QGraphicsEllipseItem
-        self.circle = SmoothCircle(
-            QRectF(*CONFIG.CANVAS_SIZE, CONFIG.RADIUS * 2, CONFIG.RADIUS * 2)
+        self.inner_circle_main = SmoothCircle(
+            QRectF(
+                *CONFIG.CANVAS_SIZE, CONFIG.INNER_RADIUS * 2, CONFIG.INNER_RADIUS * 2
+            )
         )
-        self.circle.setBrush(QColor(25, 25, 50))
-        self.circle.setPen(QPen(Qt.PenStyle.NoPen))
-        self.scene.addItem(self.circle)
+        self.inner_circle_main.setBrush(QBrush(Qt.BrushStyle.NoBrush))
+        self.inner_circle_main.setPen(QPen(QColor(30, 30, 30), 7))
+        self.scene.addItem(self.inner_circle_main)
 
-        shadow_effect = QGraphicsDropShadowEffect()
-        shadow_effect.setBlurRadius(10)
-        shadow_effect.setOffset(0, 0)
-        shadow_effect.setColor(QColor(0, 0, 0))  # Black shadow
-        self.circle.setGraphicsEffect(shadow_effect)
+        # Create another circle for the outline (slightly thicker)
+        self.outline_circle = SmoothCircle(
+            QRectF(
+                *CONFIG.CANVAS_SIZE, CONFIG.INNER_RADIUS * 2, CONFIG.INNER_RADIUS * 2
+            )
+        )
+        self.outline_circle.setBrush(QBrush(Qt.BrushStyle.NoBrush))
+        self.outline_circle.setPen(QPen(QColor(50, 50, 50), 9))
+
+        # Add the circles to the scene
+        self.scene.addItem(self.outline_circle)
+        self.scene.addItem(self.inner_circle_main)
+
+        # Ensure the inner circle is on top by setting its Z-index higher than the outline circle
+        self.inner_circle_main.setZValue(1)  # Higher Z-value to be in front
+        self.outline_circle.setZValue(0)  # Lower Z-value to be behind
 
     def closeEvent(self, event):
         """Hide the window instead of closing it."""
@@ -178,19 +201,19 @@ class PieTaskSwitcherWindow(QWidget):
 
             return button
 
-        # Create and configure the refresh button
-        self.refresh_button = create_button(
-            label="R",
-            object_name="refreshButton",
-            action=self.refresh,
-            fixed_size=True,
-            # Using size instead of geometry
-            size=(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT),
-            pos=(
-                (self.width() - CONFIG.BUTTON_HEIGHT) // 2,
-                (self.height() - CONFIG.BUTTON_HEIGHT) // 2,
-            ),  # Using position for x and y
-        )
+        # # Create and configure the refresh button
+        # self.refresh_button = create_button(
+        #     label="R",
+        #     object_name="refreshButton",
+        #     action=self.refresh,
+        #     fixed_size=True,
+        #     # Using size instead of geometry
+        #     size=(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT),
+        #     pos=(
+        #         (self.width() - CONFIG.BUTTON_HEIGHT) // 2,
+        #         (self.height() - CONFIG.BUTTON_HEIGHT) // 2,
+        #     ),  # Using position for x and y
+        # )
 
         # Button Configuration
         # Starting angle
@@ -277,8 +300,7 @@ class PieTaskSwitcherWindow(QWidget):
                     continue
 
                 app_name = get_application_name(window_title)
-                if app_name == "AutoHotkey":
-                    continue
+
                 button_title = (
                     window_title
                     if f" - {app_name}" not in window_title
@@ -406,12 +428,29 @@ def show_window(window: QWidget):
         # Get the current mouse position
         cursor_pos = QCursor.pos()
 
-        # Calculate the new position so the window is centered at the cursor
+        # Get screen dimensions
+        screen_geometry = QGuiApplication.primaryScreen().availableGeometry()
+        screen_left = screen_geometry.left()
+        screen_top = screen_geometry.top()
+        screen_right = screen_geometry.right()
+        screen_bottom = screen_geometry.bottom()
+
+        # Calculate initial new_x and new_y
         new_x = cursor_pos.x() - (window.width() // 2)
         new_y = cursor_pos.y() - (window.height() // 2)
 
-        # Set the position of the window
-        window.move(new_x, new_y)
+        # Ensure window position stays within screen bounds
+        corrected_x = max(screen_left, min(new_x, screen_right - window.width()))
+        corrected_y = max(screen_top, min(new_y, screen_bottom - window.height()))
+
+        # Move the window
+        window.move(corrected_x, corrected_y)
+
+        # Adjust the cursor position if it was moved
+        if new_x != corrected_x or new_y != corrected_y:
+            corrected_cursor_x = corrected_x + (window.width() // 2)
+            corrected_cursor_y = corrected_y + (window.height() // 2)
+            QCursor.setPos(corrected_cursor_x, corrected_cursor_y)
 
         # Ensure the window is visible and restored
         if not window.isVisible():
@@ -568,13 +607,13 @@ def get_application_name(window_title):
 def get_window_list():
     """Enumerate and retrieve a list of visible windows."""
     local_window_handles = {}
-    program_window_handle = win32gui.GetParent(window.winId())
+
+    this_program_hwnd = int(window.winId())
 
     def enum_windows_callback(hwnd, lparam):
         if win32gui.IsWindowVisible(hwnd):
             window_title = win32gui.GetWindowText(hwnd)
             class_name = win32gui.GetClassName(hwnd)
-
             isCloaked = ctypes.c_int(0)
             ctypes.WinDLL("dwmapi").DwmGetWindowAttribute(
                 hwnd, 14, ctypes.byref(isCloaked), ctypes.sizeof(isCloaked)
@@ -585,8 +624,9 @@ def get_window_list():
                 and isCloaked.value == 0
                 and window_title.strip()
                 and class_name != "Progman"
+                and class_name != "AutoHotkeyGUI"
             ):
-                if hwnd != program_window_handle:
+                if hwnd != this_program_hwnd:
                     local_window_handles[window_title] = hwnd
 
     try:

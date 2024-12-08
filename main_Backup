@@ -99,6 +99,7 @@ def get_window_list():
     """Enumerate and retrieve a list of visible windows."""
     local_window_handles = {}
     program_window_handle = win32gui.GetParent(window.winfo_id())
+    print(program_window_handle)
 
     def enum_windows_callback(hwnd, lparam):
         if win32gui.IsWindowVisible(hwnd):

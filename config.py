@@ -17,6 +17,7 @@ class TaskPieSwitcherConfig:
     WINDOW_HEIGHT: int = 400
     CANVAS_SIZE: int = 600, 400
     RADIUS: int = 150
+    INNER_RADIUS: int = 18
 
 
 CONFIG = TaskPieSwitcherConfig()
