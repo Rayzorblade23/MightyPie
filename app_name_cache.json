@@ -20,5 +20,9 @@
     "izotope rx 11 audio editor.exe": "iZotope RX Audio Editor",
     "acrobat.exe": "Adobe Acrobat ",
     "qmlls.exe": "QML Language Server",
-    "sourcetree.exe": "Sourcetree"
+    "sourcetree.exe": "Sourcetree",
+    "teams.exe": "Microsoft Teams",
+    "discord.exe": "Discord",
+    "pycharm64.exe": "PyCharm Community Edition",
+    "rundll32.exe": "Windows host process (Rundll32)"
 }

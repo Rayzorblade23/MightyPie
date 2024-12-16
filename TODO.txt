@@ -1,5 +1,11 @@
 
 - style the second line on the button differently, like italics or something
+    started the custom button thing.
+
+- have CHatGPT implement type hinting for functions
+
+- use PID to differentiate two explorer windows with the same name
+
 
 - code hover-release functionality
 

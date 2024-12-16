@@ -1,29 +1,28 @@
+import ctypes
 import json
 import math
 import os
 import sys
-import ctypes
-import time
-import psutil
-import win32gui
-import win32con
-import win32process
-import win32api
 import threading
+import time
 from threading import Lock
-from PyQt6.QtWidgets import (
-    QApplication,
-    QWidget,
-    QGraphicsScene,
-    QGraphicsView,
-    QGraphicsEllipseItem,
-    QPushButton,
-    QHBoxLayout,
-    QSizePolicy,
-    QGraphicsDropShadowEffect,
-    QMainWindow,
+from typing import *
+
+import keyboard
+import psutil
+import win32api
+import win32con
+import win32gui
+import win32process
+from PyQt6.QtCore import (
+    Qt,
+    QRectF,
+    QTimer,
+    QEvent,
+    QSize,
+    pyqtSlot,
+    pyqtSignal,
 )
-from PyQt6.QtCore import Qt, QRectF, QTimer, QEvent, QSize, Qt, pyqtSlot, pyqtSignal
 from PyQt6.QtGui import (
     QColor,
     QBrush,
@@ -34,9 +33,20 @@ from PyQt6.QtGui import (
     QCursor,
     QGuiApplication,
 )
-import keyboard
-from window_controls import create_window_controls
+from PyQt6.QtWidgets import (
+    QApplication,
+    QWidget,
+    QGraphicsScene,
+    QGraphicsView,
+    QGraphicsEllipseItem,
+    QPushButton,
+    QHBoxLayout,
+    QLabel,
+    QSizePolicy,
+)
+
 from config import CONFIG
+from window_controls import create_window_controls
 
 # Global Variables and Initialization
 window_handles = {}
@@ -124,6 +134,76 @@ class PieTaskSwitcherWindow(QWidget):
         self.view.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         self.view.setGeometry(0, 0, self.width(), self.height())
 
+        class ScrollingTextPushButton(QPushButton):
+            def __init__(self, parent=None, text=None, width=200, height=50, speed=100):
+                super().__init__(parent)
+
+                # The label that will hold the text
+                self.__lbl = QLabel(self)
+                self.__lbl.setText(text)
+                self.__lbl.setAlignment(
+                    Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+                )
+
+                # Set up the layout to hold the label
+                self.__lyt = QHBoxLayout(self)
+                self.__lyt.setContentsMargins(0, 0, 0, 0)
+                self.__lyt.setSpacing(0)
+                self.setLayout(self.__lyt)
+
+                # Add the label to the layout
+                self.__lyt.addWidget(self.__lbl)
+
+                # Set the fixed size for the button
+                self.setFixedSize(width, height)
+
+                # Double the text to ensure continuous scrolling
+                self.__lbl.setText(self.__lbl.text() * 2)  # Duplicate the text
+
+                # Store the text's width for scrolling
+                self.__text_width = (
+                    self.__lbl.fontMetrics().boundingRect(self.__lbl.text()).width()
+                )
+
+                # Timer for scrolling effect
+                self.__timer = QTimer(self)
+                self.__timer.timeout.connect(self.scrollText)
+                self.__timer.start(speed)
+
+                # Set up initial scroll position
+                self.__scroll_pos = self.width()
+
+            def setText(self, text):
+                """Sets the text for the button and updates its scrolling behavior."""
+                self.__lbl.setText(
+                    text * 2
+                )  # Duplicate the text for seamless scrolling
+                self.__text_width = (
+                    self.__lbl.fontMetrics().boundingRect(self.__lbl.text()).width()
+                )
+
+            def scrollText(self):
+                """Scrolls the text to the left, and loops it back to the right when it moves off-screen."""
+                self.__scroll_pos -= 1  # Move the text left by 1 pixel
+                if (
+                        self.__scroll_pos + self.__text_width < 0
+                ):  # If the text is off-screen
+                    self.__scroll_pos = (
+                        self.width()
+                    )  # Reset to start position, creating a seamless loop
+
+                # Update the label's position to create scrolling effect
+                self.__lbl.move(self.__scroll_pos, 0)
+
+            def sizeHint(self):
+                """Returns the suggested size for the button."""
+                return QSize(self.width(), self.height())
+
+        self.cool_button = ScrollingTextPushButton(self, "Test<br>Miauuuuuuuuuuuuuuuuu")
+        self.cool_button.setText(
+            "OKAY!<br>honeyyyyasdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        )
+
         class SmoothCircle(QGraphicsEllipseItem):
 
             def paint(self, painter: QPainter, option, widget=None):
@@ -169,12 +249,12 @@ class PieTaskSwitcherWindow(QWidget):
         """Create and position all buttons."""
 
         def create_button(
-            label,
-            object_name,
-            action=None,
-            fixed_size=True,
-            size=(CONFIG.BUTTON_WIDTH, CONFIG.BUTTON_HEIGHT),
-            pos=(0, 0),
+                label,
+                object_name,
+                action=None,
+                fixed_size=True,
+                size=(CONFIG.BUTTON_WIDTH, CONFIG.BUTTON_HEIGHT),
+                pos=(0, 0),
         ):
             """Creates a QPushButton with optional size, action, and position."""
 
@@ -222,7 +302,7 @@ class PieTaskSwitcherWindow(QWidget):
         # Create 8 buttons in a circular pattern, starting with top middle
         for i, name in enumerate(self.pie_button_texts):
             angle_in_degrees = (
-                i / 8 * 360
+                    i / 8 * 360
             )  # Calculate button's position using angle_in_radians
 
             # the base offset here moves the anchor point from top left to center
@@ -306,7 +386,7 @@ class PieTaskSwitcherWindow(QWidget):
                     if f" - {app_name}" not in window_title
                     else window_title.replace(f" - {app_name}", "")
                 )
-                button_text = f"{button_title}\n{app_name}"
+                button_text = f"{button_title}\n {app_name}"
 
                 ### if windows doesn't already have a button, find a free button for new window ###
                 # if the window is already on a button, take the index so it keeps its place
@@ -561,7 +641,7 @@ def get_pid_from_window_handle(hwnd):
         return None
 
 
-def get_file_description(exe_path):
+def get_file_description(exe_path: str):
     """Get the FileDescription (friendly app name) from the executable."""
     try:
         language, codepage = win32api.GetFileVersionInfo(
@@ -606,7 +686,7 @@ def get_application_name(window_title):
 # Window Enumeration and Handling
 def get_window_list():
     """Enumerate and retrieve a list of visible windows."""
-    local_window_handles = {}
+    local_window_handles: Dict[int, int] = {}
 
     this_program_hwnd = int(window.winId())
 
@@ -620,11 +700,11 @@ def get_window_list():
             )
 
             if (
-                win32gui.IsWindowVisible(hwnd)
-                and isCloaked.value == 0
-                and window_title.strip()
-                and class_name != "Progman"
-                and class_name != "AutoHotkeyGUI"
+                    win32gui.IsWindowVisible(hwnd)
+                    and isCloaked.value == 0
+                    and window_title.strip()
+                    and class_name != "Progman"
+                    and class_name != "AutoHotkeyGUI"
             ):
                 if hwnd != this_program_hwnd:
                     local_window_handles[window_title] = hwnd

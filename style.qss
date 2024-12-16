@@ -25,6 +25,7 @@ QPushButton:hover {
     background-color: #005a9e; /* Darker blue on hover */
 }
 
+
 QPushButton:pressed {
     background-color: #003c6b; /* Even darker blue when pressed */
 }
@@ -48,6 +49,7 @@ QPushButton:pressed {
     font-size: 12px;
     border-radius: 2px;
 }
+
 
 #closeButton {
     background-color: rgba(206, 63, 63, 255);
