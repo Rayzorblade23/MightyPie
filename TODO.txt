@@ -1,5 +1,5 @@
 
-- add Icon to button
+- hide the Widget when clicking anywhere else
 
 - in the PieButton, what happens when it gets updated? Does the ScrollingTextLabel need Update functions?
 

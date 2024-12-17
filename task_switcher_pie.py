@@ -2,15 +2,15 @@ import math
 import threading
 from threading import Lock
 
-from PyQt6.QtCore import pyqtSignal, QTimer, Qt, QRectF, QSize, pyqtSlot
-from PyQt6.QtGui import QMouseEvent, QKeyEvent, QPainter, QBrush, QPen, QColor
-from PyQt6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QPushButton, QSizePolicy
+from PyQt6.QtCore import pyqtSignal, QTimer, QRectF, QSize, pyqtSlot, Qt
+from PyQt6.QtGui import QMouseEvent, QKeyEvent, QPainter, QBrush, QPen, QColor, QCursor
+from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QPushButton, QSizePolicy, QWidget
 
 from config import CONFIG
 from events import ShowWindowEvent
 from pie_button import PieButton
 from window_controls import create_window_controls
-from window_functions import get_filtered_list_of_window_titles, get_application_info, focus_window_by_handle, show_window, get_window_icon
+from window_functions import get_filtered_list_of_window_titles, get_application_info, focus_window_by_handle, show_window
 from window_manager import WindowManager
 
 manager = WindowManager.get_instance()
@@ -22,6 +22,9 @@ class TaskSwitcherPie(QWidget):
 
     def __init__(self):
         super().__init__()
+
+        # Set the default cursor (normal arrow cursor)
+        self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Set the normal cursor
 
         # Initialize these attributes BEFORE calling setup methods
         self.inner_circle_main = None
@@ -59,6 +62,12 @@ class TaskSwitcherPie(QWidget):
             self.hide()
         else:
             super().keyPressEvent(event)  # Pass other key events to the parent
+
+    def enterEvent(self, event):
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))  # Change cursor on hover
+
+    def leaveEvent(self, event):
+        self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Restore default cursor
 
     def auto_refresh(self):
         """Automatically monitor and refresh windows periodically in a thread-safe way."""
@@ -281,7 +290,6 @@ class TaskSwitcherPie(QWidget):
                     # Handle unexpected result type
                     print(f"Unexpected result: {result}")
                     app_name, app_icon_path = None, None  # Default values or handle the error case
-
 
                 button_title = (
                     window_title

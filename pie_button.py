@@ -26,7 +26,6 @@ class PieButton(QPushButton):
                  ):
         super().__init__(parent)
 
-
         self.setObjectName(object_name)
 
         # Create a QVBoxLayout for the label
