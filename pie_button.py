@@ -2,7 +2,7 @@ import sys
 from typing import *
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
 
 from config import CONFIG
@@ -26,6 +26,7 @@ class PieButton(QPushButton):
                  ):
         super().__init__(parent)
 
+
         self.setObjectName(object_name)
 
         # Create a QVBoxLayout for the label
@@ -34,6 +35,7 @@ class PieButton(QPushButton):
 
         # Create a Label (which is on top, when both texts are set
         self.label_1 = ScrollingLabel(text_1, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Normal)
+        self.label_1.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         self.label_layout.addWidget(self.label_1)
         self.label_layout.setContentsMargins(0, 0, 0, 0)
@@ -41,6 +43,7 @@ class PieButton(QPushButton):
         # Create a second bottom label if text_2 is set
         if text_2 != "":
             self.label_2 = ScrollingLabel(text_2, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Italic)
+            self.label_2.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
             self.label_layout.addWidget(self.label_2)
 
         # Create the main layout for the button (HBoxLayout)
@@ -94,7 +97,7 @@ class PieButton(QPushButton):
             else:
                 # Create label_2 dynamically
                 self.label_2 = ScrollingLabel(text, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Italic)
-
+                self.label_2.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
                 # Add label_2 to the layout
                 self.label_layout.addWidget(self.label_2)
 
@@ -146,6 +149,8 @@ class PieButton(QPushButton):
                                                  Qt.TransformationMode.SmoothTransformation))  # Adjust size as needed
                 icon_label.setFixedSize(16, CONFIG.BUTTON_HEIGHT)  # Adjust size to match your icon dimensions
                 icon_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+                icon_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+
                 self.layout().insertWidget(1, icon_label)
 
 

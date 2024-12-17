@@ -9,6 +9,7 @@ import win32con
 import win32gui
 import win32process
 import win32ui
+from PIL import Image
 from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget
 
@@ -130,7 +131,6 @@ def get_application_info(window_handle):
         return "Unknown App, window title: " + window_title
 
 
-
 def get_window_icon(exe_path, hwnd):
     try:
         if not exe_path:
@@ -152,14 +152,14 @@ def get_window_icon(exe_path, hwnd):
 
         # Create a bitmap compatible with the window's device context
         hbmp = win32ui.CreateBitmap()
-        hbmp.CreateCompatibleBitmap(hdc, 32, 32)  # Standard icon size
+        hbmp.CreateCompatibleBitmap(hdc, 32, 32)  # Specify 32x32 size
 
         # Create a compatible DC to draw the icon
-        hdc = hdc.CreateCompatibleDC()
-        hdc.SelectObject(hbmp)
+        memdc = hdc.CreateCompatibleDC()
+        memdc.SelectObject(hbmp)
 
         # Draw the icon onto the bitmap
-        hdc.DrawIcon((0, 0), icon_handle)
+        memdc.DrawIcon((0, 0), icon_handle)
 
         # Create the project subfolder if it doesn't exist
         icon_folder = 'project_icons'
@@ -168,13 +168,22 @@ def get_window_icon(exe_path, hwnd):
 
         # Get the name of the executable without the ".exe" extension
         exe_name = os.path.basename(exe_path)
-        icon_filename = os.path.splitext(exe_name)[0] + '.ico'
+        icon_filename = os.path.splitext(exe_name)[0] + '.png'  # Changed to .png
 
-        # Save the icon to the subfolder
+        # Save the icon to the subfolder using PIL
         icon_path = os.path.join(icon_folder, icon_filename)
 
-        # Save the bitmap as an icon file
-        hbmp.SaveBitmapFile(hdc, icon_path)
+        # Convert bitmap to PIL Image
+        bmpinfo = hbmp.GetInfo()
+        bmpstr = hbmp.GetBitmapBits(True)
+        im = Image.frombuffer(
+            'RGBA',
+            (32, 32),  # Explicitly set to 32x32
+            bmpstr, 'raw', 'BGRA', 0, 1
+        )
+
+        # Save as PNG
+        im.save(icon_path, format='PNG')
 
         # Cleanup the resources
         win32gui.DestroyIcon(icon_handle)

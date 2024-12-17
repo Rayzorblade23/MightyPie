@@ -1,10 +1,9 @@
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtWidgets import QLabel, QHBoxLayout, QSizePolicy, QWidget
 
-from font_styles import FontStyle
 from config import CONFIG
-
+from font_styles import FontStyle
 
 
 class ScrollingLabel(QWidget):
@@ -20,7 +19,7 @@ class ScrollingLabel(QWidget):
         self.timer = QTimer(self)
         self.label_margins = CONFIG.PIE_TEXT_LABEL_MARGINS
         self.scroll_speed = CONFIG.PIE_TEXT_LABEL_SCROLL_SPEED
-        self.scroll_update_interval = CONFIG.PIE_TEXT_LABEL_SCROLL_INTERVAL # in ms
+        self.scroll_update_interval = CONFIG.PIE_TEXT_LABEL_SCROLL_INTERVAL  # in ms
         self.h_align = h_align
 
         # Pause parameters
