@@ -1,11 +1,9 @@
 import sys
 from typing import *
 
-from PyQt6.QtCore import (
-    Qt,
-    QSize,
-)
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QApplication, QWidget, QPushButton, QSizePolicy, QSpacerItem
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QSizePolicy, QSpacerItem, QPushButton, QLabel, QHBoxLayout
 
 from FontStyle import FontStyle
 from ScrollingTextLabel import ScrollingLabel
@@ -19,6 +17,7 @@ class PieButton(QPushButton):
                  object_name: str,
                  text_1: str = "",
                  text_2: str = "",
+                 icon_path: str = "",
                  action: Optional[Callable] = None,
                  fixed_size: bool = True,
                  size: Tuple[int, int] = (CONFIG.BUTTON_WIDTH, CONFIG.BUTTON_HEIGHT),
@@ -46,10 +45,18 @@ class PieButton(QPushButton):
         # Create the main layout for the button (HBoxLayout)
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setSpacing(0)  # Set minimal spacing between widgets
 
-        # Add a vertical spacer of 50 pixels
-        self.spacer = QSpacerItem(30, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        self.layout().addSpacerItem(self.spacer)
+        if icon_path != "":
+            # Add a vertical spacer of 50 pixels
+            self.spacer = QSpacerItem(CONFIG.PIE_TEXT_LABEL_MARGINS, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+            self.layout().addSpacerItem(self.spacer)
+
+            self.icon_label = QLabel()
+            self.icon_label.setPixmap(QIcon(icon_path).pixmap(QSize(16, 16)))  # Adjust size as needed
+            self.icon_label.setFixedSize(16, CONFIG.BUTTON_HEIGHT)  # Adjust size to match your icon dimensions
+            self.icon_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+            self.layout().addWidget(self.icon_label)
 
         # Add the VBoxLayout as a child of the HBoxLayout
         self.layout().addLayout(self.label_layout)
@@ -81,7 +88,7 @@ class PieButton(QPushButton):
 
     def default_action(self):
         """Default action when no external action is provided."""
-        print("There was only the default action assigned.")
+        print(f"There was only the default action assigned for {self.objectName()}")
 
 
 def example_function():
@@ -104,7 +111,8 @@ if __name__ == "__main__":
     button = PieButton("button_1", some_text, some_text_2, action=example_function)
     layout.addWidget(button)
 
-    button2 = PieButton("button_2", "Short text.")
+    icon_path = "D:\Mind-Portal\Multi-Media\Icons\music.png"
+    button2 = PieButton("button_2", "Short text.", icon_path=icon_path)
     layout.addWidget(button2)
 
     window.show()

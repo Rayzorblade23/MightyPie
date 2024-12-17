@@ -34,6 +34,7 @@ QLabel {
     color: white;              /* White text */
     font-size: 12px;           /* Font size */
     /*    font-family: "Comic Sans MS";*/
+/*    background: #ff0f0f;*/
     background: transparent;
 }
 
