@@ -1,52 +1,22 @@
 import math
-import sys
 import threading
 import time
 from threading import Lock
 
-import keyboard
-from PyQt6.QtCore import (
-    Qt,
-    QRectF,
-    QTimer,
-    QEvent,
-    QSize,
-    pyqtSlot,
-    pyqtSignal,
-)
-from PyQt6.QtGui import (
-    QColor,
-    QBrush,
-    QPen,
-    QPainter,
-    QMouseEvent,
-    QKeyEvent,
-)
-from PyQt6.QtWidgets import (
-    QApplication,
-    QWidget,
-    QGraphicsScene,
-    QGraphicsView,
-    QGraphicsEllipseItem,
-    QPushButton,
-    QSizePolicy,
-)
+from PyQt6.QtCore import pyqtSignal, QTimer, Qt, QRectF, QSize, pyqtSlot
+from PyQt6.QtGui import QMouseEvent, QKeyEvent, QPainter, QBrush, QPen, QColor
+from PyQt6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QPushButton, QSizePolicy
 
 from config import CONFIG
+from events import ShowWindowEvent
 from window_controls import create_window_controls
-from window_functions import focus_window_by_handle, get_application_name, get_filtered_list_of_window_titles, show_window
+from window_functions import get_filtered_list_of_window_titles, get_application_name, focus_window_by_handle, show_window
 from window_manager import WindowManager
 
-
-# Custom event type for showing the window
-class ShowWindowEvent(QEvent):
-    def __init__(self, window: QWidget):
-        super().__init__(QEvent.Type(1000))  # Custom event type
-
-        self.window = window
+manager = WindowManager.get_instance()
 
 
-class PieTaskSwitcherWindow(QWidget):
+class TaskSwitcherPie(QWidget):
     # Add a custom signal for thread-safe updates
     update_buttons_signal = pyqtSignal(list)
 
@@ -383,48 +353,3 @@ class PieTaskSwitcherWindow(QWidget):
         """Handle the custom event to show the window."""
         if isinstance(event, ShowWindowEvent):
             show_window(event.window)  # Safely call show_window when the event is posted
-
-
-def listen_for_hotkeys(window: QWidget):
-    """Listen for global hotkeys."""
-
-    def wrapper():
-        print(
-            "Hotkey pressed! Opening switcherino..."
-        )  # Debugging: Check if hotkey is detected
-        # Post the custom event to the window's event queue
-        event = ShowWindowEvent(window)
-        # Post the event to the main thread
-        QApplication.postEvent(window, event)
-
-    keyboard.add_hotkey(CONFIG.HOTKEY_OPEN, wrapper, suppress=True)
-    keyboard.wait()
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    # Load the stylesheet
-    with open("style.qss", "r") as file:
-        app.setStyleSheet(file.read())
-
-    manager = WindowManager.get_instance()
-
-    # Create and show the main window
-    window = PieTaskSwitcherWindow()
-
-    # Show the window briefly and immediately hide it
-    window.show()  # Make sure the window is part of the event loop
-    # window.hide()  # Hide it right after showing
-
-    # Hotkey Thread
-    hotkey_thread = threading.Thread(
-        target=listen_for_hotkeys, args=(window,), daemon=True
-    )
-    hotkey_thread.start()
-
-    # Initial Refresh and Auto-refresh
-    # window.refresh()
-    window.auto_refresh()
-
-    sys.exit(app.exec())

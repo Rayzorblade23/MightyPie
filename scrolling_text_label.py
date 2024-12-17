@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtWidgets import QLabel, QHBoxLayout, QSizePolicy, QWidget
 
-from FontStyle import FontStyle
+from font_styles import FontStyle
 from config import CONFIG
 
 
@@ -37,7 +37,7 @@ class ScrollingLabel(QWidget):
         self.label.setText(text)
         self._check_text_fit()
 
-        # Set the font style (based on the FontStyle.py enum)
+        # Set the font style (based on the font_styles.py enum)
         self._set_font_style(font_style)
 
         # Configure timer
@@ -72,7 +72,7 @@ class ScrollingLabel(QWidget):
         self._check_text_fit()
 
     def _set_font_style(self, font_style: FontStyle):
-        """Set the font style based on the FontStyle.py enum."""
+        """Set the font style based on the font_styles.py enum."""
         font = self.label.font()  # Get the current font
         if font_style == FontStyle.Bold:
             font.setBold(True)
@@ -83,7 +83,7 @@ class ScrollingLabel(QWidget):
         elif font_style == FontStyle.BoldItalic:
             font.setBold(True)
             font.setItalic(True)
-        else:  # FontStyle.py.Normal
+        else:  # font_styles.py.Normal
             font.setBold(False)
             font.setItalic(False)
         self.label.setFont(font)  # Apply the font style to the label

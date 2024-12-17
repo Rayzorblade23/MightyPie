@@ -5,8 +5,8 @@ from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QSizePolicy, QSpacerItem, QPushButton, QLabel, QHBoxLayout
 
-from FontStyle import FontStyle
-from ScrollingTextLabel import ScrollingLabel
+from font_styles import FontStyle
+from scrolling_text_label import ScrollingLabel
 from config import CONFIG
 
 
