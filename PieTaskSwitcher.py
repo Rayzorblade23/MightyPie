@@ -1,4 +1,3 @@
-import ctypes
 import math
 import sys
 import threading
@@ -6,10 +5,6 @@ import time
 from threading import Lock
 
 import keyboard
-import win32api
-import win32con
-import win32gui
-import win32process
 from PyQt6.QtCore import (
     Qt,
     QRectF,
@@ -26,8 +21,6 @@ from PyQt6.QtGui import (
     QPainter,
     QMouseEvent,
     QKeyEvent,
-    QCursor,
-    QGuiApplication,
 )
 from PyQt6.QtWidgets import (
     QApplication,
@@ -41,10 +34,8 @@ from PyQt6.QtWidgets import (
 
 from config import CONFIG
 from window_controls import create_window_controls
-from window_functions import focus_window_by_handle, get_application_name
-
-# Global Variables and Initialization
-window_titles_To_hwnds_map = {}
+from window_functions import focus_window_by_handle, get_application_name, get_filtered_list_of_window_titles, show_window
+from window_manager import WindowManager
 
 
 # Custom event type for showing the window
@@ -63,6 +54,7 @@ class PieTaskSwitcherWindow(QWidget):
         super().__init__()
 
         # Initialize these attributes BEFORE calling setup methods
+        self.btn = None
         self.buttons_To_windows_map = {}
         self.button_mapping_lock = Lock()
         self.pie_button_texts = ["Empty" for _ in range(CONFIG.MAX_BUTTONS)]
@@ -101,7 +93,7 @@ class PieTaskSwitcherWindow(QWidget):
 
         # Lock access to shared data to ensure thread safety
         with self.button_mapping_lock:
-            current_window_titles = get_filtered_list_of_window_titles()
+            current_window_titles = get_filtered_list_of_window_titles(self)
             # only actually refresh when windows have opened or closed
             if current_window_titles != self.last_window_titles:
                 self.last_window_titles = current_window_titles
@@ -222,7 +214,6 @@ class PieTaskSwitcherWindow(QWidget):
 
         # Button Configuration
         # Starting angle
-        angle_in_degrees = 0  # Start at 0 degrees
 
         # Create 8 buttons in a circular pattern, starting with top middle
         for i, name in enumerate(self.pie_button_texts):
@@ -263,16 +254,8 @@ class PieTaskSwitcherWindow(QWidget):
                 pass
 
             # distribute the buttons in a circle
-            button_pos_x = int(
-                CONFIG.CANVAS_SIZE[0] / 2
-                + offset_x
-                + CONFIG.RADIUS * math.sin(math.radians(angle_in_degrees))
-            )
-            button_pos_y = int(
-                CONFIG.CANVAS_SIZE[1] / 2
-                - offset_y
-                - CONFIG.RADIUS * math.cos(math.radians(angle_in_degrees))
-            )
+            button_pos_x = int(CONFIG.CANVAS_SIZE[0] / 2 + offset_x + CONFIG.RADIUS * math.sin(math.radians(angle_in_degrees)))
+            button_pos_y = int(CONFIG.CANVAS_SIZE[1] / 2 - offset_y - CONFIG.RADIUS * math.cos(math.radians(angle_in_degrees)))
 
             button_name = "Pie_Button" + str(i)  # name of the button not used
             self.btn = create_button(
@@ -298,7 +281,7 @@ class PieTaskSwitcherWindow(QWidget):
             return None
 
         def background_task():
-            windows_titles = get_filtered_list_of_window_titles()
+            windows_titles = get_filtered_list_of_window_titles(self)
 
             final_button_updates = []
 
@@ -307,7 +290,7 @@ class PieTaskSwitcherWindow(QWidget):
             )  # because the names need to be evaluated here
 
             for window_title in windows_titles:
-                window_handle = window_titles_To_hwnds_map.get(window_title)
+                window_handle = manager.get_window_titles_to_hwnds_map().get(window_title)
                 if not window_handle:  # Exclude windows with no handle
                     continue
 
@@ -334,10 +317,6 @@ class PieTaskSwitcherWindow(QWidget):
 
                 temp_pie_button_names[button_index] = button_text  # Update button name
 
-                # print(
-                #     f"{temp_pie_button_names[button_index]} has received Index {button_index}.\n"
-                # )
-
                 final_button_updates.append(
                     {
                         "index": button_index,
@@ -359,8 +338,6 @@ class PieTaskSwitcherWindow(QWidget):
                     for handle, button_id in self.buttons_To_windows_map.items()
                     if handle in valid_window_handles
                 }
-
-            # print(self.buttons_To_windows_map)
 
             # Emit the signal instead of using invokeMethod
             self.update_buttons_signal.emit(final_button_updates)
@@ -405,102 +382,7 @@ class PieTaskSwitcherWindow(QWidget):
     def customEvent(self, event):
         """Handle the custom event to show the window."""
         if isinstance(event, ShowWindowEvent):
-            show_window(
-                event.window
-            )  # Safely call show_window when the event is posted
-
-
-def show_window(window: QWidget):
-    """Display the main window and bring it to the foreground."""
-    try:
-        # Get the window handle
-        hwnd = int(window.winId())
-
-        # Get the current mouse position
-        cursor_pos = QCursor.pos()
-
-        # Get screen dimensions
-        screen_geometry = QGuiApplication.primaryScreen().availableGeometry()
-        screen_left = screen_geometry.left()
-        screen_top = screen_geometry.top()
-        screen_right = screen_geometry.right()
-        screen_bottom = screen_geometry.bottom()
-
-        # Calculate initial new_x and new_y
-        new_x = cursor_pos.x() - (window.width() // 2)
-        new_y = cursor_pos.y() - (window.height() // 2)
-
-        # Ensure window position stays within screen bounds
-        corrected_x = max(screen_left, min(new_x, screen_right - window.width()))
-        corrected_y = max(screen_top, min(new_y, screen_bottom - window.height()))
-
-        # Move the window
-        window.move(corrected_x, corrected_y)
-
-        # Adjust the cursor position if it was moved
-        if new_x != corrected_x or new_y != corrected_y:
-            corrected_cursor_x = corrected_x + (window.width() // 2)
-            corrected_cursor_y = corrected_y + (window.height() // 2)
-            QCursor.setPos(corrected_cursor_x, corrected_cursor_y)
-
-        # Ensure the window is visible and restored
-        if not window.isVisible():
-            window.show()
-
-        # Get current foreground window and threads
-        fg_window = win32gui.GetForegroundWindow()
-        fg_thread, _ = win32process.GetWindowThreadProcessId(fg_window)
-        this_thread = win32api.GetCurrentThreadId()
-
-        # Detach any previous thread inputs to reset state
-        try:
-            ctypes.windll.user32.AttachThreadInput(this_thread, fg_thread, False)
-        except Exception:
-            pass
-
-        # Multiple attempts to bring window to foreground
-        for attempt in range(3):
-            try:
-                # Attach input threads
-                ctypes.windll.user32.AttachThreadInput(this_thread, fg_thread, True)
-
-                # Restore window if minimized
-                win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-
-                # Try multiple methods to bring to foreground
-                win32gui.SetForegroundWindow(hwnd)
-                ctypes.windll.user32.BringWindowToTop(hwnd)
-
-                # Detach input threads
-                ctypes.windll.user32.AttachThreadInput(this_thread, fg_thread, False)
-
-                break  # Success, exit attempts
-            except Exception as e:
-                print(f"Window focus attempt {attempt + 1} failed: {e}")
-                time.sleep(0.1)  # Small delay between attempts
-
-        # Final positioning to ensure visibility
-        ctypes.windll.user32.SetWindowPos(
-            hwnd,
-            win32con.HWND_TOPMOST,
-            0,
-            0,
-            0,
-            0,
-            win32con.SWP_NOMOVE | win32con.SWP_NOSIZE,
-        )
-        ctypes.windll.user32.SetWindowPos(
-            hwnd,
-            win32con.HWND_NOTOPMOST,
-            0,
-            0,
-            0,
-            0,
-            win32con.SWP_NOMOVE | win32con.SWP_NOSIZE,
-        )
-
-    except Exception as e:
-        print(f"Error showing the main window: {e}")
+            show_window(event.window)  # Safely call show_window when the event is posted
 
 
 def listen_for_hotkeys(window: QWidget):
@@ -519,57 +401,14 @@ def listen_for_hotkeys(window: QWidget):
     keyboard.wait()
 
 
-def get_filtered_list_of_window_titles():
-    """Enumerate and retrieve a list of visible windows."""
-    temp_window_titles_To_hwnds_map: Dict[int, int] = {}
-
-    this_program_hwnd = int(window.winId())  # Exclude this program from the Switcher
-
-    def enum_windows_callback(hwnd, lparam):
-        # Check if the window is visible
-        if win32gui.IsWindowVisible(hwnd):
-            window_title = win32gui.GetWindowText(hwnd)
-            class_name = win32gui.GetClassName(hwnd)
-
-            print(f"hwnd: {hwnd} and window title: {window_title} \n")
-
-            # Check if the window is cloaked (hidden or transparent)
-            isCloaked = ctypes.c_int(0)
-            ctypes.WinDLL("dwmapi").DwmGetWindowAttribute(
-                hwnd, 14, ctypes.byref(isCloaked), ctypes.sizeof(isCloaked)
-            )
-            # Apply filtering conditions to determine if we want to include this window
-            if (
-                    win32gui.IsWindowVisible(hwnd)  # Window must be visible
-                    and isCloaked.value == 0  # Window must not be cloaked (hidden)
-                    and window_title.strip()  # Window must have a non-empty title
-                    and class_name != "Progman"  # Exclude system windows like "Progman"
-                    and class_name != "AutoHotkeyGUI"  # Exclude "AutoHotkey" windows
-                    and hwnd != this_program_hwnd  # Exclude this program
-            ):
-                if window_title in temp_window_titles_To_hwnds_map:
-                    window_title += " (2)"
-                temp_window_titles_To_hwnds_map[window_title] = hwnd
-
-    # Enumerate all top-level windows and pass each window's handle to the callback
-    try:
-        win32gui.EnumWindows(enum_windows_callback, None)
-        # Clear the existing window handles from the main mapping dictionary
-        window_titles_To_hwnds_map.clear()
-        # Update the main mapping dictionary with the filtered window handles
-        window_titles_To_hwnds_map.update(temp_window_titles_To_hwnds_map)
-        return list(window_titles_To_hwnds_map.keys())
-    except Exception as e:
-        print(f"Error getting windows: {e}")
-        return []
-
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # Load the stylesheet
     with open("style.qss", "r") as file:
         app.setStyleSheet(file.read())
+
+    manager = WindowManager.get_instance()
 
     # Create and show the main window
     window = PieTaskSwitcherWindow()
