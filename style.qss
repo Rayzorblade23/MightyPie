@@ -30,6 +30,13 @@ QPushButton:pressed {
     background-color: #003c6b; /* Even darker blue when pressed */
 }
 
+QLabel {
+    color: white;              /* White text */
+    font-size: 12px;           /* Font size */
+    /*    font-family: "Comic Sans MS";*/
+    background: transparent;
+}
+
 #refreshButton {
     background-color: rgba(27, 27, 27, 150);
     color: white;

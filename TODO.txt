@@ -1,6 +1,7 @@
 
-- style the second line on the button differently, like italics or something
-    started the custom button thing.
+- add Icon to button
+
+- in the PieButton, what happens when it gets updated? Does the ScrollingTextLabel need Update functions?
 
 - have CHatGPT implement type hinting for functions
 

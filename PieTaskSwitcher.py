@@ -40,8 +40,6 @@ from PyQt6.QtWidgets import (
     QGraphicsView,
     QGraphicsEllipseItem,
     QPushButton,
-    QHBoxLayout,
-    QLabel,
     QSizePolicy,
 )
 
@@ -133,76 +131,6 @@ class PieTaskSwitcherWindow(QWidget):
         self.view = QGraphicsView(self.scene, self)
         self.view.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         self.view.setGeometry(0, 0, self.width(), self.height())
-
-        class ScrollingTextPushButton(QPushButton):
-            def __init__(self, parent=None, text=None, width=200, height=50, speed=100):
-                super().__init__(parent)
-
-                # The label that will hold the text
-                self.__lbl = QLabel(self)
-                self.__lbl.setText(text)
-                self.__lbl.setAlignment(
-                    Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
-                )
-
-                # Set up the layout to hold the label
-                self.__lyt = QHBoxLayout(self)
-                self.__lyt.setContentsMargins(0, 0, 0, 0)
-                self.__lyt.setSpacing(0)
-                self.setLayout(self.__lyt)
-
-                # Add the label to the layout
-                self.__lyt.addWidget(self.__lbl)
-
-                # Set the fixed size for the button
-                self.setFixedSize(width, height)
-
-                # Double the text to ensure continuous scrolling
-                self.__lbl.setText(self.__lbl.text() * 2)  # Duplicate the text
-
-                # Store the text's width for scrolling
-                self.__text_width = (
-                    self.__lbl.fontMetrics().boundingRect(self.__lbl.text()).width()
-                )
-
-                # Timer for scrolling effect
-                self.__timer = QTimer(self)
-                self.__timer.timeout.connect(self.scrollText)
-                self.__timer.start(speed)
-
-                # Set up initial scroll position
-                self.__scroll_pos = self.width()
-
-            def setText(self, text):
-                """Sets the text for the button and updates its scrolling behavior."""
-                self.__lbl.setText(
-                    text * 2
-                )  # Duplicate the text for seamless scrolling
-                self.__text_width = (
-                    self.__lbl.fontMetrics().boundingRect(self.__lbl.text()).width()
-                )
-
-            def scrollText(self):
-                """Scrolls the text to the left, and loops it back to the right when it moves off-screen."""
-                self.__scroll_pos -= 1  # Move the text left by 1 pixel
-                if (
-                        self.__scroll_pos + self.__text_width < 0
-                ):  # If the text is off-screen
-                    self.__scroll_pos = (
-                        self.width()
-                    )  # Reset to start position, creating a seamless loop
-
-                # Update the label's position to create scrolling effect
-                self.__lbl.move(self.__scroll_pos, 0)
-
-            def sizeHint(self):
-                """Returns the suggested size for the button."""
-                return QSize(self.width(), self.height())
-
-        self.cool_button = ScrollingTextPushButton(self, "Test<br>Miauuuuuuuuuuuuuuuuu")
-        self.cool_button.setText(
-            "OKAY!<br>honeyyyyasdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
-        )
 
         class SmoothCircle(QGraphicsEllipseItem):
 
