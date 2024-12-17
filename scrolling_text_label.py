@@ -53,14 +53,15 @@ class ScrollingLabel(QWidget):
         self.label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         # Allow label to expand beyond container width
-        self.label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        self.label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
         # Layout for QLabel
         self.layout = QHBoxLayout(self._container)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.layout.addWidget(self.label)
-        self.layout.setAlignment(self.label, self.h_align)  # Align label to the left
+        self.layout.setAlignment(self.label, self.h_align | Qt.AlignmentFlag.AlignVCenter)  # Align label to the left
 
     def resizeEvent(self, event):
         """Adjust container size on resize."""
@@ -70,6 +71,12 @@ class ScrollingLabel(QWidget):
         rect.moveLeft((self.rect().width() - rect.width()) // 2)
         self._container.setGeometry(rect)
         self._check_text_fit()
+
+    def update_text(self, new_text: str):
+        """Update the text of the scrolling label."""
+        self.label.setText(new_text)
+        self.text_scroll_pos = 0  # Reset scroll position
+        self._check_text_fit()  # Re-evaluate if scrolling is needed
 
     def _set_font_style(self, font_style: FontStyle):
         """Set the font style based on the font_styles.py enum."""

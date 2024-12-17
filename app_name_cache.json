@@ -1,8 +1,26 @@
 {
-    "pycharm64.exe": "PyCharm Community Edition",
-    "vivaldi.exe": "Vivaldi",
-    "explorer.exe": "Windows Explorer",
-    "sourcetree.exe": "Sourcetree",
-    "spotify.exe": "Spotify",
-    "python.exe": "Python"
+    "pycharm64.exe": {
+        "app_name": "PyCharm Community Edition",
+        "icon_path": "project_icons\\pycharm64.ico"
+    },
+    "explorer.exe": {
+        "app_name": "Windows Explorer",
+        "icon_path": "project_icons\\explorer.ico"
+    },
+    "vivaldi.exe": {
+        "app_name": "Vivaldi",
+        "icon_path": "project_icons\\vivaldi.ico"
+    },
+    "sourcetree.exe": {
+        "app_name": "Sourcetree",
+        "icon_path": "project_icons\\SourceTree.ico"
+    },
+    "spotify.exe": {
+        "app_name": "Spotify",
+        "icon_path": "project_icons\\Spotify.ico"
+    },
+    "flux.exe": {
+        "app_name": "f.lux",
+        "icon_path": "project_icons\\flux.ico"
+    }
 }

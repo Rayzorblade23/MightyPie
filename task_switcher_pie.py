@@ -1,6 +1,5 @@
 import math
 import threading
-import time
 from threading import Lock
 
 from PyQt6.QtCore import pyqtSignal, QTimer, Qt, QRectF, QSize, pyqtSlot
@@ -9,8 +8,9 @@ from PyQt6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsEll
 
 from config import CONFIG
 from events import ShowWindowEvent
+from pie_button import PieButton
 from window_controls import create_window_controls
-from window_functions import get_filtered_list_of_window_titles, get_application_name, focus_window_by_handle, show_window
+from window_functions import get_filtered_list_of_window_titles, get_application_info, focus_window_by_handle, show_window, get_window_icon
 from window_manager import WindowManager
 
 manager = WindowManager.get_instance()
@@ -24,6 +24,9 @@ class TaskSwitcherPie(QWidget):
         super().__init__()
 
         # Initialize these attributes BEFORE calling setup methods
+        self.inner_circle_main = None
+        self.scene = None
+        self.view = None
         self.btn = None
         self.buttons_To_windows_map = {}
         self.button_mapping_lock = Lock()
@@ -59,18 +62,19 @@ class TaskSwitcherPie(QWidget):
 
     def auto_refresh(self):
         """Automatically monitor and refresh windows periodically in a thread-safe way."""
-        start_time = time.time()
+        # start_time = time.time()
 
         # Lock access to shared data to ensure thread safety
         with self.button_mapping_lock:
             current_window_titles = get_filtered_list_of_window_titles(self)
             # only actually refresh when windows have opened or closed
             if current_window_titles != self.last_window_titles:
+                print("Changed!")
                 self.last_window_titles = current_window_titles
                 self.refresh()  # Safely call the refresh method to update UI
 
-        elapsed_time = time.time() - start_time
-        print(f"auto_refresh took {elapsed_time:.3f} seconds")
+        # elapsed_time = time.time() - start_time
+        # print(f"auto_refresh took {elapsed_time:.3f} seconds")
 
     def refresh(self):
         print("Refreshing!")
@@ -135,14 +139,7 @@ class TaskSwitcherPie(QWidget):
     def setup_buttons(self):
         """Create and position all buttons."""
 
-        def create_button(
-                label,
-                object_name,
-                action=None,
-                fixed_size=True,
-                size=(CONFIG.BUTTON_WIDTH, CONFIG.BUTTON_HEIGHT),
-                pos=(0, 0),
-        ):
+        def create_button(label, object_name, action=None, fixed_size=True, size=(CONFIG.BUTTON_WIDTH, CONFIG.BUTTON_HEIGHT), pos=(0, 0), ):
             """Creates a QPushButton with optional size, action, and position."""
 
             button = QPushButton(label, self)
@@ -186,7 +183,7 @@ class TaskSwitcherPie(QWidget):
         # Starting angle
 
         # Create 8 buttons in a circular pattern, starting with top middle
-        for i, name in enumerate(self.pie_button_texts):
+        for i, pie_button_text in enumerate(self.pie_button_texts):
             angle_in_degrees = (
                     i / 8 * 360
             )  # Calculate button's position using angle_in_radians
@@ -228,9 +225,16 @@ class TaskSwitcherPie(QWidget):
             button_pos_y = int(CONFIG.CANVAS_SIZE[1] / 2 - offset_y - CONFIG.RADIUS * math.cos(math.radians(angle_in_degrees)))
 
             button_name = "Pie_Button" + str(i)  # name of the button not used
-            self.btn = create_button(
-                name, button_name, pos=(button_pos_x, button_pos_y)
-            )
+            # self.btn = create_button(name, button_name, pos=(button_pos_x, button_pos_y))
+
+            self.btn = PieButton(
+                object_name=button_name,
+                text_1=pie_button_text,
+                text_2="",
+                icon_path="",
+                action=None,
+                pos=(button_pos_x, button_pos_y),
+                parent=self)
 
             self.pie_buttons.append(self.btn)
 
@@ -255,7 +259,7 @@ class TaskSwitcherPie(QWidget):
 
             final_button_updates = []
 
-            temp_pie_button_names = (
+            temp_pie_button_texts = (
                 self.pie_button_texts
             )  # because the names need to be evaluated here
 
@@ -264,34 +268,50 @@ class TaskSwitcherPie(QWidget):
                 if not window_handle:  # Exclude windows with no handle
                     continue
 
-                app_name = get_application_name(window_handle)
+                result = get_application_info(window_handle)
+
+                # Check if the result is a tuple (app_name, app_icon_path)
+                if isinstance(result, tuple):
+                    app_name, app_icon_path = result
+                elif isinstance(result, str):
+                    # If result is a string, print the error and handle it
+                    print(f"Error: {result}")
+                    app_name, app_icon_path = None, None  # Default values or handle the error case
+                else:
+                    # Handle unexpected result type
+                    print(f"Unexpected result: {result}")
+                    app_name, app_icon_path = None, None  # Default values or handle the error case
+
 
                 button_title = (
                     window_title
                     if f" - {app_name}" not in window_title
                     else window_title.replace(f" - {app_name}", "")
                 )
-                button_text = f"{button_title}\n {app_name}"
+                button_text_1 = button_title
+                button_text_2 = app_name
 
                 # Check if the window is already assigned a button
                 button_index = self.buttons_To_windows_map.get(window_handle)
 
                 # If Button Index not assigned, find a free button
                 if button_index is None:
-                    button_index = get_free_button_index(temp_pie_button_names)
+                    button_index = get_free_button_index(temp_pie_button_texts)
                     # If Button Index still not assigned, no free button for you :(
                     if button_index is None:
                         continue
                     # Assign Button Index to the window handle
                     self.buttons_To_windows_map[window_handle] = button_index
 
-                temp_pie_button_names[button_index] = button_text  # Update button name
+                temp_pie_button_texts[button_index] = button_text_1  # Update button name
 
                 final_button_updates.append(
                     {
                         "index": button_index,
-                        "text": button_text,
+                        "text_1": button_text_1,
+                        "text_2": button_text_2,
                         "window_handle": window_handle,
+                        "app_icon_path": app_icon_path
                     }
                 )
 
@@ -319,11 +339,16 @@ class TaskSwitcherPie(QWidget):
         """Update button UI in the main thread."""
         for update in button_updates:
             button_index = update["index"]
-            button_text = update["text"]
+            button_text_1 = update["text_1"]
+            button_text_2 = update["text_2"]
             window_handle = update["window_handle"]
+            app_icon_path = update["app_icon_path"]
+            print(window_handle)
 
-            self.pie_button_texts[button_index] = button_text
-            self.pie_buttons[button_index].setText(button_text)
+            self.pie_button_texts[button_index] = button_text_1
+            self.pie_buttons[button_index].set_label_1_text(button_text_1)
+            self.pie_buttons[button_index].set_label_2_text(button_text_2)
+            self.pie_buttons[button_index].update_icon(app_icon_path)
 
             # Disconnect any previous connections first
             try:
@@ -347,9 +372,12 @@ class TaskSwitcherPie(QWidget):
                     self.pie_buttons[i].clicked.disconnect()
                 except TypeError:
                     pass
-                self.pie_buttons[i].setText("Empty")
+                self.pie_buttons[i].set_label_1_text("Empty")
+                self.pie_buttons[i].set_label_2_text("")
+                self.pie_buttons[i].update_icon("")
 
     def customEvent(self, event):
         """Handle the custom event to show the window."""
         if isinstance(event, ShowWindowEvent):
+            self.refresh()
             show_window(event.window)  # Safely call show_window when the event is posted

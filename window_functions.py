@@ -8,6 +8,7 @@ import win32api
 import win32con
 import win32gui
 import win32process
+import win32ui
 from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget
 
@@ -90,8 +91,16 @@ def get_friendly_app_name(exe_path: str):
         return "Unknown App"
 
 
-def get_application_name(window_handle):
-    """Retrieve the application name for a given window handle."""
+def get_application_info(window_handle):
+    """Retrieve the application name and icon path for a given window handle (and save friendly name).
+
+    Args:
+        window_handle (any): The handle of the window for which to retrieve application info.
+
+    Returns:
+        tuple: A tuple containing the application name (str) and icon path (str) if the window handle is valid and information is found.
+        str: A string indicating either the window title (str) if the window handle is invalid, or an error message (str) if an exception occurs.
+    """
     window_title = get_window_title(window_handle)
     try:
         if window_handle:
@@ -106,16 +115,76 @@ def get_application_name(window_handle):
                 if os.path.exists(exe_path):
                     exe_name = os.path.basename(exe_path).lower()
                     if exe_name in app_cache:
-                        app_name = app_cache[exe_name]
+                        app_name = app_cache[exe_name]["app_name"]
+                        icon_path = app_cache[exe_name]["icon_path"]
                     else:
+                        icon_path = get_window_icon(exe_path, window_handle)
                         app_name = get_friendly_app_name(exe_path)
-                        app_cache[exe_name] = app_name
+                        app_cache[exe_name] = {"app_name": app_name, "icon_path": icon_path}
                         save_cache(app_cache)
-                    return app_name
+                    return app_name, icon_path
+
         return window_title
     except Exception as e:
         print(f"Error fetching application name for {window_title}: {e}")
         return "Unknown App, window title: " + window_title
+
+
+
+def get_window_icon(exe_path, hwnd):
+    try:
+        if not exe_path:
+            print(f"Executable path not found for hwnd: {hwnd}")
+            return ""
+
+        # Extract the icon from the executable
+        large, small = win32gui.ExtractIconEx(exe_path, 0)
+
+        if not large and not small:
+            print(f"No icon found for executable: {exe_path}")
+            return ""
+
+        # Use the large icon (if available), else fallback to small
+        icon_handle = large[0] if large else small[0]
+
+        # Create a device context (DC)
+        hdc = win32ui.CreateDCFromHandle(win32gui.GetDC(hwnd))
+
+        # Create a bitmap compatible with the window's device context
+        hbmp = win32ui.CreateBitmap()
+        hbmp.CreateCompatibleBitmap(hdc, 32, 32)  # Standard icon size
+
+        # Create a compatible DC to draw the icon
+        hdc = hdc.CreateCompatibleDC()
+        hdc.SelectObject(hbmp)
+
+        # Draw the icon onto the bitmap
+        hdc.DrawIcon((0, 0), icon_handle)
+
+        # Create the project subfolder if it doesn't exist
+        icon_folder = 'project_icons'
+        if not os.path.exists(icon_folder):
+            os.makedirs(icon_folder)
+
+        # Get the name of the executable without the ".exe" extension
+        exe_name = os.path.basename(exe_path)
+        icon_filename = os.path.splitext(exe_name)[0] + '.ico'
+
+        # Save the icon to the subfolder
+        icon_path = os.path.join(icon_folder, icon_filename)
+
+        # Save the bitmap as an icon file
+        hbmp.SaveBitmapFile(hdc, icon_path)
+
+        # Cleanup the resources
+        win32gui.DestroyIcon(icon_handle)
+
+        print(f"Icon saved as {icon_path}.")
+        return icon_path
+
+    except Exception as e:
+        print(f"Error fetching icon: {e}")
+        return None
 
 
 def get_window_title(hwnd):
@@ -166,8 +235,7 @@ def get_filtered_list_of_window_titles(this_window: QWidget = None):
     try:
         win32gui.EnumWindows(enum_windows_callback, None)
         # Update the main mapping dictionary with the filtered window handles
-        manager.update_window_titles_to_hwnds_map(
-            temp_window_titles_To_hwnds_map)
+        manager.update_window_titles_to_hwnds_map(temp_window_titles_To_hwnds_map)
 
         return list(manager.get_window_titles_to_hwnds_map().keys())
     except Exception as e:
