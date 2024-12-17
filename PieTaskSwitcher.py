@@ -1,15 +1,11 @@
 import ctypes
-import json
 import math
-import os
 import sys
 import threading
 import time
 from threading import Lock
-from typing import *
 
 import keyboard
-import psutil
 import win32api
 import win32con
 import win32gui
@@ -45,9 +41,10 @@ from PyQt6.QtWidgets import (
 
 from config import CONFIG
 from window_controls import create_window_controls
+from window_functions import focus_window_by_handle, get_application_name
 
 # Global Variables and Initialization
-window_handles = {}
+window_titles_To_hwnds_map = {}
 
 
 # Custom event type for showing the window
@@ -66,11 +63,11 @@ class PieTaskSwitcherWindow(QWidget):
         super().__init__()
 
         # Initialize these attributes BEFORE calling setup methods
-        self.button_window_mapping = {}
+        self.buttons_To_windows_map = {}
         self.button_mapping_lock = Lock()
         self.pie_button_texts = ["Empty" for _ in range(CONFIG.MAX_BUTTONS)]
         self.pie_buttons = []
-        self.last_window_list = []
+        self.last_window_titles = []
 
         # Connect the custom signal to the update method
         self.update_buttons_signal.connect(self.update_button_ui)
@@ -104,10 +101,10 @@ class PieTaskSwitcherWindow(QWidget):
 
         # Lock access to shared data to ensure thread safety
         with self.button_mapping_lock:
-            current_window_list = get_window_list()
+            current_window_titles = get_filtered_list_of_window_titles()
             # only actually refresh when windows have opened or closed
-            if current_window_list != self.last_window_list:
-                self.last_window_list = current_window_list
+            if current_window_titles != self.last_window_titles:
+                self.last_window_titles = current_window_titles
                 self.refresh()  # Safely call the refresh method to update UI
 
         elapsed_time = time.time() - start_time
@@ -293,8 +290,15 @@ class PieTaskSwitcherWindow(QWidget):
     def update_buttons(self):
         """Update window buttons with current window information."""
 
+        def get_free_button_index(temp_pie_button_names):
+            """Find a free button index in the button names list."""
+            for j in range(CONFIG.MAX_BUTTONS):
+                if temp_pie_button_names[j] == "Empty":
+                    return j
+            return None
+
         def background_task():
-            windows = get_window_list()
+            windows_titles = get_filtered_list_of_window_titles()
 
             final_button_updates = []
 
@@ -302,12 +306,12 @@ class PieTaskSwitcherWindow(QWidget):
                 self.pie_button_texts
             )  # because the names need to be evaluated here
 
-            for i, window_title in enumerate(windows):
-                window_handle = window_handles.get(window_title)
-                if not window_handle:  # exclude windows with no handle
+            for window_title in windows_titles:
+                window_handle = window_titles_To_hwnds_map.get(window_title)
+                if not window_handle:  # Exclude windows with no handle
                     continue
 
-                app_name = get_application_name(window_title)
+                app_name = get_application_name(window_handle)
 
                 button_title = (
                     window_title
@@ -316,23 +320,19 @@ class PieTaskSwitcherWindow(QWidget):
                 )
                 button_text = f"{button_title}\n {app_name}"
 
-                ### if windows doesn't already have a button, find a free button for new window ###
-                # if the window is already on a button, take the index so it keeps its place
-                if window_handle in self.button_window_mapping:
-                    button_index = self.button_window_mapping[window_handle]
-                else:
-                    button_index = None
-                    # go through buttons until a free one is found
-                    for j in range(CONFIG.MAX_BUTTONS):
-                        if temp_pie_button_names[j] == "Empty":
-                            button_index = j
-                            break
+                # Check if the window is already assigned a button
+                button_index = self.buttons_To_windows_map.get(window_handle)
+
+                # If Button Index not assigned, find a free button
+                if button_index is None:
+                    button_index = get_free_button_index(temp_pie_button_names)
+                    # If Button Index still not assigned, no free button for you :(
                     if button_index is None:
-                        continue  # no free button for you :(
+                        continue
+                    # Assign Button Index to the window handle
+                    self.buttons_To_windows_map[window_handle] = button_index
 
-                    self.button_window_mapping[window_handle] = button_index
-
-                temp_pie_button_names[button_index] = button_text
+                temp_pie_button_names[button_index] = button_text  # Update button name
 
                 # print(
                 #     f"{temp_pie_button_names[button_index]} has received Index {button_index}.\n"
@@ -346,21 +346,22 @@ class PieTaskSwitcherWindow(QWidget):
                     }
                 )
 
-            # Clean button_window_mapping dict of old windows
-            if len(self.button_window_mapping) > 20:
-                # Step 1: Extract valid window_handles from button_updates
+            # Clean buttons_To_windows_map dict of old windows
+            if len(self.buttons_To_windows_map) > 20:
+                # Step 1: Extract valid window_titles_To_hwnds_map from button_updates
                 valid_window_handles = {
                     update["window_handle"] for update in final_button_updates
                 }
 
-                # Step 2: Filter button_window_mapping to only keep pairs where the window_handle is in valid_window_handles
-                self.button_window_mapping = {
+                # Step 2: Filter buttons_To_windows_map to only keep pairs where the window_handle is in valid_window_handles
+                self.buttons_To_windows_map = {
                     handle: button_id
-                    for handle, button_id in self.button_window_mapping.items()
+                    for handle, button_id in self.buttons_To_windows_map.items()
                     if handle in valid_window_handles
                 }
 
-            print(self.button_window_mapping)
+            # print(self.buttons_To_windows_map)
+
             # Emit the signal instead of using invokeMethod
             self.update_buttons_signal.emit(final_button_updates)
 
@@ -407,24 +408,6 @@ class PieTaskSwitcherWindow(QWidget):
             show_window(
                 event.window
             )  # Safely call show_window when the event is posted
-
-
-def focus_window_by_handle(hwnd):
-    """Bring a window to the foreground and restore/maximize as needed."""
-    try:
-        win32gui.SetForegroundWindow(hwnd)
-        placement = win32gui.GetWindowPlacement(hwnd)
-
-        if placement[1] == win32con.SW_MINIMIZE:
-            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        elif placement[1] == win32con.SW_SHOWMAXIMIZED:
-            pass
-        else:
-            win32gui.ShowWindow(hwnd, win32con.SW_SHOWNORMAL)
-
-        win32gui.SetForegroundWindow(hwnd)
-    except Exception as e:
-        print(f"Could not focus window with handle '{hwnd}': {e}")
 
 
 def show_window(window: QWidget):
@@ -536,123 +519,52 @@ def listen_for_hotkeys(window: QWidget):
     keyboard.wait()
 
 
-# Cache Management
-def load_cache():
-    """Load application name cache from file."""
-    if os.path.exists(CACHE_FILE):
-        try:
-            with open(CACHE_FILE, "r") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"Error loading cache file: {e}")
-            return {}
-    return {}
-
-
-def save_cache(cache):
-    """Save application name cache to file."""
-    try:
-        with open(CACHE_FILE, "w") as f:
-            json.dump(cache, f, indent=4)
-        print("Cache saved successfully.")
-    except Exception as e:
-        print(f"Error saving cache file: {e}")
-
-
-def get_pid_from_window_handle(hwnd):
-    """Retrieve the Process ID (PID) for a given window handle."""
-    try:
-        _, pid = win32process.GetWindowThreadProcessId(hwnd)
-        return pid
-    except Exception as e:
-        print(f"Error retrieving PID for window: {e}")
-        return None
-
-
-def get_file_description(exe_path: str):
-    """Get the FileDescription (friendly app name) from the executable."""
-    try:
-        language, codepage = win32api.GetFileVersionInfo(
-            exe_path, "\\VarFileInfo\\Translation"
-        )[0]
-        string_file_info = "\\StringFileInfo\\%04X%04X\\%s" % (
-            language,
-            codepage,
-            "FileDescription",
-        )
-        description = win32api.GetFileVersionInfo(exe_path, string_file_info)
-        return description if description else "Unknown App"
-    except Exception as e:
-        print(f"Error retrieving file description for {exe_path}: {e}")
-        return "Unknown App"
-
-
-def get_application_name(window_title):
-    """Retrieve the application name for a given window title."""
-    try:
-        window_handle = window_handles.get(window_title)
-        if window_handle:
-            pid = get_pid_from_window_handle(window_handle)
-            if pid:
-                process = psutil.Process(pid)
-                exe_path = process.exe()
-                if os.path.exists(exe_path):
-                    exe_name = os.path.basename(exe_path).lower()
-                    if exe_name in app_cache:
-                        app_name = app_cache[exe_name]
-                    else:
-                        app_name = get_file_description(exe_path)
-                        app_cache[exe_name] = app_name
-                        save_cache(app_cache)
-                    return app_name
-        return window_title
-    except Exception as e:
-        print(f"Error fetching application name for {window_title}: {e}")
-        return "Unknown App, window title: " + window_title
-
-
-# Window Enumeration and Handling
-def get_window_list():
+def get_filtered_list_of_window_titles():
     """Enumerate and retrieve a list of visible windows."""
-    local_window_handles: Dict[int, int] = {}
+    temp_window_titles_To_hwnds_map: Dict[int, int] = {}
 
-    this_program_hwnd = int(window.winId())
+    this_program_hwnd = int(window.winId())  # Exclude this program from the Switcher
 
     def enum_windows_callback(hwnd, lparam):
+        # Check if the window is visible
         if win32gui.IsWindowVisible(hwnd):
             window_title = win32gui.GetWindowText(hwnd)
             class_name = win32gui.GetClassName(hwnd)
+
+            print(f"hwnd: {hwnd} and window title: {window_title} \n")
+
+            # Check if the window is cloaked (hidden or transparent)
             isCloaked = ctypes.c_int(0)
             ctypes.WinDLL("dwmapi").DwmGetWindowAttribute(
                 hwnd, 14, ctypes.byref(isCloaked), ctypes.sizeof(isCloaked)
             )
-
+            # Apply filtering conditions to determine if we want to include this window
             if (
-                    win32gui.IsWindowVisible(hwnd)
-                    and isCloaked.value == 0
-                    and window_title.strip()
-                    and class_name != "Progman"
-                    and class_name != "AutoHotkeyGUI"
+                    win32gui.IsWindowVisible(hwnd)  # Window must be visible
+                    and isCloaked.value == 0  # Window must not be cloaked (hidden)
+                    and window_title.strip()  # Window must have a non-empty title
+                    and class_name != "Progman"  # Exclude system windows like "Progman"
+                    and class_name != "AutoHotkeyGUI"  # Exclude "AutoHotkey" windows
+                    and hwnd != this_program_hwnd  # Exclude this program
             ):
-                if hwnd != this_program_hwnd:
-                    local_window_handles[window_title] = hwnd
+                if window_title in temp_window_titles_To_hwnds_map:
+                    window_title += " (2)"
+                temp_window_titles_To_hwnds_map[window_title] = hwnd
 
+    # Enumerate all top-level windows and pass each window's handle to the callback
     try:
         win32gui.EnumWindows(enum_windows_callback, None)
-        window_handles.clear()
-        window_handles.update(local_window_handles)
-        return list(window_handles.keys())
+        # Clear the existing window handles from the main mapping dictionary
+        window_titles_To_hwnds_map.clear()
+        # Update the main mapping dictionary with the filtered window handles
+        window_titles_To_hwnds_map.update(temp_window_titles_To_hwnds_map)
+        return list(window_titles_To_hwnds_map.keys())
     except Exception as e:
         print(f"Error getting windows: {e}")
         return []
 
 
 if __name__ == "__main__":
-    CACHE_FILE = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "app_name_cache.json"
-    )
-    app_cache = load_cache()
-
     app = QApplication(sys.argv)
 
     # Load the stylesheet
