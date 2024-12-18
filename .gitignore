@@ -163,7 +163,7 @@ cython_debug/
 # App Name Cache and Icons
 app_name_cache.json
 
-.app_icons/
+app_icons/
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
