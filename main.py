@@ -32,9 +32,17 @@ def listen_for_hotkeys(window: QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    # Load the stylesheet
+    # Load the QSS template
     with open("style.qss", "r") as file:
-        app.setStyleSheet(file.read())
+        qss_template = file.read()
+
+    # inserting style attributes from the config.py file
+    qss = (qss_template
+           .replace("{{accent_color}}", CONFIG.ACCENT_COLOR)
+           .replace("{{bg_color}}", CONFIG.BG_COLOR))
+
+    # Apply the QSS to the application or widgets
+    app.setStyleSheet(qss)
 
     manager = WindowManager.get_instance()
 

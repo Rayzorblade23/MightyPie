@@ -12,11 +12,10 @@ QWidget {
 
 /* Style the button */
 QPushButton {
-    background-color: #0078d7; /* Blue */
+    background-color: {{bg_color}}; /* Blue */
     color: white;              /* White text */
     font-size: 12px;           /* Font size */
-    border: none;              /* No border */
-    /* padding: 10px;             Padding */
+    border: 1px solid {{accent_color}};              /* No border */
     border-radius: 5px;        /* Rounded corners */
     opacity:1.0;
 }

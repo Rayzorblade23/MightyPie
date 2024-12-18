@@ -2,9 +2,9 @@ import math
 import threading
 from threading import Lock
 
-from PyQt6.QtCore import pyqtSignal, QTimer, QRectF, QSize, pyqtSlot, Qt
+from PyQt6.QtCore import pyqtSignal, QTimer, QRectF, pyqtSlot, Qt
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QPainter, QBrush, QPen, QColor, QCursor
-from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QPushButton, QSizePolicy, QWidget
+from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QWidget
 
 from config import CONFIG
 from events import ShowWindowEvent
@@ -147,33 +147,9 @@ class TaskSwitcherPie(QWidget):
 
     def setup_buttons(self):
         """Create and position all buttons."""
-
-        def create_button(label, object_name, action=None, fixed_size=True, size=(CONFIG.BUTTON_WIDTH, CONFIG.BUTTON_HEIGHT), pos=(0, 0), ):
-            """Creates a QPushButton with optional size, action, and position."""
-
-            button = QPushButton(label, self)
-            if fixed_size:
-                # Use fixed size if requested or fallback to default size
-                button.setFixedSize(QSize(size[0], size[1]))
-            else:
-                # If no fixed size, button will size to its content
-                button.setSizePolicy(
-                    QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum
-                )
-
-            button.setObjectName(object_name)
-
-            # Set the button action if provided
-            if action:
-                button.clicked.connect(action)
-
-            # Set position if provided
-            x, y = pos
-            # Set position using `move()`, not `setGeometry()`
-            button.move(x, y)
-
-            return button
-
+        # Create window control buttons with fixed sizes and actions
+        button_widget, minimize_button, close_button = create_window_controls(main_window=self)
+        
         # # Create and configure the refresh button
         # self.refresh_button = create_button(
         #     label="R",
@@ -246,11 +222,6 @@ class TaskSwitcherPie(QWidget):
                 parent=self)
 
             self.pie_buttons.append(self.btn)
-
-        # Create window control buttons with fixed sizes and actions
-        button_widget, minimize_button, close_button = create_window_controls(
-            main_window=self, create_button=create_button
-        )
 
     # Button Management
     def update_buttons(self):

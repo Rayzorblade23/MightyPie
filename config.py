@@ -10,8 +10,8 @@ class TaskPieSwitcherConfig:
     REFRESH_INTERVAL: int = 2000  # ms
     HOTKEY_OPEN: str = "F1"
     MAX_BUTTONS: int = 8
-    BUTTON_WIDTH: int = 150
-    BUTTON_HEIGHT: int = 38
+    BUTTON_WIDTH: int = 140
+    BUTTON_HEIGHT: int = 36
     CONTROL_BUTTON_SIZE: int = 30
     WINDOW_WIDTH: int = 600
     WINDOW_HEIGHT: int = 400
@@ -20,7 +20,9 @@ class TaskPieSwitcherConfig:
     INNER_RADIUS: int = 18
     PIE_TEXT_LABEL_MARGINS: int = 10
     PIE_TEXT_LABEL_SCROLL_SPEED: int = 1
-    PIE_TEXT_LABEL_SCROLL_INTERVAL: int = 16
+    PIE_TEXT_LABEL_SCROLL_INTERVAL: int = 25
+    ACCENT_COLOR: str = "#5a14b7"
+    BG_COLOR: str = "#3b3b3b"
 
 
 

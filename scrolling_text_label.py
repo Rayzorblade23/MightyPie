@@ -9,7 +9,7 @@ from font_styles import FontStyle
 class ScrollingLabel(QWidget):
     """Label with scrolling text for long content."""
 
-    def __init__(self, text: str = "", font_style: FontStyle = FontStyle.Normal, h_align: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignLeft,
+    def __init__(self, text: str = "", font_style: FontStyle = FontStyle.Normal, h_align: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignLeft, v_offset: int = 0,
                  parent: QWidget = None):
         super().__init__(parent)
 
@@ -21,6 +21,7 @@ class ScrollingLabel(QWidget):
         self.scroll_speed = CONFIG.PIE_TEXT_LABEL_SCROLL_SPEED
         self.scroll_update_interval = CONFIG.PIE_TEXT_LABEL_SCROLL_INTERVAL  # in ms
         self.h_align = h_align
+        self.v_offset = v_offset
 
         # Pause parameters
         self.pause_state = 1
@@ -68,6 +69,7 @@ class ScrollingLabel(QWidget):
         rect = self.rect()
         rect.setWidth(rect.width() - self.label_margins * 2)
         rect.moveLeft((self.rect().width() - rect.width()) // 2)
+        rect.moveTop(-self.v_offset)
         self._container.setGeometry(rect)
         self._check_text_fit()
 

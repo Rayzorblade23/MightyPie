@@ -26,5 +26,25 @@
     "csrss.exe": {
         "app_name": "Client Server Runtime Process",
         "icon_path": ""
+    },
+    "notepad.exe": {
+        "app_name": "Notepad",
+        "icon_path": "project_icons\\notepad.png"
+    },
+    "photoshop.exe": {
+        "app_name": "Adobe Photoshop 2024",
+        "icon_path": "project_icons\\Photoshop.png"
+    },
+    "flux.exe": {
+        "app_name": "f.lux",
+        "icon_path": "project_icons\\flux.png"
+    },
+    "blender.exe": {
+        "app_name": "Blender",
+        "icon_path": "project_icons\\blender.png"
+    },
+    "powertoys.advancedpaste.exe": {
+        "app_name": "PowerToys.AdvancedPaste",
+        "icon_path": "project_icons\\PowerToys.AdvancedPaste.png"
     }
 }

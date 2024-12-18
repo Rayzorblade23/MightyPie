@@ -40,10 +40,7 @@ class PieButton(QPushButton):
         self.label_layout.setContentsMargins(0, 0, 0, 0)
 
         # Create a second bottom label if text_2 is set
-        if text_2 != "":
-            self.label_2 = ScrollingLabel(text_2, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Italic)
-            self.label_2.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-            self.label_layout.addWidget(self.label_2)
+        self.set_label_2_text("")
 
         # Create the main layout for the button (HBoxLayout)
         self.setLayout(QHBoxLayout())
@@ -95,8 +92,9 @@ class PieButton(QPushButton):
                 self.label_2.update_text(text)
             else:
                 # Create label_2 dynamically
-                self.label_2 = ScrollingLabel(text, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Italic)
+                self.label_2 = ScrollingLabel(text, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Italic, v_offset=2)
                 self.label_2.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+
                 # Add label_2 to the layout
                 self.label_layout.addWidget(self.label_2)
 
