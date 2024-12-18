@@ -12,7 +12,7 @@ QWidget {
 
 /* Style the button */
 QPushButton {
-    background-color: blue; /* Blue */
+    background-color: #222222; /* Blue */
     color: white;              /* White text */
     font-size: 12px;           /* Font size */
     border: 1px solid darkred;              /* No border */

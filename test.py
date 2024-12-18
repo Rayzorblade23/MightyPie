@@ -1,17 +1,30 @@
+import re
 import sys
+
 from PyQt6.QtCore import Qt, QEvent, QPointF
-from PyQt6.QtGui import QPainter, QMouseEvent
-from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QPushButton, QWidget
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtWidgets import QApplication, QPushButton, QWidget
+
 
 class MyWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Stuapoid")
+        self.setWindowTitle("Slice_01")
 
         # Enable hover events
         self.setAttribute(Qt.WidgetAttribute.WA_Hover)
 
+        self.styles = self.extract_button_styles_from_global_stylesheet()
+
+        # Now you can use these variables to set the styles dynamically
+        self.button_style = self.styles["button"]
+        self.hover_style = self.styles["hover"]
+        self.pressed_style = self.styles["pressed"]
+
+        print("Button Style:", self.button_style)
+        print("Hover Style:", self.hover_style)
+        print("Pressed Style:", self.pressed_style)
         # Get screen size
         screen = QApplication.primaryScreen()
         size = screen.size()
@@ -33,6 +46,7 @@ class MyWindow(QWidget):
 
         self.is_hovering = False
         self.is_clicked = False
+        self.is_released_inside_quadrant = False  # To track the release position
 
     def center_button(self):
         """Centers the button in the window."""
@@ -45,7 +59,7 @@ class MyWindow(QWidget):
         center_y = (self.height() - button_height) // 2
 
         # Set button geometry
-        self.button.setGeometry(center_x, center_y, button_width, button_height)
+        self.button.setGeometry(center_x // 2, center_y // 2, button_width, button_height)
 
     def eventFilter(self, watched, event):
         """Handles events globally for the window."""
@@ -56,14 +70,19 @@ class MyWindow(QWidget):
             # Check if the mouse is in the upper-left quadrant
             if cursor_pos.x() < self.width() // 2 and cursor_pos.y() < self.height() // 2:
                 if not self.is_hovering:
-                    self.simulate_hover()  # Apply hover style when entering the quadrant
+                    print("Hover enter quadrant.")
+                    self.set_hover_inside_style()  # Apply hover style when entering the quadrant
                     self.is_hovering = True  # Mark that we're hovering
+                else:
+                    print("Hovering in quadrant.")
             else:
                 if self.is_hovering:
+                    print("Hover leave quadrant.")
                     self.revert_hover_style()  # Revert style if leaving the quadrant
                     self.is_hovering = False  # Mark that we're not hovering anymore
 
         elif event.type() == QEvent.Type.HoverLeave:
+            print("Hover leave (out of window).")
             self.revert_hover_style()  # Revert hover style when leaving
             self.is_hovering = False
 
@@ -73,8 +92,10 @@ class MyWindow(QWidget):
             # Check if the mouse press is in the upper-left quadrant
             if cursor_pos.x() < self.width() // 2 and cursor_pos.y() < self.height() // 2:
                 print("Quadrant clicked!")
-                self.simulate_click()  # Simulate button click
-                self.is_clicking = True
+                self.set_clicked_inside_style()  # Set clicked inside style
+                self.is_clicked = True
+                self.is_released_inside_quadrant = False  # Reset, to track release position
+                print("Button style set to clicked.")
                 return True  # Block event propagation
 
         elif event.type() == QEvent.Type.MouseButtonRelease:
@@ -83,66 +104,92 @@ class MyWindow(QWidget):
             # Check if the mouse release is in the upper-left quadrant or button
             if cursor_pos.x() < self.width() // 2 and cursor_pos.y() < self.height() // 2:
                 print("Quadrant released!")
-                self.simulate_release()  # Simulate release if within the quadrant
+                self.set_hover_inside_style()  # Revert to hover style
+                self.is_released_inside_quadrant = True  # Mark that release happened inside the quadrant
+                print("Button reverted to hover after release.")
             else:
                 print("Release outside quadrant!")
-                self.revert_hover_style()  # Revert to normal or hover style if outside
-            self.is_clicking = False
+                self.set_normal_style()  # Revert to held outside style
+                self.is_released_inside_quadrant = False  # Reset to mark release happened outside
+                print("Button style set to held outside after release outside quadrant.")
+
+            self.is_clicked = False
             return True  # Block event propagation
 
         return super().eventFilter(watched, event)
 
-    def simulate_hover(self):
-        """Simulates a hover event on the button."""
-        self.is_hovering = True  # Mark the button as hovered
-        self.button.setStyleSheet("QPushButton { background-color: red; color: red; }")  # Hover style
+    def set_hover_inside_style(self):
+        """Set the hover style for inside state."""
+        self.is_hovering = True
+        self.button.setStyleSheet(self.hover_style)  # Hover inside style
+        print("Button style set to hover inside.")
 
     def revert_hover_style(self):
         """Reverts to the normal style of the button."""
-        self.is_hovering = False  # Mark the button as not hovered
+        self.is_hovering = False
         if self.is_clicked:
-            self.button.setStyleSheet("QPushButton { background-color: blue; color: white; border: none; }")  # Clicked style
+            self.set_clicked_style()  # If clicked, maintain clicked style
         else:
-            self.button.setStyleSheet("QPushButton { background-color: white; color: black; }")  # Normal style
+            self.set_normal_style()  # Normal style if not clicked
 
-    def simulate_click(self):
-        """Simulates a click on the button and changes its style to blue on press."""
-        self.is_clicked = True
-        self.button.setStyleSheet("QPushButton { background-color: blue; color: white; border: none; }")  # Clicked style
+    def set_clicked_style(self):
+        """Sets the clicked style for the button."""
+        self.button.setStyleSheet(self.pressed_style)
+        print("Button style set to clicked.")
 
-        # Create a mouse press event at the button's center position
+    def set_normal_style(self):
+        """Sets the normal style for the button."""
+        self.button.setStyleSheet(self.button_style)
+        print("Button style set to normal.")
+
+    def set_clicked_inside_style(self):
+        """Set the clicked inside style."""
+        self.button.setStyleSheet(self.pressed_style)
+        print("Button style set to clicked inside.")
+        # Emit a proper click event
         press_event = QMouseEvent(
             QEvent.Type.MouseButtonPress,
-            QPointF(self.button.rect().center()),  # Convert QPoint to QPointF
-            Qt.MouseButton.LeftButton,  # Left button press
-            Qt.MouseButton.LeftButton,  # Left button state
-            Qt.KeyboardModifier.NoModifier  # No modifier keys
+            QPointF(self.button.rect().center()),  # Center position of the button
+            Qt.MouseButton.LeftButton,  # Left mouse button
+            Qt.MouseButton.LeftButton,  # Button state
+            Qt.KeyboardModifier.NoModifier  # No keyboard modifiers
         )
-        QApplication.sendEvent(self.button, press_event)  # Send press event
+        QApplication.sendEvent(self.button, press_event)  # Send press event to the button
 
-    def simulate_release(self):
-        """Simulates a release on the button and resets the style."""
-        self.is_clicked = False
-
-        # Create a mouse release event at the button's center position
         release_event = QMouseEvent(
             QEvent.Type.MouseButtonRelease,
-            QPointF(self.button.rect().center()),  # Convert QPoint to QPointF
-            Qt.MouseButton.LeftButton,  # Left button release
-            Qt.MouseButton.LeftButton,  # Left button state
-            Qt.KeyboardModifier.NoModifier  # No modifier keys
+            QPointF(self.button.rect().center()),  # Center position of the button
+            Qt.MouseButton.LeftButton,  # Left mouse button
+            Qt.MouseButton.LeftButton,  # Button state
+            Qt.KeyboardModifier.NoModifier  # No keyboard modifiers
         )
-        QApplication.sendEvent(self.button, release_event)  # Send release event
-
-        # Revert to hover or normal style after release
-        if self.is_hovering:
-            self.simulate_hover()  # Reapply hover style
-        else:
-            self.revert_hover_style()  # Revert to the original style if not hovering
+        QApplication.sendEvent(self.button, release_event)  # Send release event to the button
 
     def print_message(self):
         """Prints a message when the button is clicked."""
         print("Button clicked!")
+
+    def extract_button_styles_from_global_stylesheet(self):
+        """Extracts the QPushButton styles (normal, hover, and pressed) from the global application stylesheet."""
+        # Access the global stylesheet for the whole app
+        global_stylesheet = QApplication.instance().styleSheet()
+
+        # Regular expressions to match the styles for QPushButton, QPushButton:hover, QPushButton:pressed
+        button_style_pattern = r"QPushButton\s*{(.*?)}"
+        hover_style_pattern = r"QPushButton:hover\s*{(.*?)}"
+        pressed_style_pattern = r"QPushButton:pressed\s*{(.*?)}"
+
+        # Extract the content inside the curly braces for each selector using regex
+        button_style = re.search(button_style_pattern, global_stylesheet, re.DOTALL)
+        hover_style = re.search(hover_style_pattern, global_stylesheet, re.DOTALL)
+        pressed_style = re.search(pressed_style_pattern, global_stylesheet, re.DOTALL)
+
+        # Prepare and return a dictionary with the extracted styles or None if not found
+        return {
+            "button": button_style.group(1).strip() if button_style else None,
+            "hover": hover_style.group(1).strip() if hover_style else None,
+            "pressed": pressed_style.group(1).strip() if pressed_style else None
+        }
 
 
 def clean_up():
