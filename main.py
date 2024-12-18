@@ -53,8 +53,6 @@ def adjust_saturation(hex_color, saturation_factor=0.8):
     return f'#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}'
 
 
-
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
@@ -94,4 +92,3 @@ if __name__ == "__main__":
     window.auto_refresh()
 
     sys.exit(app.exec())
-
