@@ -162,7 +162,7 @@ def get_window_icon(exe_path, hwnd):
         memdc.DrawIcon((0, 0), icon_handle)
 
         # Create the project subfolder if it doesn't exist
-        icon_folder = 'project_icons'
+        icon_folder = 'app_icons'
         if not os.path.exists(icon_folder):
             os.makedirs(icon_folder)
 

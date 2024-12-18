@@ -1,19 +1,13 @@
 
-- hide the Widget when clicking anywhere else
-
-- in the PieButton, what happens when it gets updated? Does the ScrollingTextLabel need Update functions?
-
-- have CHatGPT implement type hinting for functions
-
-- use PID to differentiate two explorer windows with the same name
 
 
 - code hover-release functionality
 
 - save previous condition of minimized windows (i. e.: maximized or normal)
 
-
-- maybe scrolling text in buttons
-
 IDEA:
 Remove Windows button but open when clicking bottom left of screen
+
+
+BUGS:
+- Spotify text is cut off when title changes

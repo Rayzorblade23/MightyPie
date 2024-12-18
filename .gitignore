@@ -160,6 +160,11 @@ cython_debug/
 # Windows shortcut files
 *.lnk
 
+# App Name Cache and Icons
+app_name_cache.json
+
+.app_icons/
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
