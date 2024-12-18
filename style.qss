@@ -21,19 +21,26 @@ QPushButton {
 }
 
 QPushButton:hover {
-    background-color: #005a9e; /* Darker blue on hover */
+    background-color: {{accent_muted}}; /* Darker blue on hover */
 }
 
 
 QPushButton:pressed {
-    background-color: #003c6b; /* Even darker blue when pressed */
+    background-color: {{accent_color}}; /* Even darker blue when pressed */
+}
+
+QPushButton:disabled {
+    border: 1px solid #333333;
+}
+
+QLabel:disabled {
+    color: gray;
 }
 
 QLabel {
     color: white;              /* White text */
-    font-size: 12px;           /* Font size */
     /*    font-family: "Comic Sans MS";*/
-    /*    background: #ff0f0f;*/
+/*    background: #ff0f0f;*/
     background: transparent;
 }
 

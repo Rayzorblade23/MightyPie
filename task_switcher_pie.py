@@ -149,7 +149,7 @@ class TaskSwitcherPie(QWidget):
         """Create and position all buttons."""
         # Create window control buttons with fixed sizes and actions
         button_widget, minimize_button, close_button = create_window_controls(main_window=self)
-        
+
         # # Create and configure the refresh button
         # self.refresh_button = create_button(
         #     label="R",
@@ -342,6 +342,7 @@ class TaskSwitcherPie(QWidget):
                     self.hide(),
                 )
             )
+            self.pie_buttons[button_index].setEnabled(True)  # Disable the button
 
         # Clear button attributes when button index not among updates
         for i in range(CONFIG.MAX_BUTTONS):
@@ -351,6 +352,10 @@ class TaskSwitcherPie(QWidget):
                     self.pie_buttons[i].clicked.disconnect()
                 except TypeError:
                     pass
+                self.pie_buttons[i].clicked.connect(
+                    lambda checked, hwnd=window_handle: self.hide()
+                )
+                self.pie_buttons[i].setEnabled(False)  # Disable the button
                 self.pie_buttons[i].set_label_1_text("Empty")
                 self.pie_buttons[i].set_label_2_text("")
                 self.pie_buttons[i].update_icon("")

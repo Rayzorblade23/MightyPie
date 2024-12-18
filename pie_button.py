@@ -33,7 +33,7 @@ class PieButton(QPushButton):
         # self.label_layout.setSpacing(0)  # No space between widgets
 
         # Create a Label (which is on top, when both texts are set
-        self.label_1 = ScrollingLabel(text_1, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Normal)
+        self.label_1 = ScrollingLabel(text_1, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Normal, v_offset=-1)
         self.label_1.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         self.label_layout.addWidget(self.label_1)
@@ -92,7 +92,7 @@ class PieButton(QPushButton):
                 self.label_2.update_text(text)
             else:
                 # Create label_2 dynamically
-                self.label_2 = ScrollingLabel(text, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Italic, v_offset=2)
+                self.label_2 = ScrollingLabel(text, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Italic, v_offset=1, font_size=10)
                 self.label_2.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
                 # Add label_2 to the layout

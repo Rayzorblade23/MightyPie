@@ -11,7 +11,7 @@ class TaskPieSwitcherConfig:
     HOTKEY_OPEN: str = "F1"
     MAX_BUTTONS: int = 8
     BUTTON_WIDTH: int = 140
-    BUTTON_HEIGHT: int = 36
+    BUTTON_HEIGHT: int = 34
     CONTROL_BUTTON_SIZE: int = 30
     WINDOW_WIDTH: int = 600
     WINDOW_HEIGHT: int = 400
