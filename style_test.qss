@@ -19,9 +19,15 @@ QPushButton {
     border-radius: 5px;        /* Rounded corners */
     opacity:1.0;
 }
-
+QPushButton[hovered="true"] {
+    background-color: #ff00ff;
+}
 QPushButton:hover {
     background-color: green; /* Darker blue on hover */
+}
+
+#area {
+    background-color: darkgrey;
 }
 
 
