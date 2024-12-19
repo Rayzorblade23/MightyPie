@@ -7,13 +7,17 @@ from PyQt6.QtWidgets import QApplication, QPushButton, QWidget
 
 
 class MyWindow(QWidget):
-    def __init__(self):
+    def __init__(self, area_check):
         super().__init__()
 
         self.setWindowTitle("Slice_01")
 
         # Enable hover events
         self.setAttribute(Qt.WidgetAttribute.WA_Hover)
+
+        self.area_check = area_check
+
+        print(self.area_check(0, 0, self.width(), self.height()))
 
         self.styles = self.extract_button_styles_from_global_stylesheet()
 
@@ -22,15 +26,12 @@ class MyWindow(QWidget):
         self.hover_style = self.styles["hover"]
         self.pressed_style = self.styles["pressed"]
 
-        print("Button Style:", self.button_style)
-        print("Hover Style:", self.hover_style)
-        print("Pressed Style:", self.pressed_style)
         # Get screen size
         screen = QApplication.primaryScreen()
         size = screen.size()
 
-        # Set window to span half the screen width and full screen height
-        self.setGeometry(0, 0, size.width() // 2, size.height())  # Half the screen width, full height
+        # Set window to span half the screen triangle_width and full screen height
+        self.setGeometry(0, 0, size.width() // 2, size.height())  # Half the screen triangle_width, full height
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
@@ -67,8 +68,10 @@ class MyWindow(QWidget):
         if event.type() == QEvent.Type.HoverMove:
             cursor_pos = event.position()
 
+            area_condition = self.area_check(cursor_pos.x(), cursor_pos.y(), self.width(), self.height())
+
             # Check if the mouse is in the upper-left quadrant
-            if cursor_pos.x() < self.width() // 2 and cursor_pos.y() < self.height() // 2:
+            if area_condition:
                 if not self.is_hovering:
                     print("Hover enter quadrant.")
                     self.set_hover_inside_style()  # Apply hover style when entering the quadrant
@@ -88,9 +91,10 @@ class MyWindow(QWidget):
 
         elif event.type() == QEvent.Type.MouseButtonPress:
             cursor_pos = event.position()
+            area_condition = self.area_check(cursor_pos.x(), cursor_pos.y(), self.width(), self.height())
 
             # Check if the mouse press is in the upper-left quadrant
-            if cursor_pos.x() < self.width() // 2 and cursor_pos.y() < self.height() // 2:
+            if area_condition:
                 print("Quadrant clicked!")
                 self.set_clicked_inside_style()  # Set clicked inside style
                 self.is_clicked = True
@@ -207,7 +211,9 @@ if __name__ == "__main__":
 
     app.setStyleSheet(qss_template)
 
-    window = MyWindow()
+    check_top_left = lambda x, y, w, h: x < w // 2 and y < h // 2
+
+    window = MyWindow(check_top_left)
     window.show()
 
     # Run the application

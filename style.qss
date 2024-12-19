@@ -20,6 +20,20 @@ QPushButton {
     opacity:1.0;
 }
 
+/* Style the button */
+#triangle {
+    background-color: rgba(128,128,128,0.1);
+    border: none;              /* No border */
+}
+#triangle:hover {
+    background-color: rgba(128,128,128,0.4);
+    border: none;              /* No border */
+}
+#triangle:pressed {
+    background-color: rgba(128,128,128,0.8);
+    border: none;              /* No border */
+}
+
 QPushButton:hover {
     background-color: {{accent_muted}}; /* Darker blue on hover */
 }
@@ -40,7 +54,7 @@ QLabel:disabled {
 QLabel {
     color: white;              /* White text */
     /*    font-family: "Comic Sans MS";*/
-/*    background: #ff0f0f;*/
+    /*    background: #ff0f0f;*/
     background: transparent;
 }
 

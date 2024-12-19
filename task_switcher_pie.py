@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem,
 from config import CONFIG
 from events import ShowWindowEvent
 from pie_button import PieButton
+from triangle_button import TriangleButton
 from window_controls import create_window_controls
 from window_functions import get_filtered_list_of_window_titles, get_application_info, focus_window_by_handle, show_window
 from window_manager import WindowManager
@@ -150,6 +151,19 @@ class TaskSwitcherPie(QWidget):
         # Create window control buttons with fixed sizes and actions
         button_widget, minimize_button, close_button = create_window_controls(main_window=self)
 
+        # distribute the buttons in a circle
+        button_pos_x = int(CONFIG.CANVAS_SIZE[0] / 2)
+        button_pos_y = int(CONFIG.CANVAS_SIZE[1] / 2)
+
+        self.triangle_button = TriangleButton(
+            "triangle",
+            500,
+            top_angle=45,
+            action=None,
+            pos=(button_pos_x, button_pos_y),
+            parent=self
+        )
+
         # # Create and configure the refresh button
         # self.refresh_button = create_button(
         #     label="R",
@@ -159,7 +173,7 @@ class TaskSwitcherPie(QWidget):
         #     # Using size instead of geometry
         #     size=(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT),
         #     pos=(
-        #         (self.width() - CONFIG.BUTTON_HEIGHT) // 2,
+        #         (self.triangle_width() - CONFIG.BUTTON_HEIGHT) // 2,
         #         (self.height() - CONFIG.BUTTON_HEIGHT) // 2,
         #     ),  # Using position for x and y
         # )
@@ -359,6 +373,7 @@ class TaskSwitcherPie(QWidget):
                 self.pie_buttons[i].set_label_1_text("Empty")
                 self.pie_buttons[i].set_label_2_text("")
                 self.pie_buttons[i].update_icon("")
+
 
     def customEvent(self, event):
         """Handle the custom event to show the window."""

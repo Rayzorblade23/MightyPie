@@ -40,7 +40,7 @@ QLabel:disabled {
 QLabel {
     color: white;              /* White text */
     /*    font-family: "Comic Sans MS";*/
-/*    background: #ff0f0f;*/
+    /*    background: #ff0f0f;*/
     background: transparent;
 }
 

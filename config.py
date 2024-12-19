@@ -13,9 +13,9 @@ class TaskPieSwitcherConfig:
     BUTTON_WIDTH: int = 140
     BUTTON_HEIGHT: int = 34
     CONTROL_BUTTON_SIZE: int = 30
-    WINDOW_WIDTH: int = 600
-    WINDOW_HEIGHT: int = 400
-    CANVAS_SIZE: int = 600, 400
+    # WINDOW_WIDTH: int = 1200
+    # WINDOW_HEIGHT: int = 800
+    CANVAS_SIZE: int = 1200, 1200
     RADIUS: int = 150
     INNER_RADIUS: int = 18
     PIE_TEXT_LABEL_MARGINS: int = 10
