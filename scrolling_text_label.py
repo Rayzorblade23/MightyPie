@@ -80,7 +80,8 @@ class ScrollingLabel(QWidget):
         """Update the text of the scrolling label."""
         self.label.setText(new_text)
         self.text_scroll_pos = 0  # Reset scroll position
-        self._check_text_fit()  # Re-evaluate if scrolling is needed
+        # self._check_text_fit()  # Re-evaluate if scrolling is needed
+        # self.resizeEvent()
 
     def _set_font_style(self, font_style: FontStyle):
         """Set the font style based on the font_styles.py enum."""
