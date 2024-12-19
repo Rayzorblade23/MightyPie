@@ -1,7 +1,56 @@
+import math
 import sys
 
-from PyQt6.QtCore import QEvent, Qt, QPoint
+from PyQt6.QtCore import QEvent, Qt, QObject
+from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QHBoxLayout, QWidget, QSizePolicy
+
+
+class GlobalMouseFilter(QObject):
+    def __init__(self, area_button):
+        super().__init__()
+        self.area_button = area_button  # Reference to the button for state updates
+
+    def eventFilter(self, obj, event):
+        if isinstance(event, QMouseEvent):
+            global_pos = event.globalPosition().toPoint()
+
+            if event.type() == QEvent.Type.MouseMove:
+                self.handle_mouse_move(global_pos)
+            elif event.type() == QEvent.Type.MouseButtonPress:
+                self.handle_mouse_press(global_pos)
+            elif event.type() == QEvent.Type.MouseButtonRelease:
+                self.handle_mouse_release(global_pos)
+
+        return super().eventFilter(obj, event)
+
+    def handle_mouse_move(self, global_pos):
+        local_pos = self.area_button.mapFromGlobal(global_pos)
+        in_area = self.area_button.check_active_area(local_pos.x(), local_pos.y())
+
+        if in_area != self.area_button.in_active_area:
+            self.area_button.in_active_area = in_area
+            self.area_button.update_child_button_hover_state(in_area)
+            print("Hover", "enter" if in_area else "leave", "active area")
+
+    def handle_mouse_press(self, global_pos):
+        local_pos = self.area_button.mapFromGlobal(global_pos)
+        if self.area_button.check_active_area(local_pos.x(), local_pos.y()):
+            self.area_button.is_pressed = True
+            self.area_button.child_button.setDown(True)
+            print("Pressed in active area")
+
+    def handle_mouse_release(self, global_pos):
+        if self.area_button.is_pressed:
+            self.area_button.is_pressed = False
+            self.area_button.child_button.setDown(False)
+
+            local_pos = self.area_button.mapFromGlobal(global_pos)
+            if self.area_button.check_active_area(local_pos.x(), local_pos.y()):
+                self.area_button.child_button.click()
+                print("Released in active area - clicked")
+            else:
+                print("Released outside active area")
 
 
 class AreaButton(QPushButton):
@@ -17,9 +66,8 @@ class AreaButton(QPushButton):
         self.is_pressed = False
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
-        # Get screen size and set window geometry
-        screen = QApplication.primaryScreen()
-        self.setFixedSize(200,200)
+        # Set fixed size
+        self.setFixedSize(200, 200)
 
         # Connect signals
         self.child_button.clicked.connect(self.on_child_clicked)
@@ -31,65 +79,38 @@ class AreaButton(QPushButton):
         self.child_button.move(button_x, button_y)
 
     def check_active_area(self, x, y):
-        return x < self.width() // 2 and y < self.height() // 2
+        center_x = self.width() // 2
+        center_y = self.height() // 2
+        dx = x - center_x
+        dy = y - center_y
 
-    def event(self, event):
-        if event.type() == QEvent.Type.HoverMove:
-            pos = event.position()
-            in_area = self.check_active_area(pos.x(), pos.y())
+        # Compute angle in degrees (0 to 360)
+        theta = math.degrees(math.atan2(dy, dx))
+        if theta < 0:
+            theta += 360
 
-            if in_area != self.in_active_area:
-                self.in_active_area = in_area
-                if in_area:
-                    self.child_button.setProperty("hovered", True)
-                else:
-                    self.child_button.setProperty("hovered", False)
-                self.child_button.style().unpolish(self.child_button)
-                self.child_button.style().polish(self.child_button)
-                print("Hover", "enter" if in_area else "leave", "active area")
+        # Predefined constants
+        d = 100  # Minimum distance
+        angle_start = 180 - 22.5  # Start angle in degrees
+        angle_end = angle_start + 45  # End angle in degrees
 
-        elif event.type() == QEvent.Type.MouseButtonPress:
-            pos = event.position()
-            if self.check_active_area(pos.x(), pos.y()):
-                self.is_pressed = True
-                self.child_button.setDown(True)
-                print("Pressed in active area")
-                return True
+        # Check if the angle is within the sector
+        if not (angle_start <= theta <= angle_end if angle_start <= angle_end else theta >= angle_start or theta <= angle_end):
+            return False  # Early exit if angle is outside the sector
 
-        elif event.type() == QEvent.Type.MouseButtonRelease:
-            if self.is_pressed:
-                pos = event.position()
-                self.is_pressed = False
-                self.child_button.setDown(False)
+        # Compute distance only if angle condition is satisfied
+        r = math.sqrt(dx ** 2 + dy ** 2)
+        return r >= d
 
-                if self.check_active_area(pos.x(), pos.y()):
-                    self.child_button.click()
-                    print("Released in active area - clicked")
-                else:
-                    print("Released outside active area")
-                return True
+        # return x < self.width() // 2 and y < self.height() // 2
 
-        elif event.type() == QEvent.Type.Leave:
-            if self.in_active_area:
-                self.in_active_area = False
-                self.child_button.setProperty("hovered", False)
-                self.child_button.style().unpolish(self.child_button)
-                self.child_button.style().polish(self.child_button)
-                if self.is_pressed:
-                    self.child_button.setDown(False)
-                    self.is_pressed = False
-                print("Left window")
-
-        return super().event(event)
+    def update_child_button_hover_state(self, hovered):
+        self.child_button.setProperty("hovered", hovered)
+        self.child_button.style().unpolish(self.child_button)
+        self.child_button.style().polish(self.child_button)
 
     def on_child_clicked(self):
         print("Child button clicked!")
-
-    def is_mouse_near(self, pos: QPoint) -> bool:
-        """ Simulate if the mouse is near the AreaButton even outside its boundaries """
-        margin = 50  # Define how far outside the button you want to detect
-        button_rect = self.rect()
-        return button_rect.adjusted(-margin, -margin, margin, margin).contains(pos.toPoint())
 
 
 class MainWindow(QMainWindow):
@@ -107,8 +128,8 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout()
 
         # Create an AreaButton instance and add it to the layout
-        area_button = AreaButton("Area Button", self)
-        layout.addWidget(area_button)
+        self.area_button = AreaButton("Area Button", self)
+        layout.addWidget(self.area_button)
 
         # Set the layout to the central widget
         central_widget.setLayout(layout)
@@ -119,6 +140,13 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+
+    # Create the main window
+    window = MainWindow()
+
+    # Install the global mouse event filter
+    global_mouse_filter = GlobalMouseFilter(window.area_button)
+    app.installEventFilter(global_mouse_filter)
 
     stylesheet = ""
 
@@ -131,7 +159,6 @@ if __name__ == "__main__":
 
     app.setStyleSheet(stylesheet)
 
-    window = MainWindow()
     window.show()
 
     sys.exit(app.exec())

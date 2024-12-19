@@ -20,7 +20,7 @@ QPushButton {
     opacity:1.0;
 }
 QPushButton[hovered="true"] {
-    background-color: #ff00ff;
+    background-color: green;
 }
 QPushButton:hover {
     background-color: green; /* Darker blue on hover */
