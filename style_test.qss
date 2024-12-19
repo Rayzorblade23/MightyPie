@@ -12,7 +12,7 @@ QWidget {
 
 /* Style the button */
 QPushButton {
-    background-color: #222222; /* Blue */
+    background-color: rgba(255, 255, 255, 0.01); /* Blue */
     color: white;              /* White text */
     font-size: 12px;           /* Font size */
     border: 1px solid darkred;              /* No border */
@@ -26,8 +26,14 @@ QPushButton:hover {
     background-color: green; /* Darker blue on hover */
 }
 
-#area {
-    background-color: darkgrey;
+AreaButton {
+    background-color: transparent;
+    border: none;
+}
+
+AreaButton:hover {
+    background-color: transparent;
+    border: none;
 }
 
 

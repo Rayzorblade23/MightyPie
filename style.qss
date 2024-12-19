@@ -38,6 +38,9 @@ QPushButton:hover {
     background-color: {{accent_muted}}; /* Darker blue on hover */
 }
 
+QPushButton[hovered="true"] {
+    background-color: {{accent_muted}};
+}
 
 QPushButton:pressed {
     background-color: {{accent_color}}; /* Even darker blue when pressed */
@@ -46,6 +49,17 @@ QPushButton:pressed {
 QPushButton:disabled {
     border: 1px solid #333333;
 }
+
+AreaButton {
+    background-color: transparent;
+    border: none;
+}
+
+AreaButton:hover {
+    background-color: transparent;
+    border: none;
+}
+
 
 QLabel:disabled {
     color: gray;

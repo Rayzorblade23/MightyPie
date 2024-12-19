@@ -1,5 +1,5 @@
 
-- rewrite the test, so it inherits from PushButton
+- create a button that is an eigth of a circle and can be rotated
 
 - code hover-release functionality
 
