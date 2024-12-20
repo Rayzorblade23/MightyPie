@@ -1,7 +1,10 @@
 import sys
 import threading
+from sys import dont_write_bytecode
 
 import keyboard
+from PyQt6.QtCore import QObject, QEvent
+from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -12,6 +15,22 @@ from config import CONFIG
 from events import ShowWindowEvent
 from task_switcher_pie import TaskSwitcherPie
 from window_manager import WindowManager
+
+class GlobalMouseFilter(QObject):
+    def __init__(self, donut_button):
+        super().__init__()
+        self.donut_button = donut_button  # Reference to the button for state updates
+
+    def eventFilter(self, obj, event):
+        if isinstance(event, QMouseEvent):
+            global_pos = event.globalPosition().toPoint()
+
+            if event.type() == QEvent.Type.MouseMove:
+                local_pos = self.donut_button.mapFromGlobal(global_pos)
+                self.donut_button.turn_towards_cursor(local_pos)
+
+
+        return super().eventFilter(obj, event)
 
 
 def listen_for_hotkeys(window: QWidget):
@@ -49,10 +68,16 @@ if __name__ == "__main__":
     # Apply the QSS to the application or widgets
     app.setStyleSheet(qss)
 
+
+
     manager = WindowManager.get_instance()
 
     # Create and show the main window
     window = TaskSwitcherPie()
+
+    # Install the global mouse event filter
+    global_mouse_filter = GlobalMouseFilter(window.donut_button)
+    app.installEventFilter(global_mouse_filter)
 
     # Show the window briefly and immediately hide it
     window.show()  # Make sure the window is part of the event loop

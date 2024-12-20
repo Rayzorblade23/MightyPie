@@ -151,18 +151,15 @@ class TaskSwitcherPie(QWidget):
         # Create window control buttons with fixed sizes and actions
         button_widget, minimize_button, close_button = create_window_controls(main_window=self)
 
-        # distribute the buttons in a circle
-        button_pos_x = int(CONFIG.CANVAS_SIZE[0] / 2)
-        button_pos_y = int(CONFIG.CANVAS_SIZE[1] / 2)
 
         self.donut_button = DonutSliceButton(
             object_name="DonutSlice",
-            outer_radius=CONFIG.RADIUS+100,
-            inner_radius=CONFIG.INNER_RADIUS,
+            outer_radius=CONFIG.INNER_RADIUS+30,
+            inner_radius=CONFIG.INNER_RADIUS+10,
             start_angle=-22.5,
             span_angle=45,
             action=None,
-            pos=(button_pos_x, button_pos_y),
+            pos=(self.rect().center().x(), self.rect().center().y()),
             parent=self
         )
 
