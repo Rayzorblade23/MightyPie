@@ -1,5 +1,5 @@
 
-- create a button that is an eigth of a circle and can be rotated
+- make window span the whole screen and open pie_menu at cursor
 
 - code hover-release functionality
 

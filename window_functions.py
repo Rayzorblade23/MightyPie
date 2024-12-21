@@ -13,6 +13,7 @@ from PIL import Image
 from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget
 
+from config import CONFIG
 from window_manager import WindowManager
 
 
@@ -208,15 +209,15 @@ def get_window_title(hwnd):
 def get_filtered_list_of_window_titles(this_window: QWidget = None):
     """Enumerate and retrieve a list of visible windows."""
     temp_window_titles_To_hwnds_map: Dict[int, int] = {}
-
     if this_window is not None:
-        this_program_hwnd = int(this_window.winId())  # Exclude this program from the Switcher
+        this_program_hwnd = int(this_window.parent().winId())  # Exclude this program from the Switcher
     else:
         this_program_hwnd = 0
 
     def enum_windows_callback(hwnd, lparam):
         # Check if the window is visible
         if win32gui.IsWindowVisible(hwnd):
+
             window_title = win32gui.GetWindowText(hwnd)
             class_name = win32gui.GetClassName(hwnd)
 
@@ -228,6 +229,7 @@ def get_filtered_list_of_window_titles(this_window: QWidget = None):
                 hwnd, 14, ctypes.byref(isCloaked), ctypes.sizeof(isCloaked)
             )
             # Apply filtering conditions to determine if we want to include this window
+
             if (
                     win32gui.IsWindowVisible(hwnd)  # Window must be visible
                     and isCloaked.value == 0  # Window must not be cloaked (hidden)
@@ -277,13 +279,18 @@ def show_window(window: QWidget):
         corrected_y = max(screen_top, min(new_y, screen_bottom - window.height()))
 
         # Move the window
-        window.move(corrected_x, corrected_y)
+        # window.move(corrected_x, corrected_y)
+        window.move(0,0)
 
-        # Adjust the cursor position if it was moved
-        if new_x != corrected_x or new_y != corrected_y:
-            corrected_cursor_x = corrected_x + (window.width() // 2)
-            corrected_cursor_y = corrected_y + (window.height() // 2)
-            QCursor.setPos(corrected_cursor_x, corrected_cursor_y)
+
+        # window.setGeometry(0,0,screen_right // 2,screen_bottom)
+        # window.view.setGeometry(0, 0, window.width(), window.height())
+
+        # # Adjust the cursor position if it was moved
+        # if new_x != corrected_x or new_y != corrected_y:
+        #     corrected_cursor_x = corrected_x + (window.width() // 2)
+        #     corrected_cursor_y = corrected_y + (window.height() // 2)
+        #     QCursor.setPos(corrected_cursor_x, corrected_cursor_y)
 
         # Ensure the window is visible and restored
         if not window.isVisible():

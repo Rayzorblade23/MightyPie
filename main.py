@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
 from color_functions import adjust_saturation
 from config import CONFIG
 from events import ShowWindowEvent
-from task_switcher_pie import TaskSwitcherPie
+from task_switcher_pie import TaskSwitcherPie, MainWindow
 from window_manager import WindowManager
 
 class GlobalMouseFilter(QObject):
@@ -31,6 +31,7 @@ class GlobalMouseFilter(QObject):
 
 
         return super().eventFilter(obj, event)
+
 
 
 def listen_for_hotkeys(window: QWidget):
@@ -73,14 +74,20 @@ if __name__ == "__main__":
     manager = WindowManager.get_instance()
 
     # Create and show the main window
-    window = TaskSwitcherPie()
+    window = MainWindow()
 
     # Install the global mouse event filter
-    global_mouse_filter = GlobalMouseFilter(window.donut_button)
-    app.installEventFilter(global_mouse_filter)
+    # global_mouse_filter = GlobalMouseFilter(window.donut_button)
+    # app.installEventFilter(global_mouse_filter)
 
     # Show the window briefly and immediately hide it
     window.show()  # Make sure the window is part of the event loop
+
+    event = ShowWindowEvent(window)
+    # Post the event to the main thread
+    QApplication.postEvent(window, event)
+
+
     # window.hide()  # Hide it right after showing
 
     # Hotkey Thread
@@ -89,8 +96,7 @@ if __name__ == "__main__":
     )
     hotkey_thread.start()
 
-    # Initial Refresh and Auto-refresh
-    # window.refresh()
-    window.auto_refresh()
+
+    # window.auto_refresh()
 
     sys.exit(app.exec())

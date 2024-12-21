@@ -4,7 +4,7 @@ from threading import Lock
 
 from PyQt6.QtCore import pyqtSignal, QTimer, QRectF, pyqtSlot, Qt
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QPainter, QBrush, QPen, QColor, QCursor
-from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QWidget
+from PyQt6.QtWidgets import QGraphicsEllipseItem, QMainWindow, QGraphicsView, QGraphicsScene, QWidget, QApplication
 
 from config import CONFIG
 from events import ShowWindowEvent
@@ -17,12 +17,66 @@ from window_manager import WindowManager
 manager = WindowManager.get_instance()
 
 
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        # Create the scene and view for the left part of the screen
+        self.scene = QGraphicsScene(self)
+        self.view = QGraphicsView(self.scene, self)
+
+        # Get the primary screen geometry
+        screen_geometry = QApplication.primaryScreen().geometry()
+        screen_width = screen_geometry.width()
+        screen_height = screen_geometry.height()
+
+        # Set the window size to take the full screen
+        self.setGeometry(0, 0, screen_width // 2, screen_height)
+
+        # Set the geometry of the QGraphicsView to take the left half
+        self.view.setGeometry(0, 0, screen_width // 2, screen_height)
+        self.scene.setSceneRect(0, 0, screen_width // 2, screen_height)
+
+        self.setup_window()
+
+        # Create TaskSwitcherPie with this window as parent
+        self.task_switcher_pie = TaskSwitcherPie(parent=self)
+
+        # Create window control buttons with fixed sizes and actions
+        button_widget, minimize_button, close_button = create_window_controls(main_window=self)
+
+    def mousePressEvent(self, event: QMouseEvent):
+        """Close the window on any mouse button press."""
+        if event.button() in (Qt.MouseButton.LeftButton, Qt.MouseButton.RightButton):
+            self.hide()
+
+    def keyPressEvent(self, event: QKeyEvent):
+        """Close the window on pressing the Escape key."""
+        if event.key() == Qt.Key.Key_Escape:
+            self.hide()
+        else:
+            super().keyPressEvent(event)  # Pass other key events to the parent
+
+    def setup_window(self):
+        """Set up the main window properties."""
+        self.setWindowTitle("Main Window with Graphics View and Task Switcher Pie")
+        # Non-resizable window
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+
+    def customEvent(self, event):
+        """Handle the custom event to show the window."""
+        if isinstance(event, ShowWindowEvent):
+            self.task_switcher_pie.refresh()
+            show_window(event.window)  # Safely call show_window when the event is posted
+
+
 class TaskSwitcherPie(QWidget):
     # Add a custom signal for thread-safe updates
     update_buttons_signal = pyqtSignal(list)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         # Set the default cursor (normal arrow cursor)
         self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Set the normal cursor
@@ -51,18 +105,6 @@ class TaskSwitcherPie(QWidget):
         self.auto_refresh_timer = QTimer(self)
         self.auto_refresh_timer.timeout.connect(self.auto_refresh)
         self.auto_refresh_timer.start(CONFIG.REFRESH_INTERVAL)  # Periodic refresh
-
-    def mousePressEvent(self, event: QMouseEvent):
-        """Close the window on any mouse button press."""
-        if event.button() in (Qt.MouseButton.LeftButton, Qt.MouseButton.RightButton):
-            self.hide()
-
-    def keyPressEvent(self, event: QKeyEvent):
-        """Close the window on pressing the Escape key."""
-        if event.key() == Qt.Key.Key_Escape:
-            self.hide()
-        else:
-            super().keyPressEvent(event)  # Pass other key events to the parent
 
     def enterEvent(self, event):
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))  # Change cursor on hover
@@ -148,14 +190,11 @@ class TaskSwitcherPie(QWidget):
 
     def setup_buttons(self):
         """Create and position all buttons."""
-        # Create window control buttons with fixed sizes and actions
-        button_widget, minimize_button, close_button = create_window_controls(main_window=self)
-
 
         self.donut_button = DonutSliceButton(
             object_name="DonutSlice",
-            outer_radius=CONFIG.INNER_RADIUS+30,
-            inner_radius=CONFIG.INNER_RADIUS+10,
+            outer_radius=CONFIG.INNER_RADIUS + 30,
+            inner_radius=CONFIG.INNER_RADIUS + 10,
             start_angle=-22.5,
             span_angle=45,
             action=None,
@@ -320,15 +359,19 @@ class TaskSwitcherPie(QWidget):
                     for handle, button_id in self.buttons_To_windows_map.items()
                     if handle in valid_window_handles
                 }
-
+            print(f"Finished processing. Total updates: {len(final_button_updates)}")
+            print("About to emit signal...")
             # Emit the signal instead of using invokeMethod
             self.update_buttons_signal.emit(final_button_updates)
 
         threading.Thread(target=background_task, daemon=True).start()
+        print("Background thread started")
 
     @pyqtSlot(list)
     def update_button_ui(self, button_updates):
         """Update button UI in the main thread."""
+        print(f"update_button_ui called with {len(button_updates)} updates")
+
         for update in button_updates:
             button_index = update["index"]
             button_text_1 = update["text_1"]
@@ -365,16 +408,10 @@ class TaskSwitcherPie(QWidget):
                     self.pie_buttons[i].clicked.disconnect()
                 except TypeError:
                     pass
-                self.pie_buttons[i].clicked.connect(
-                    lambda checked, hwnd=window_handle: self.hide()
-                )
+                # self.pie_buttons[i].clicked.connect(
+                #     lambda checked, hwnd=window_handle: self.hide()
+                # )
                 self.pie_buttons[i].setEnabled(False)  # Disable the button
                 self.pie_buttons[i].set_label_1_text("Empty")
                 self.pie_buttons[i].set_label_2_text("")
                 self.pie_buttons[i].update_icon("")
-
-    def customEvent(self, event):
-        """Handle the custom event to show the window."""
-        if isinstance(event, ShowWindowEvent):
-            self.refresh()
-            show_window(event.window)  # Safely call show_window when the event is posted
