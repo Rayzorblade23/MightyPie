@@ -4,6 +4,8 @@ from PyQt6.QtCore import QObject, QEvent
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QWidget, QPushButton
 
+from exp_button import ExpButton
+
 
 class GlobalMouseFilter(QObject):
     def __init__(self, main_window):

@@ -10,7 +10,7 @@ class ExpButton(QPushButton):
 
     def __init__(
             self,
-            label: str,
+            text: str,
             object_name: str,
             action: Optional[Callable] = None,
             fixed_size: bool = True,
@@ -19,7 +19,7 @@ class ExpButton(QPushButton):
             parent: Optional[QWidget] = None
     ) -> None:
         """Initializes the QPushButton with optional size, action, and position."""
-        super().__init__(label, parent)
+        super().__init__(text, parent)
 
         if fixed_size:
             # Use fixed size if requested or fallback to default size

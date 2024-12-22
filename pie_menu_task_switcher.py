@@ -4,11 +4,13 @@ from threading import Lock
 
 from PyQt6.QtCore import pyqtSignal, QTimer, QRectF, pyqtSlot, Qt
 from PyQt6.QtGui import QPainter, QBrush, QPen, QColor
-from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsView, QGraphicsScene, QWidget
+from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsView, QGraphicsScene, QWidget, QPushButton
+from PyQt6.uic.properties import QtCore
 
 from area_button import AreaButton
 from config import CONFIG
 from donut_slice_button import DonutSliceButton
+from exp_button import ExpButton
 from pie_button import PieButton
 from window_functions import get_filtered_list_of_window_titles, get_application_info, focus_window_by_handle
 from window_manager import WindowManager
@@ -24,6 +26,7 @@ class PieMenuTaskSwitcher(QWidget):
         super().__init__(parent)
 
         # Initialize these attributes BEFORE calling setup methods
+        self.donut_button = None
         self.inner_circle_main = None
         self.scene = None
         self.view = None
@@ -117,6 +120,9 @@ class PieMenuTaskSwitcher(QWidget):
         self.outline_circle.setBrush(QBrush(Qt.BrushStyle.NoBrush))
         self.outline_circle.setPen(QPen(QColor(50, 50, 50), 9))
 
+        self.outline_circle.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+        self.inner_circle_main.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+
         # Add the circles to the scene
         self.scene.addItem(self.outline_circle)
         self.scene.addItem(self.inner_circle_main)
@@ -138,31 +144,30 @@ class PieMenuTaskSwitcher(QWidget):
             pos=(self.rect().center().x(), self.rect().center().y()),
             parent=self
         )
+        self.donut_button.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        # # Create and configure the refresh button
-        # self.refresh_button = create_button(
-        #     label="R",
-        #     object_name="refreshButton",
-        #     action=self.refresh,
-        #     fixed_size=True,
-        #     # Using size instead of geometry
-        #     size=(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT),
-        #     pos=(
-        #         (self.triangle_width() - CONFIG.BUTTON_HEIGHT) // 2,
-        #         (self.height() - CONFIG.BUTTON_HEIGHT) // 2,
-        #     ),  # Using position for x and y
-        # )
+        # Create and configure the refresh button
+        self.refresh_button = ExpButton(
+            text="",
+            object_name="refreshButton",
+            action=lambda checked: print("What"),
+            fixed_size=True,
+            # Using size instead of geometry
+            size=(CONFIG.INNER_RADIUS * 2, CONFIG.INNER_RADIUS * 2),
+            pos=(self.width() // 2 - CONFIG.INNER_RADIUS, self.height() // 2 - CONFIG.INNER_RADIUS)  # Using position for x and y
+        )
+        self.refresh_button.setParent(self)
+        self.refresh_button.lower()
+        self.view.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        # Create an AreaButton instance and add it to the layout
+
+        # Creates the area button that has the screen spanning pie sections
         self.area_button = AreaButton("Slice!",
                                       "",
                                       pos=(self.width() // 2, self.height() // 2),
-                                      angle_start=270 - 22.5,
-                                      angle_degrees=45,
                                       parent=self)
-
-        # Button Configuration
-        # Starting angle
+        # Make the actual button click-through
+        self.area_button.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         # Create 8 buttons in a circular pattern, starting with top middle
         for i, pie_button_text in enumerate(self.pie_button_texts):

@@ -15,16 +15,10 @@ class AreaButton(QPushButton):
                  object_name: str,
                  text="",
                  pos: Tuple[int, int] = (0, 0),
-                 angle_start: float = 0,
-                 angle_degrees: float = 45,
                  parent=None):
         super().__init__(text, parent)
         self.setObjectName(object_name)
         self.setAttribute(Qt.WidgetAttribute.WA_Hover)
-        self.angle_start = angle_start
-        self.angle_degrees = angle_degrees
-
-        # self.child_buttons = []
 
         self.in_active_area = 0
         self.is_pressed = False
@@ -81,13 +75,10 @@ class AreaButton(QPushButton):
         if theta < 0:
             theta += 360
 
-        # Predefined constants
-        angle_end = self.angle_start + self.angle_degrees  # End angle in degrees
-
-        # Compute distance only if angle condition is satisfied
+        # Compute distance and check if smaller than inner radius
         r = math.sqrt(dx ** 2 + dy ** 2)
 
-        if r < CONFIG.INNER_RADIUS:
+        if r < CONFIG.INNER_RADIUS * 2:
             return -1
 
         # Check if the angle is within the sector

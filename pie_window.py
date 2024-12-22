@@ -39,7 +39,6 @@ class PieWindow(QMainWindow):
 
         # Create main_window control buttons with fixed sizes and actions
         button_widget, minimize_button, close_button = create_window_controls(main_window=self)
-        # button_widget.raise_()
 
     def closeEvent(self, event):
         """Hide the main_window instead of closing it."""

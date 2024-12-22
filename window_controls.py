@@ -32,7 +32,7 @@ def create_window_controls(main_window):
     # Create a QWidget to hold the buttons and set the layout
     button_widget = QWidget(main_window)
     button_widget.setLayout(button_layout)
-    button_widget.setObjectName("buttonWidget")
+    button_widget.setObjectName("controlButtonWidget")
     button_widget.adjustSize()
 
     # Position the button container widget
