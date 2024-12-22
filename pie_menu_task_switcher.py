@@ -95,7 +95,10 @@ class PieMenuTaskSwitcher(QWidget):
         # Use the subclass instead of QGraphicsEllipseItem
         self.inner_circle_main = SmoothCircle(
             QRectF(
-                *CONFIG.CANVAS_SIZE, CONFIG.INNER_RADIUS * 2, CONFIG.INNER_RADIUS * 2
+                self.rect().center().x() - CONFIG.INNER_RADIUS,  # Adjust for radius
+                self.rect().center().y() - CONFIG.INNER_RADIUS,  # Adjust for radius
+                CONFIG.INNER_RADIUS * 2,  # Diameter
+                CONFIG.INNER_RADIUS * 2  # Diameter
             )
         )
         self.inner_circle_main.setBrush(QBrush(Qt.BrushStyle.NoBrush))
@@ -105,7 +108,10 @@ class PieMenuTaskSwitcher(QWidget):
         # Create another circle for the outline (slightly thicker)
         self.outline_circle = SmoothCircle(
             QRectF(
-                *CONFIG.CANVAS_SIZE, CONFIG.INNER_RADIUS * 2, CONFIG.INNER_RADIUS * 2
+                self.rect().center().x() - CONFIG.INNER_RADIUS,  # Adjust for radius
+                self.rect().center().y() - CONFIG.INNER_RADIUS,  # Adjust for radius
+                CONFIG.INNER_RADIUS * 2,  # Diameter
+                CONFIG.INNER_RADIUS * 2  # Diameter
             )
         )
         self.outline_circle.setBrush(QBrush(Qt.BrushStyle.NoBrush))
@@ -151,7 +157,6 @@ class PieMenuTaskSwitcher(QWidget):
         self.area_button = AreaButton("Slice!",
                                       "",
                                       pos=(self.width() // 2, self.height() // 2),
-                                      offset=(100, 150),
                                       angle_start=270 - 22.5,
                                       angle_degrees=45,
                                       parent=self)

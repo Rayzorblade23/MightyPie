@@ -15,7 +15,6 @@ class AreaButton(QPushButton):
                  object_name: str,
                  text="",
                  pos: Tuple[int, int] = (0, 0),
-                 offset: Tuple[int, int] = (0, 0),
                  angle_start: float = 0,
                  angle_degrees: float = 45,
                  parent=None):
@@ -24,7 +23,6 @@ class AreaButton(QPushButton):
         self.setAttribute(Qt.WidgetAttribute.WA_Hover)
         self.angle_start = angle_start
         self.angle_degrees = angle_degrees
-        self.offset = offset
 
         # self.child_buttons = []
 
@@ -47,7 +45,7 @@ class AreaButton(QPushButton):
         # Set position if provided
         self.x, self.y = pos
         # Set position using `move()`, not `setGeometry()`
-        self.move(self.x - self.width() // 2 + offset[0], self.y - self.height() // 2 + offset[1])
+        self.move(self.x - self.width() // 2, self.y - self.height() // 2)
 
     def paintEvent(self, event):
         super().paintEvent(event)  # Call the base class to handle normal painting
@@ -73,8 +71,8 @@ class AreaButton(QPushButton):
     #     self.child_button.move(button_x, button_y)
 
     def check_active_area(self, x, y):
-        center_x = self.width() // 2 - self.offset[0]
-        center_y = self.height() // 2 - self.offset[1]
+        center_x = self.width() // 2
+        center_y = self.height() // 2
         dx = x - center_x
         dy = y - center_y
 
@@ -152,7 +150,6 @@ class MainWindow(QMainWindow):
         self.area_button = AreaButton("Slice!",
                                       "",
                                       pos=(button_pos_x, button_pos_y),
-                                      offset=(100, 150),
                                       angle_start=270 - 22.5,
                                       angle_degrees=45,
                                       parent=self)
