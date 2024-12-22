@@ -48,17 +48,17 @@ manager = WindowManager.get_instance()
 
 
 def get_pid_from_window_handle(hwnd):
-    """Retrieve the Process ID (PID) for a given window handle."""
+    """Retrieve the Process ID (PID) for a given main_window handle."""
     try:
         _, pid = win32process.GetWindowThreadProcessId(hwnd)
         return pid
     except Exception as e:
-        print(f"Error retrieving PID for window: {e}")
+        print(f"Error retrieving PID for main_window: {e}")
         return None
 
 
 def focus_window_by_handle(hwnd):
-    """Bring a window to the foreground and restore/maximize as needed."""
+    """Bring a main_window to the foreground and restore/maximize as needed."""
     try:
         win32gui.SetForegroundWindow(hwnd)
         placement = win32gui.GetWindowPlacement(hwnd)
@@ -72,7 +72,7 @@ def focus_window_by_handle(hwnd):
 
         win32gui.SetForegroundWindow(hwnd)
     except Exception as e:
-        print(f"Could not focus window with handle '{hwnd}': {e}")
+        print(f"Could not focus main_window with handle '{hwnd}': {e}")
 
 
 def get_friendly_app_name(exe_path: str):
@@ -94,14 +94,14 @@ def get_friendly_app_name(exe_path: str):
 
 
 def get_application_info(window_handle):
-    """Retrieve the application name and icon path for a given window handle (and save friendly name).
+    """Retrieve the application name and icon path for a given main_window handle (and save friendly name).
 
     Args:
-        window_handle (any): The handle of the window for which to retrieve application info.
+        window_handle (any): The handle of the main_window for which to retrieve application info.
 
     Returns:
-        tuple: A tuple containing the application name (str) and icon path (str) if the window handle is valid and information is found.
-        str: A string indicating either the window title (str) if the window handle is invalid, or an error message (str) if an exception occurs.
+        tuple: A tuple containing the application name (str) and icon path (str) if the main_window handle is valid and information is found.
+        str: A string indicating either the main_window title (str) if the main_window handle is invalid, or an error message (str) if an exception occurs.
     """
     window_title = get_window_title(window_handle)
     try:
@@ -129,7 +129,7 @@ def get_application_info(window_handle):
         return window_title
     except Exception as e:
         print(f"Error fetching application name for {window_title}: {e}")
-        return "Unknown App, window title: " + window_title
+        return "Unknown App, main_window title: " + window_title
 
 
 def get_window_icon(exe_path, hwnd):
@@ -151,7 +151,7 @@ def get_window_icon(exe_path, hwnd):
         # Create a device context (DC)
         hdc = win32ui.CreateDCFromHandle(win32gui.GetDC(hwnd))
 
-        # Create a bitmap compatible with the window's device context
+        # Create a bitmap compatible with the main_window's device context
         hbmp = win32ui.CreateBitmap()
         hbmp.CreateCompatibleBitmap(hdc, 32, 32)  # Specify 32x32 size
 
@@ -198,11 +198,11 @@ def get_window_icon(exe_path, hwnd):
 
 
 def get_window_title(hwnd):
-    """Retrieve the title of the window for a given window handle."""
+    """Retrieve the title of the main_window for a given main_window handle."""
     try:
         return win32gui.GetWindowText(hwnd)
     except Exception as e:
-        print(f"Error retrieving window title for handle {hwnd}: {e}")
+        print(f"Error retrieving main_window title for handle {hwnd}: {e}")
         return "Unknown Window Title"
 
 
@@ -215,20 +215,20 @@ def get_filtered_list_of_window_titles(this_window: QWidget = None):
         this_program_hwnd = 0
 
     def enum_windows_callback(hwnd, lparam):
-        # Check if the window is visible
+        # Check if the main_window is visible
         if win32gui.IsWindowVisible(hwnd):
 
             window_title = win32gui.GetWindowText(hwnd)
             class_name = win32gui.GetClassName(hwnd)
 
-            # print(f"hwnd: {hwnd} and window title: {window_title}. This is the window functions script \n")
+            # print(f"hwnd: {hwnd} and main_window title: {window_title}. This is the main_window functions script \n")
 
-            # Check if the window is cloaked (hidden or transparent)
+            # Check if the main_window is cloaked (hidden or transparent)
             isCloaked = ctypes.c_int(0)
             ctypes.WinDLL("dwmapi").DwmGetWindowAttribute(
                 hwnd, 14, ctypes.byref(isCloaked), ctypes.sizeof(isCloaked)
             )
-            # Apply filtering conditions to determine if we want to include this window
+            # Apply filtering conditions to determine if we want to include this main_window
 
             if (
                     win32gui.IsWindowVisible(hwnd)  # Window must be visible
@@ -242,10 +242,10 @@ def get_filtered_list_of_window_titles(this_window: QWidget = None):
                     window_title += " (2)"
                 temp_window_titles_To_hwnds_map[window_title] = hwnd
 
-    # Enumerate all top-level windows and pass each window's handle to the callback
+    # Enumerate all top-level windows and pass each main_window's handle to the callback
     try:
         win32gui.EnumWindows(enum_windows_callback, None)
-        # Update the main mapping dictionary with the filtered window handles
+        # Update the main mapping dictionary with the filtered main_window handles
         manager.update_window_titles_to_hwnds_map(temp_window_titles_To_hwnds_map)
 
         return list(manager.get_window_titles_to_hwnds_map().keys())
@@ -254,11 +254,11 @@ def get_filtered_list_of_window_titles(this_window: QWidget = None):
         return []
 
 
-def show_window(window: QWidget):
-    """Display the main window and bring it to the foreground."""
+def show_pie_window(pie_window: QWidget, pie_menu):
+    """Display the main main_window and bring it to the foreground."""
     try:
-        # Get the window handle
-        hwnd = int(window.winId())
+        # Get the main_window handle
+        hwnd = int(pie_window.winId())
 
         # Get the current mouse position
         cursor_pos = QCursor.pos()
@@ -271,32 +271,31 @@ def show_window(window: QWidget):
         screen_bottom = screen_geometry.bottom()
 
         # Calculate initial new_x and new_y
-        new_x = cursor_pos.x() - (window.width() // 2)
-        new_y = cursor_pos.y() - (window.height() // 2)
-
-        # Ensure window position stays within screen bounds
-        corrected_x = max(screen_left, min(new_x, screen_right - window.width()))
-        corrected_y = max(screen_top, min(new_y, screen_bottom - window.height()))
-
-        # Move the window
-        # window.move(corrected_x, corrected_y)
-        window.move(0,0)
+        new_x = cursor_pos.x() - (pie_menu.width() // 2)
+        new_y = cursor_pos.y() - (pie_menu.height() // 2)
 
 
-        # window.setGeometry(0,0,screen_right // 2,screen_bottom)
-        # window.view.setGeometry(0, 0, window.width(), window.height())
+        # Ensure main_window position stays within screen bounds
+        corrected_x = max(screen_left, min(new_x, screen_right - pie_menu.width()))
+        corrected_y = max(screen_top, min(new_y, screen_bottom - pie_menu.height()))
+
+        if pie_menu is not None:
+            pie_menu.move(corrected_x, corrected_y)
+
+        # main_window.setGeometry(0,0,screen_right // 2,screen_bottom)
+        # main_window.view.setGeometry(0, 0, main_window.width(), main_window.height())
 
         # # Adjust the cursor position if it was moved
         # if new_x != corrected_x or new_y != corrected_y:
-        #     corrected_cursor_x = corrected_x + (window.width() // 2)
-        #     corrected_cursor_y = corrected_y + (window.height() // 2)
+        #     corrected_cursor_x = corrected_x + (main_window.width() // 2)
+        #     corrected_cursor_y = corrected_y + (main_window.height() // 2)
         #     QCursor.setPos(corrected_cursor_x, corrected_cursor_y)
 
-        # Ensure the window is visible and restored
-        if not window.isVisible():
-            window.show()
+        # Ensure the main_window is visible and restored
+        if not pie_window.isVisible():
+            pie_window.show()
 
-        # Get current foreground window and threads
+        # Get current foreground main_window and threads
         fg_window = win32gui.GetForegroundWindow()
         fg_thread, _ = win32process.GetWindowThreadProcessId(fg_window)
         this_thread = win32api.GetCurrentThreadId()
@@ -307,13 +306,13 @@ def show_window(window: QWidget):
         except (OSError, ctypes.WinError) as e:
             print(f"Error detaching thread input: {e}")
 
-        # Multiple attempts to bring window to foreground
+        # Multiple attempts to bring main_window to foreground
         for attempt in range(3):
             try:
                 # Attach input threads
                 ctypes.windll.user32.AttachThreadInput(this_thread, fg_thread, True)
 
-                # Restore window if minimized
+                # Restore main_window if minimized
                 win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
 
                 # Try multiple methods to bring to foreground
@@ -333,4 +332,4 @@ def show_window(window: QWidget):
         ctypes.windll.user32.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE, )
 
     except Exception as e:
-        print(f"Error showing the main window: {e}")
+        print(f"Error showing the main main_window: {e}")

@@ -1,4 +1,4 @@
-/* Style the window background */
+/* Style the main_window background */
 QWidget {
     background-color: rgba(255, 255, 255, 0.01); /* Semi-transparent white */
     border-radius: 15px;       /* Rounded corners */

@@ -71,7 +71,7 @@ class DonutSliceButton(QPushButton):
         return QPointF(x, y)
 
     def paintEvent(self, event):
-        """Custom paint event to draw a donut slice with QPushButton styling or gradient."""
+        """Custom paint filtered_event to draw a donut slice with QPushButton styling or gradient."""
         # Common setup
         path = QPainterPath()
         center_x = self.button_size / 2

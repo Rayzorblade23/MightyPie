@@ -2,7 +2,7 @@ import sys
 from typing import *
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QCursor
 from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
 
 from config import CONFIG
@@ -49,7 +49,7 @@ class PieButton(QPushButton):
 
         self.update_icon(icon_path)
 
-        # Add the VBoxLayout as a child of the HBoxLayout
+        # Add the VBoxLayout as a pie_menu of the HBoxLayout
         self.layout().addLayout(self.label_layout)
 
         if fixed_size:
@@ -149,6 +149,12 @@ class PieButton(QPushButton):
                 icon_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
 
                 self.layout().insertWidget(1, icon_label)
+
+    def enterEvent(self, event):
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))  # Change cursor on hover
+
+    def leaveEvent(self, event):
+        self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Restore default cursor
 
 
 def example_function():

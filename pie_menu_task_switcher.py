@@ -3,83 +3,26 @@ import threading
 from threading import Lock
 
 from PyQt6.QtCore import pyqtSignal, QTimer, QRectF, pyqtSlot, Qt
-from PyQt6.QtGui import QMouseEvent, QKeyEvent, QPainter, QBrush, QPen, QColor, QCursor
-from PyQt6.QtWidgets import QGraphicsEllipseItem, QMainWindow, QGraphicsView, QGraphicsScene, QWidget, QApplication
+from PyQt6.QtGui import QPainter, QBrush, QPen, QColor
+from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsView, QGraphicsScene, QWidget
 
 from config import CONFIG
-from events import ShowWindowEvent
 from pie_button import PieButton
-from pie_indicator_button import DonutSliceButton
-from window_controls import create_window_controls
-from window_functions import get_filtered_list_of_window_titles, get_application_info, focus_window_by_handle, show_window
+from donut_slice_button import DonutSliceButton
+from window_functions import get_filtered_list_of_window_titles, get_application_info, focus_window_by_handle
 from window_manager import WindowManager
 
 manager = WindowManager.get_instance()
 
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-
-        # Create the scene and view for the left part of the screen
-        self.scene = QGraphicsScene(self)
-        self.view = QGraphicsView(self.scene, self)
-
-        # Get the primary screen geometry
-        screen_geometry = QApplication.primaryScreen().geometry()
-        screen_width = screen_geometry.width()
-        screen_height = screen_geometry.height()
-
-        # Set the window size to take the full screen
-        self.setGeometry(0, 0, screen_width // 2, screen_height)
-
-        # Set the geometry of the QGraphicsView to take the left half
-        self.view.setGeometry(0, 0, screen_width // 2, screen_height)
-        self.scene.setSceneRect(0, 0, screen_width // 2, screen_height)
-
-        self.setup_window()
-
-        # Create TaskSwitcherPie with this window as parent
-        self.task_switcher_pie = TaskSwitcherPie(parent=self)
-
-        # Create window control buttons with fixed sizes and actions
-        button_widget, minimize_button, close_button = create_window_controls(main_window=self)
-
-    def mousePressEvent(self, event: QMouseEvent):
-        """Close the window on any mouse button press."""
-        if event.button() in (Qt.MouseButton.LeftButton, Qt.MouseButton.RightButton):
-            self.hide()
-
-    def keyPressEvent(self, event: QKeyEvent):
-        """Close the window on pressing the Escape key."""
-        if event.key() == Qt.Key.Key_Escape:
-            self.hide()
-        else:
-            super().keyPressEvent(event)  # Pass other key events to the parent
-
-    def setup_window(self):
-        """Set up the main window properties."""
-        self.setWindowTitle("Main Window with Graphics View and Task Switcher Pie")
-        # Non-resizable window
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-
-    def customEvent(self, event):
-        """Handle the custom event to show the window."""
-        if isinstance(event, ShowWindowEvent):
-            self.task_switcher_pie.refresh()
-            show_window(event.window)  # Safely call show_window when the event is posted
-
-
-class TaskSwitcherPie(QWidget):
+class PieMenuTaskSwitcher(QWidget):
     # Add a custom signal for thread-safe updates
     update_buttons_signal = pyqtSignal(list)
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # Set the default cursor (normal arrow cursor)
-        self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Set the normal cursor
+
 
         # Initialize these attributes BEFORE calling setup methods
         self.inner_circle_main = None
@@ -95,22 +38,16 @@ class TaskSwitcherPie(QWidget):
         # Connect the custom signal to the update method
         self.update_buttons_signal.connect(self.update_button_ui)
 
-        self.setup_window()  # Configure window properties
+        self.setup_window()  # Configure main_window properties
         # Create scene and graphical elements
         self.setup_scene_and_view()
-        # Create all buttons (task and window controls)
+        # Create all buttons (task and main_window controls)
         self.setup_buttons()
 
         # Start auto-refreshing every REFRESH_INTERVAL milliseconds
         self.auto_refresh_timer = QTimer(self)
         self.auto_refresh_timer.timeout.connect(self.auto_refresh)
         self.auto_refresh_timer.start(CONFIG.REFRESH_INTERVAL)  # Periodic refresh
-
-    def enterEvent(self, event):
-        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))  # Change cursor on hover
-
-    def leaveEvent(self, event):
-        self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Restore default cursor
 
     def auto_refresh(self):
         """Automatically monitor and refresh windows periodically in a thread-safe way."""
@@ -133,10 +70,10 @@ class TaskSwitcherPie(QWidget):
         self.update_buttons()
 
     def setup_window(self):
-        """Set up the main window properties."""
+        """Set up the main main_window properties."""
         self.setWindowTitle("PieTaskSwitcher")
-        # Non-resizable window
-        self.setFixedSize(*CONFIG.CANVAS_SIZE)
+        # Non-resizable main_window
+        self.setFixedSize(CONFIG.RADIUS * 2 + CONFIG.BUTTON_WIDTH * 2, CONFIG.RADIUS * 2 + CONFIG.BUTTON_HEIGHT * 2)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
@@ -146,6 +83,8 @@ class TaskSwitcherPie(QWidget):
         self.view = QGraphicsView(self.scene, self)
         self.view.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         self.view.setGeometry(0, 0, self.width(), self.height())
+        self.view.setObjectName("PieMenuTaskSwitcher")
+
 
         class SmoothCircle(QGraphicsEllipseItem):
 
@@ -182,11 +121,6 @@ class TaskSwitcherPie(QWidget):
         # Ensure the inner circle is on top by setting its Z-index higher than the outline circle
         self.inner_circle_main.setZValue(1)  # Higher Z-value to be in front
         self.outline_circle.setZValue(0)  # Lower Z-value to be behind
-
-    def closeEvent(self, event):
-        """Hide the window instead of closing it."""
-        self.hide()
-        event.ignore()  # Prevent the default close behavior
 
     def setup_buttons(self):
         """Create and position all buttons."""
@@ -258,8 +192,8 @@ class TaskSwitcherPie(QWidget):
                 pass
 
             # distribute the buttons in a circle
-            button_pos_x = int(CONFIG.CANVAS_SIZE[0] / 2 + offset_x + CONFIG.RADIUS * math.sin(math.radians(angle_in_degrees)))
-            button_pos_y = int(CONFIG.CANVAS_SIZE[1] / 2 - offset_y - CONFIG.RADIUS * math.cos(math.radians(angle_in_degrees)))
+            button_pos_x = int(self.width() / 2 + offset_x + CONFIG.RADIUS * math.sin(math.radians(angle_in_degrees)))
+            button_pos_y = int(self.height() / 2 - offset_y - CONFIG.RADIUS * math.cos(math.radians(angle_in_degrees)))
 
             button_name = "Pie_Button" + str(i)  # name of the button not used
             # self.btn = create_button(name, button_name, pos=(button_pos_x, button_pos_y))
@@ -277,7 +211,7 @@ class TaskSwitcherPie(QWidget):
 
     # Button Management
     def update_buttons(self):
-        """Update window buttons with current window information."""
+        """Update main_window buttons with current main_window information."""
 
         def get_free_button_index(temp_pie_button_names):
             """Find a free button index in the button names list."""
@@ -322,7 +256,7 @@ class TaskSwitcherPie(QWidget):
                 button_text_1 = button_title
                 button_text_2 = app_name
 
-                # Check if the window is already assigned a button
+                # Check if the main_window is already assigned a button
                 button_index = self.buttons_To_windows_map.get(window_handle)
 
                 # If Button Index not assigned, find a free button
@@ -331,7 +265,7 @@ class TaskSwitcherPie(QWidget):
                     # If Button Index still not assigned, no free button for you :(
                     if button_index is None:
                         continue
-                    # Assign Button Index to the window handle
+                    # Assign Button Index to the main_window handle
                     self.buttons_To_windows_map[window_handle] = button_index
 
                 temp_pie_button_texts[button_index] = button_text_1  # Update button name
@@ -395,7 +329,7 @@ class TaskSwitcherPie(QWidget):
             self.pie_buttons[button_index].clicked.connect(
                 lambda checked, hwnd=window_handle: (
                     focus_window_by_handle(hwnd),
-                    self.hide(),
+                    self.parent().hide(),
                 )
             )
             self.pie_buttons[button_index].setEnabled(True)  # Disable the button

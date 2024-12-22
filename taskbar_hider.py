@@ -78,7 +78,7 @@ def hide_taskbar():
     """Hide the Windows taskbar."""
     hwnd = get_taskbar_handle()
     if hwnd == 0:
-        print("Taskbar window handle not found.")
+        print("Taskbar main_window handle not found.")
     else:
         print(f"Taskbar handle: {hwnd}")
         ctypes.windll.user32.ShowWindow(hwnd, win32con.SW_HIDE)
@@ -88,17 +88,17 @@ def show_taskbar():
     """Show the Windows taskbar."""
     hwnd = get_taskbar_handle()
     if hwnd == 0:
-        print("Taskbar window handle not found.")
+        print("Taskbar main_window handle not found.")
     else:
         print(f"Taskbar handle: {hwnd}")
         ctypes.windll.user32.ShowWindow(hwnd, win32con.SW_SHOW)
 
 
 def get_taskbar_handle():
-    """Get the current taskbar window handle (retries if necessary)."""
+    """Get the current taskbar main_window handle (retries if necessary)."""
     hwnd = ctypes.windll.user32.FindWindowW("Shell_TrayWnd", None)
 
-    # Retry to find the taskbar window handle after Explorer restart
+    # Retry to find the taskbar main_window handle after Explorer restart
     attempts = 5
     while hwnd == 0 and attempts > 0:
         print("Waiting for taskbar handle...")

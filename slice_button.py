@@ -111,10 +111,10 @@ class AreaButton(QPushButton):
 
     def create_dot_widget(self, hover_pos):
         """Creates a new dot widget for each hover position."""
-        dot_widget = DotWidget(self.parent())  # Create a new dot widget with MainWindow as parent
+        dot_widget = DotWidget(self.parent())  # Create a new dot widget with PieWindow as parent
         self.dot_widgets.append(dot_widget)  # Add it to the list of dots
 
-        # Convert global position to the parent (MainWindow) coordinate system
+        # Convert global position to the parent (PieWindow) coordinate system
         local_pos = self.parent().mapFromGlobal(hover_pos)  # Get position relative to the parent
 
         dot_widget.move(local_pos)  # Move the dot widget to hover position
@@ -187,9 +187,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # Set the main window title and size
+        # Set the main main_window title and size
         self.setWindowTitle("Main Window with AreaButton")
-        self.setGeometry(300, 100, CONFIG.CANVAS_SIZE[0], CONFIG.CANVAS_SIZE[1])  # Initial size of the window
+        self.setGeometry(300, 100, CONFIG.CANVAS_SIZE[0], CONFIG.CANVAS_SIZE[1])  # Initial size of the main_window
 
         # Create a QWidget to hold the layout
         central_widget = QWidget(self)
@@ -212,17 +212,17 @@ class MainWindow(QMainWindow):
         # Set the layout to the central widget
         central_widget.setLayout(layout)
 
-        # Set the central widget of the main window
+        # Set the central widget of the main main_window
         self.setCentralWidget(central_widget)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    # Create the main window
+    # Create the main main_window
     window = MainWindow()
 
-    # Install the global mouse event filter
+    # Install the global mouse filtered_event filter
     global_mouse_filter = GlobalMouseFilter(window.area_button)
     app.installEventFilter(global_mouse_filter)
 

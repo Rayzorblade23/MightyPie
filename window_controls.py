@@ -6,7 +6,7 @@ from exp_button import ExpButton
 
 def create_window_controls(main_window):
     """Create minimize, maximize, and close buttons."""
-    # Create window control buttons with fixed sizes and actions
+    # Create main_window control buttons with fixed sizes and actions
     minimize_button = ExpButton(
         "_",
         "minimizeButton",

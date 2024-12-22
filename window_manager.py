@@ -9,7 +9,7 @@ class WindowManager:
         return WindowManager._instance
 
     def update_window_titles_to_hwnds_map(self, new_map):
-        """Update the global map with a new window titles to hwnds mapping."""
+        """Update the global map with a new main_window titles to hwnds mapping."""
 
         # Remove keys that are not in new_map
         keys_to_remove = [key for key in self.window_titles_to_hwnds_map if key not in new_map]
