@@ -4,12 +4,11 @@ import threading
 import keyboard
 from PyQt6.QtWidgets import (
     QApplication,
-    QWidget,
-)
+    QWidget, )
 
 from color_functions import adjust_saturation
 from config import CONFIG
-from events import ShowWindowEvent
+from events import ShowWindowEvent, HotkeyReleaseEvent
 from global_mouse_filter import GlobalMouseFilter
 from pie_window import PieWindow
 from window_manager import WindowManager
@@ -18,16 +17,25 @@ from window_manager import WindowManager
 def listen_for_hotkeys(main_window: QWidget):
     """Listen for global hotkeys."""
 
-    def wrapper():
-        print(
-            "Hotkey pressed! Opening switcherino..."
-        )  # Debugging: Check if hotkey is detected
-        # Post the custom filtered_event to the main_window's filtered_event queue
-        hotkey_event = ShowWindowEvent(main_window)
-        # Post the filtered_event to the main thread
-        QApplication.postEvent(main_window, hotkey_event)
+    can_open_window = True  # Track window state
 
-    keyboard.add_hotkey(CONFIG.HOTKEY_OPEN, wrapper, suppress=True)
+    def on_press():
+        nonlocal can_open_window
+        if can_open_window:  # Only show if not already open
+            print("Hotkey pressed! Opening switcherino...")
+            show_event = ShowWindowEvent(main_window)
+            QApplication.postEvent(main_window, show_event)
+            can_open_window = False
+
+    def on_release():
+        nonlocal can_open_window
+        print("Hotkey released!")
+        release_event = HotkeyReleaseEvent(main_window)
+        QApplication.postEvent(main_window, release_event)
+        can_open_window = True  # Reset the state
+
+    keyboard.on_press_key(CONFIG.HOTKEY_OPEN, lambda _: on_press(),suppress=True)
+    keyboard.on_release_key(CONFIG.HOTKEY_OPEN, lambda _: on_release())
     keyboard.wait()
 
 

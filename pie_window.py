@@ -1,8 +1,8 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
-from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication, QScrollArea, QWidget, QVBoxLayout
+from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication
 
-from events import ShowWindowEvent
+from events import ShowWindowEvent, HotkeyReleaseEvent
 from pie_menu_task_switcher import PieMenuTaskSwitcher
 from window_controls import create_window_controls
 from window_functions import show_pie_window
@@ -64,8 +64,18 @@ class PieWindow(QMainWindow):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
-    def customEvent(self, event):
+    def event(self, event):
         """Handle the custom filtered_event to show the main_window."""
         if isinstance(event, ShowWindowEvent):
             self.pm_task_switcher.refresh()
             show_pie_window(event.window, self.pm_task_switcher)  # Safely call show_pie_window when the filtered_event is posted
+            return True
+        elif isinstance(event, HotkeyReleaseEvent):
+            # If there's an active section, click that button
+            if hasattr(self.pm_task_switcher.area_button, 'current_active_section'):
+                active_section = self.pm_task_switcher.area_button.current_active_section
+                if active_section != -1:
+                    self.pm_task_switcher.pie_buttons[active_section].click()
+            self.hide()
+            return True
+        return super().event(event)

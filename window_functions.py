@@ -72,7 +72,7 @@ def focus_window_by_handle(hwnd):
 
         win32gui.SetForegroundWindow(hwnd)
     except Exception as e:
-        print(f"Could not focus main_window with handle '{hwnd}': {e}")
+        print(f"Could not focus main_window with handle '{get_window_title(hwnd)}': {e}")
 
 
 def get_friendly_app_name(exe_path: str):

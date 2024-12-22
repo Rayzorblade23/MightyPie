@@ -17,6 +17,8 @@ from window_manager import WindowManager
 
 manager = WindowManager.get_instance()
 
+import time
+
 
 class PieMenuTaskSwitcher(QWidget):
     # Add a custom signal for thread-safe updates
@@ -146,19 +148,19 @@ class PieMenuTaskSwitcher(QWidget):
         )
         self.donut_button.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        # Create and configure the refresh button
-        self.refresh_button = ExpButton(
-            text="",
-            object_name="refreshButton",
-            action=lambda checked: print("What"),
-            fixed_size=True,
-            # Using size instead of geometry
-            size=(CONFIG.INNER_RADIUS * 2, CONFIG.INNER_RADIUS * 2),
-            pos=(self.width() // 2 - CONFIG.INNER_RADIUS, self.height() // 2 - CONFIG.INNER_RADIUS)  # Using position for x and y
-        )
-        self.refresh_button.setParent(self)
-        self.refresh_button.lower()
-        self.view.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        # # Create and configure the refresh button
+        # self.refresh_button = ExpButton(
+        #     text="",
+        #     object_name="refreshButton",
+        #     action=lambda checked: print("What"),
+        #     fixed_size=True,
+        #     # Using size instead of geometry
+        #     size=(CONFIG.INNER_RADIUS * 2, CONFIG.INNER_RADIUS * 2),
+        #     pos=(self.width() // 2 - CONFIG.INNER_RADIUS, self.height() // 2 - CONFIG.INNER_RADIUS)  # Using position for x and y
+        # )
+        # self.refresh_button.setParent(self)
+        # self.refresh_button.lower()
+        # self.view.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
 
         # Creates the area button that has the screen spanning pie sections
@@ -344,7 +346,7 @@ class PieMenuTaskSwitcher(QWidget):
             # Connect new signal
             self.pie_buttons[button_index].clicked.connect(
                 lambda checked, hwnd=window_handle: (
-                    focus_window_by_handle(hwnd),
+                    QTimer.singleShot(100, lambda: focus_window_by_handle(hwnd)),  # Delay in event loop
                     self.parent().hide(),
                 )
             )
@@ -358,11 +360,11 @@ class PieMenuTaskSwitcher(QWidget):
                     self.pie_buttons[i].clicked.disconnect()
                 except TypeError:
                     pass
-                self.pie_buttons[i].clicked.connect(
-                    lambda checked: (
-                        self.parent().hide(),
-                    )
-                )
+                # self.pie_buttons[i].clicked.connect(
+                #     lambda checked: (
+                #         self.parent().hide(),
+                #     )
+                # )
                 # self.pie_buttons[i].setEnabled(False)  # Disable the button
                 self.pie_buttons[i].set_label_1_text("Empty")
                 self.pie_buttons[i].set_label_2_text("")

@@ -2,9 +2,7 @@ from typing import Any
 
 from PyQt6.QtCore import QObject, QEvent
 from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtWidgets import QWidget, QPushButton
-
-from exp_button import ExpButton
+from PyQt6.QtWidgets import QPushButton
 
 
 class GlobalMouseFilter(QObject):
@@ -39,14 +37,12 @@ class GlobalMouseFilter(QObject):
                 elif filtered_event.type() == QEvent.Type.MouseButtonRelease:
                     self.handle_mouse_release(global_pos)
 
-
         return super().eventFilter(obj, filtered_event)
 
     def handle_mouse_move(self, global_pos):
         local_pos = self.area_button.mapFromGlobal(global_pos)
         # active_section will be -1 if not in any area, 0-7 if in a valid section
         active_section = self.area_button.check_active_area(local_pos.x(), local_pos.y())
-
 
         if active_section != getattr(self.area_button, 'current_active_section', -1):
             # Reset previous button's hover state if there was one
