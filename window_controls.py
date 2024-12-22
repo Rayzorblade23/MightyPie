@@ -10,7 +10,7 @@ def create_window_controls(main_window):
     minimize_button = ExpButton(
         "_",
         "minimizeButton",
-        action=main_window.showMinimized,
+        action= main_window.showMinimized,
         fixed_size=True,
         size=(CONFIG.CONTROL_BUTTON_SIZE, CONFIG.CONTROL_BUTTON_SIZE),
     )

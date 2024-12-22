@@ -27,7 +27,7 @@ class PieButton(QPushButton):
         super().__init__(parent)
 
         self.setObjectName(object_name)
-
+        self.hovered = False
         # Create a QVBoxLayout for the label
         self.label_layout = QVBoxLayout()
         # self.label_layout.setSpacing(0)  # No space between widgets

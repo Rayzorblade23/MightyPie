@@ -28,7 +28,7 @@ class AreaButton(QPushButton):
 
         # self.child_buttons = []
 
-        self.in_active_area = False
+        self.in_active_area = 0
         self.is_pressed = False
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.setFixedSize(100, 100)
@@ -67,12 +67,6 @@ class AreaButton(QPushButton):
         dot_widget.move(local_pos)  # Move the dot widget to hover position
         dot_widget.setVisible(True)  # Show the dot widget
 
-    def set_hover_pos(self, pos):
-        """Sets the hover position manually from outside the widget."""
-        self.hover_pos = pos  # Set hover_pos to the new mouse position
-        self.update()  # Ensure the widget is repainted when hover_pos changes
-        print("Tonight we hover like kings!")
-
     # def resizeEvent(self, event):
     #     button_x = (self.width() - self.child_button.width()) // 2
     #     button_y = (self.height() - self.child_button.height()) // 2
@@ -92,19 +86,29 @@ class AreaButton(QPushButton):
         # Predefined constants
         angle_end = self.angle_start + self.angle_degrees  # End angle in degrees
 
-        # Check if the angle is within the sector
-        if not (
-                self.angle_start <= theta <= angle_end if self.angle_start <= angle_end else theta >= self.angle_start or theta <= angle_end):
-            return False  # Early exit if angle is outside the sector
-
         # Compute distance only if angle condition is satisfied
         r = math.sqrt(dx ** 2 + dy ** 2)
-        return r >= CONFIG.INNER_RADIUS
 
-    def update_child_button_hover_state(self, button, hovered):
-        button.setProperty("hovered", hovered)
-        button.style().unpolish(button)
-        button.style().polish(button)
+        if r < CONFIG.INNER_RADIUS:
+            return -1
+
+        # Check if the angle is within the sector
+        if 247.5 <= theta < 292.5:
+            return 0
+        elif 292.5 <= theta < 337.5:
+            return 1
+        elif (337.5 <= theta < 360) or (0 <= theta < 22.5):
+            return 2
+        elif 22.5 <= theta < 67.5:
+            return 3
+        elif 67.5 <= theta < 112.5:
+            return 4
+        elif 112.5 <= theta < 157.5:
+            return 5
+        elif 157.5 <= theta < 202.5:
+            return 6
+        elif 202.5 <= theta < 247.5:
+            return 7
 
     def set_hover_pos(self, pos):
         """Sets the hover position manually from outside the widget."""

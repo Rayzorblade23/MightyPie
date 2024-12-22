@@ -57,7 +57,6 @@ class PieMenuTaskSwitcher(QWidget):
             current_window_titles = get_filtered_list_of_window_titles(self)
             # only actually refresh when windows have opened or closed
             if current_window_titles != self.last_window_titles:
-                print("Changed!")
                 self.last_window_titles = current_window_titles
                 self.refresh()  # Safely call the refresh method to update UI
 
@@ -205,7 +204,6 @@ class PieMenuTaskSwitcher(QWidget):
             button_name = "Pie_Button" + str(i)  # name of the button not used
             # self.btn = create_button(name, button_name, pos=(button_pos_x, button_pos_y))
 
-
             self.btn = PieButton(
                 object_name=button_name,
                 text_1=pie_button_text,
@@ -216,6 +214,11 @@ class PieMenuTaskSwitcher(QWidget):
                 parent=self)
 
             self.pie_buttons.append(self.btn)
+
+    def update_child_button_hover_state(self, button, hovered):
+        button.setProperty("hovered", hovered)
+        button.style().unpolish(button)
+        button.style().polish(button)
 
     # Button Management
     def update_buttons(self):
@@ -335,7 +338,7 @@ class PieMenuTaskSwitcher(QWidget):
                     self.parent().hide(),
                 )
             )
-            self.pie_buttons[button_index].setEnabled(True)  # Disable the button
+            # self.pie_buttons[button_index].setEnabled(True)
 
         # Clear button attributes when button index not among updates
         for i in range(CONFIG.MAX_BUTTONS):
@@ -345,10 +348,12 @@ class PieMenuTaskSwitcher(QWidget):
                     self.pie_buttons[i].clicked.disconnect()
                 except TypeError:
                     pass
-                # self.pie_buttons[i].clicked.connect(
-                #     lambda checked, hwnd=window_handle: self.hide()
-                # )
-                self.pie_buttons[i].setEnabled(False)  # Disable the button
+                self.pie_buttons[i].clicked.connect(
+                    lambda checked: (
+                        self.parent().hide(),
+                    )
+                )
+                # self.pie_buttons[i].setEnabled(False)  # Disable the button
                 self.pie_buttons[i].set_label_1_text("Empty")
                 self.pie_buttons[i].set_label_2_text("")
                 self.pie_buttons[i].update_icon("")

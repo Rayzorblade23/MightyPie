@@ -10,4 +10,8 @@ Remove Windows button but open when clicking bottom left of screen
 
 
 BUGS:
-- Spotify text is cut off when title changes
+- positioning not exactly right
+
+- when opening a jump from the last position is visible
+
+- Spotify text is cut off when title changes (maybe fixed?!)
