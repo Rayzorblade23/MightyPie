@@ -47,8 +47,8 @@ class PieWindow(QMainWindow):
 
     def mousePressEvent(self, event: QMouseEvent):
         """Close the main_window on any mouse button press."""
-        if event.button() in (Qt.MouseButton.LeftButton, Qt.MouseButton.RightButton):
-            self.hide()
+        # if event.button() in (Qt.MouseButton.LeftButton, Qt.MouseButton.RightButton):
+        #     self.hide()
 
     def keyPressEvent(self, event: QKeyEvent):
         """Close the main_window on pressing the Escape key."""

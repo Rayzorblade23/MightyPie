@@ -6,9 +6,10 @@ from PyQt6.QtCore import pyqtSignal, QTimer, QRectF, pyqtSlot, Qt
 from PyQt6.QtGui import QPainter, QBrush, QPen, QColor
 from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsView, QGraphicsScene, QWidget
 
+from area_button import AreaButton
 from config import CONFIG
-from pie_button import PieButton
 from donut_slice_button import DonutSliceButton
+from pie_button import PieButton
 from window_functions import get_filtered_list_of_window_titles, get_application_info, focus_window_by_handle
 from window_manager import WindowManager
 
@@ -21,8 +22,6 @@ class PieMenuTaskSwitcher(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-
-
 
         # Initialize these attributes BEFORE calling setup methods
         self.inner_circle_main = None
@@ -84,7 +83,6 @@ class PieMenuTaskSwitcher(QWidget):
         self.view.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         self.view.setGeometry(0, 0, self.width(), self.height())
         self.view.setObjectName("PieMenuTaskSwitcher")
-
 
         class SmoothCircle(QGraphicsEllipseItem):
 
@@ -150,6 +148,15 @@ class PieMenuTaskSwitcher(QWidget):
         #     ),  # Using position for x and y
         # )
 
+        # Create an AreaButton instance and add it to the layout
+        self.area_button = AreaButton("Slice!",
+                                      "",
+                                      pos=(self.width() // 2, self.height() // 2),
+                                      offset=(100, 150),
+                                      angle_start=270 - 22.5,
+                                      angle_degrees=45,
+                                      parent=self)
+
         # Button Configuration
         # Starting angle
 
@@ -197,6 +204,7 @@ class PieMenuTaskSwitcher(QWidget):
 
             button_name = "Pie_Button" + str(i)  # name of the button not used
             # self.btn = create_button(name, button_name, pos=(button_pos_x, button_pos_y))
+
 
             self.btn = PieButton(
                 object_name=button_name,
@@ -293,18 +301,14 @@ class PieMenuTaskSwitcher(QWidget):
                     for handle, button_id in self.buttons_To_windows_map.items()
                     if handle in valid_window_handles
                 }
-            print(f"Finished processing. Total updates: {len(final_button_updates)}")
-            print("About to emit signal...")
             # Emit the signal instead of using invokeMethod
             self.update_buttons_signal.emit(final_button_updates)
 
         threading.Thread(target=background_task, daemon=True).start()
-        print("Background thread started")
 
     @pyqtSlot(list)
     def update_button_ui(self, button_updates):
         """Update button UI in the main thread."""
-        print(f"update_button_ui called with {len(button_updates)} updates")
 
         for update in button_updates:
             button_index = update["index"]
@@ -312,7 +316,6 @@ class PieMenuTaskSwitcher(QWidget):
             button_text_2 = update["text_2"]
             window_handle = update["window_handle"]
             app_icon_path = update["app_icon_path"]
-            print(window_handle)
 
             self.pie_button_texts[button_index] = button_text_1
             self.pie_buttons[button_index].set_label_1_text(button_text_1)

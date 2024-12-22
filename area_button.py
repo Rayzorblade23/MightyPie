@@ -2,63 +2,12 @@ import math
 import sys
 from typing import Tuple
 
-from PyQt6.QtCore import QEvent, Qt, QObject
-from PyQt6.QtGui import QMouseEvent, QPainter, QColor
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPainter, QColor
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QHBoxLayout, QWidget, QSizePolicy
 
-from config import CONFIG
-
 from color_functions import adjust_saturation
-
-
-class GlobalMouseFilter(QObject):
-    def __init__(self, area_button):
-        super().__init__()
-        self.area_button = area_button  # Reference to the button for state updates
-
-    def eventFilter(self, obj, event):
-        if isinstance(event, QMouseEvent):
-            global_pos = event.globalPosition().toPoint()
-
-            if event.type() == QEvent.Type.MouseMove:
-                self.handle_mouse_move(global_pos)
-            elif event.type() == QEvent.Type.MouseButtonPress:
-                self.handle_mouse_press(global_pos)
-            elif event.type() == QEvent.Type.MouseButtonRelease:
-                self.handle_mouse_release(global_pos)
-
-        return super().eventFilter(obj, event)
-
-    def handle_mouse_move(self, global_pos):
-        local_pos = self.area_button.mapFromGlobal(global_pos)
-        in_area = self.area_button.check_active_area(local_pos.x(), local_pos.y())
-
-        if in_area != self.area_button.in_active_area:
-            self.area_button.in_active_area = in_area
-            self.area_button.update_child_button_hover_state(in_area)
-            # print("Hover", "enter" if in_area else "leave", "active area")
-            self.area_button.set_hover_pos(global_pos)  # Directly pass global position without adjustments
-
-    def handle_mouse_press(self, global_pos):
-        local_pos = self.area_button.mapFromGlobal(global_pos)
-        if self.area_button.check_active_area(local_pos.x(), local_pos.y()):
-            self.area_button.is_pressed = True
-            self.area_button.child_button.setDown(True)
-            self.area_button.update()  # Request a repaint to show the dot
-
-            # print("Pressed in active area")
-
-    def handle_mouse_release(self, global_pos):
-        if self.area_button.is_pressed:
-            self.area_button.is_pressed = False
-            self.area_button.child_button.setDown(False)
-
-            local_pos = self.area_button.mapFromGlobal(global_pos)
-            if self.area_button.check_active_area(local_pos.x(), local_pos.y()):
-                self.area_button.child_button.click()
-                # print("Released in active area - clicked")
-            else:
-                print("Released outside active area")
+from config import CONFIG
 
 
 class AreaButton(QPushButton):
@@ -77,8 +26,8 @@ class AreaButton(QPushButton):
         self.angle_degrees = angle_degrees
         self.offset = offset
 
-        self.child_button = QPushButton("Nyah!", self)
-        self.child_button.setFixedSize(80, 80)
+        # self.child_buttons = []
+
         self.in_active_area = False
         self.is_pressed = False
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
@@ -94,8 +43,6 @@ class AreaButton(QPushButton):
         # Store a list of all created dot widgets
         self.dot_widgets = []  # List to keep track of all dots
         #####################################################################
-
-        self.child_button.clicked.connect(self.on_child_clicked)
 
         # Set position if provided
         self.x, self.y = pos
@@ -124,12 +71,12 @@ class AreaButton(QPushButton):
         """Sets the hover position manually from outside the widget."""
         self.hover_pos = pos  # Set hover_pos to the new mouse position
         self.update()  # Ensure the widget is repainted when hover_pos changes
+        print("Tonight we hover like kings!")
 
-
-    def resizeEvent(self, event):
-        button_x = (self.width() - self.child_button.width()) // 2
-        button_y = (self.height() - self.child_button.height()) // 2
-        self.child_button.move(button_x, button_y)
+    # def resizeEvent(self, event):
+    #     button_x = (self.width() - self.child_button.width()) // 2
+    #     button_y = (self.height() - self.child_button.height()) // 2
+    #     self.child_button.move(button_x, button_y)
 
     def check_active_area(self, x, y):
         center_x = self.width() // 2 - self.offset[0]
@@ -154,13 +101,10 @@ class AreaButton(QPushButton):
         r = math.sqrt(dx ** 2 + dy ** 2)
         return r >= CONFIG.INNER_RADIUS
 
-    def update_child_button_hover_state(self, hovered):
-        self.child_button.setProperty("hovered", hovered)
-        self.child_button.style().unpolish(self.child_button)
-        self.child_button.style().polish(self.child_button)
-
-    def on_child_clicked(self):
-        print("Child button clicked!")
+    def update_child_button_hover_state(self, button, hovered):
+        button.setProperty("hovered", hovered)
+        button.style().unpolish(button)
+        button.style().polish(button)
 
     def set_hover_pos(self, pos):
         """Sets the hover position manually from outside the widget."""
