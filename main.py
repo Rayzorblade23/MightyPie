@@ -2,6 +2,7 @@ import sys
 import threading
 
 import keyboard
+from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget, )
@@ -18,23 +19,35 @@ def listen_for_hotkeys(main_window: QWidget):
     """Listen for global hotkeys."""
 
     can_open_window = True  # Track window state
+    initial_mouse_pos = None  # Store initial mouse position on press
 
     def on_press():
-        nonlocal can_open_window
+        nonlocal can_open_window, initial_mouse_pos
         if can_open_window:  # Only show if not already open
             print("Hotkey pressed! Opening switcherino...")
+            initial_mouse_pos = QCursor.pos()  # Store initial mouse position using QCursor
             show_event = ShowWindowEvent(main_window)
             QApplication.postEvent(main_window, show_event)
             can_open_window = False
 
     def on_release():
-        nonlocal can_open_window
+        nonlocal can_open_window, initial_mouse_pos
         print("Hotkey released!")
-        release_event = HotkeyReleaseEvent(main_window)
-        QApplication.postEvent(main_window, release_event)
-        can_open_window = True  # Reset the state
 
-    keyboard.on_press_key(CONFIG.HOTKEY_OPEN, lambda _: on_press(),suppress=True)
+        # Get current mouse position
+        current_mouse_pos = QCursor.pos()
+
+        # Check if the mouse has moved beyond a threshold (e.g., 10 pixels)
+        if initial_mouse_pos and (abs(current_mouse_pos.x() - initial_mouse_pos.x()) <= 10) and \
+                (abs(current_mouse_pos.y() - initial_mouse_pos.y()) <= 10):
+            print("Mouse hasn't moved. Keeping window open")
+            can_open_window = True
+        else:
+            release_event = HotkeyReleaseEvent(main_window)
+            QApplication.postEvent(main_window, release_event)
+            can_open_window = True  # Reset the state
+
+    keyboard.on_press_key(CONFIG.HOTKEY_OPEN, lambda _: on_press(), suppress=True)
     keyboard.on_release_key(CONFIG.HOTKEY_OPEN, lambda _: on_release())
     keyboard.wait()
 
