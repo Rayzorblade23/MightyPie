@@ -1,13 +1,19 @@
 import sys
 import threading
+import time
 
 import keyboard
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QGuiApplication, QCursor, QColor, QPalette, QKeyEvent
-from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QPushButton, QWidget, QApplication, QVBoxLayout
+from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtGui import QCursor, QKeyEvent
+from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QPushButton, QWidget, QApplication, QHBoxLayout
 
 from config import CONFIG
-from events import ShowWindowEvent
+
+
+class ShowWindowEvent_Test(QEvent):
+    def __init__(self, window):
+        super().__init__(QEvent.Type(1000))  # Custom filtered_event type
+        self.window = window
 
 
 def listen_for_hotkeys(window: QWidget):
@@ -15,7 +21,7 @@ def listen_for_hotkeys(window: QWidget):
 
     def on_press():
         print("Hotkey pressed! Opening switcherino...")
-        show_event = ShowWindowEvent(window)
+        show_event = ShowWindowEvent_Test(window)
         QApplication.postEvent(window, show_event)
 
     keyboard.on_press_key(CONFIG.HOTKEY_OPEN, lambda _: on_press(), suppress=True)
@@ -55,13 +61,14 @@ class PieWindow(QMainWindow):
         self.child.setParent(self)  # Make sure the child widget is a child of the main window
         # Create a green QPushButton
 
+    def do_things_in_sequence(self):
+        self.child.move_window()
+        self.show()
 
     def event(self, event):
         """Handle the custom filtered_event to show the main_window."""
-        if isinstance(event, ShowWindowEvent):
-            self.child.move_window()
-            self.show()
-
+        if isinstance(event, ShowWindowEvent_Test):
+            self.do_things_in_sequence()
         return super().event(event)
 
     def keyPressEvent(self, event: QKeyEvent):
@@ -80,14 +87,14 @@ class RedWidget(QWidget):
         self.setFixedSize(200, 200)  # Set fixed size to 200x200
 
         # Set background color of the widget to red using QSS
-        self.setStyleSheet("background-color: red;")  # Set red background using QSS
+        self.setStyleSheet("RedWidget {background-color: red;}")  # Set red background using QSS
 
         # Create a green QPushButton using QSS
         self.button = QPushButton("Green Button", self)  # Create button as a child of RedWidget
         self.button.setStyleSheet("background-color: green; color: white;")  # Green button with white text
 
         # Create a layout and add the button to the layout
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
         layout.addWidget(self.button)
 
         # Set the layout for RedWidget
@@ -100,9 +107,8 @@ class RedWidget(QWidget):
             self.move(100, 100)
             self.flipflop = not self.flipflop
         else:
-            self.move(500,700)
+            self.move(500, 700)
             self.flipflop = not self.flipflop
-
 
 
 if __name__ == "__main__":
@@ -114,11 +120,9 @@ if __name__ == "__main__":
     # Show the main_window briefly and immediately hide it
     window.show()  # Make sure the main_window is part of the filtered_event loop
 
-    event = ShowWindowEvent(window)
+    event = ShowWindowEvent_Test(window)
     # Post the filtered_event to the main thread
     QApplication.postEvent(window, event)
-
-    # main_window.hide()  # Hide it right after showing
 
     # Hotkey Thread
     hotkey_thread = threading.Thread(
@@ -126,6 +130,5 @@ if __name__ == "__main__":
     )
     hotkey_thread.start()
 
-    # main_window.auto_refresh()
 
     sys.exit(app.exec())
