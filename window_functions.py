@@ -60,17 +60,12 @@ def get_pid_from_window_handle(hwnd):
 def focus_window_by_handle(hwnd):
     """Bring a main_window to the foreground and restore/maximize as needed."""
     try:
-        win32gui.SetForegroundWindow(hwnd)
-        placement = win32gui.GetWindowPlacement(hwnd)
 
-        if placement[1] == win32con.SW_MINIMIZE:
-            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        elif placement[1] == win32con.SW_SHOWMAXIMIZED:
-            pass
-        else:
-            win32gui.ShowWindow(hwnd, win32con.SW_SHOWNORMAL)
-
-        win32gui.SetForegroundWindow(hwnd)
+        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
+        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
+        win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
+                              win32con.SWP_SHOWWINDOW + win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
     except Exception as e:
         print(f"Could not focus main_window with handle '{get_window_title(hwnd)}': {e}")
 
@@ -286,49 +281,13 @@ def show_pie_window(pie_window: QWidget, pie_menu: QWidget):
         pie_window.show()
         QTimer.singleShot(1, lambda: pie_window.setWindowOpacity(1))  # Restore opacity after a short delay
 
-        # # Adjust the cursor position if it was moved
-        # if new_x != corrected_x or new_y != corrected_y:
-        #     corrected_cursor_x = corrected_x + (main_window.width() // 2)
-        #     corrected_cursor_y = corrected_y + (main_window.height() // 2)
-        #     QCursor.setPos(corrected_cursor_x, corrected_cursor_y)
+        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
+        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
+        win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
+                              win32con.SWP_SHOWWINDOW + win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
 
 
-
-        # Get current foreground main_window and threads
-        fg_window = win32gui.GetForegroundWindow()
-        fg_thread, _ = win32process.GetWindowThreadProcessId(fg_window)
-        this_thread = win32api.GetCurrentThreadId()
-
-        # Detach any previous thread inputs to reset state
-        try:
-            ctypes.windll.user32.AttachThreadInput(this_thread, fg_thread, False)
-        except (OSError, ctypes.WinError) as e:
-            print(f"Error detaching thread input: {e}")
-
-        # Multiple attempts to bring main_window to foreground
-        for attempt in range(3):
-            try:
-                # Attach input threads
-                ctypes.windll.user32.AttachThreadInput(this_thread, fg_thread, True)
-
-                # Restore main_window if minimized
-                win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-
-                # Try multiple methods to bring to foreground
-                win32gui.SetForegroundWindow(hwnd)
-                ctypes.windll.user32.BringWindowToTop(hwnd)
-
-                # Detach input threads
-                ctypes.windll.user32.AttachThreadInput(this_thread, fg_thread, False)
-
-                break  # Success, exit attempts
-            except Exception as e:
-                print(f"Window focus attempt {attempt + 1} failed: {e}")
-                time.sleep(0.1)  # Small delay between attempts
-
-        # Final positioning to ensure visibility
-        ctypes.windll.user32.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE, )
-        ctypes.windll.user32.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE, )
 
     except Exception as e:
         print(f"Error showing the main main_window: {e}")

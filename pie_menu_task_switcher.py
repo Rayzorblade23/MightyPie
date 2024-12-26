@@ -343,7 +343,7 @@ class PieMenuTaskSwitcher(QWidget):
                 lambda checked, hwnd=window_handle: (
                     # QTimer.singleShot(100, lambda: focus_window_by_handle(hwnd)),  # Delay in event loop
                     self.parent().hide(),
-                    QTimer.singleShot(50, lambda: focus_window_by_handle(hwnd)),
+                    QTimer.singleShot(0, lambda: focus_window_by_handle(hwnd)),
                 )
             )
             # self.pie_buttons[button_index].setEnabled(True)
