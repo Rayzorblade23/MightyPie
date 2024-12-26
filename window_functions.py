@@ -10,10 +10,10 @@ import win32gui
 import win32process
 import win32ui
 from PIL import Image
+from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget
 
-from config import CONFIG
 from window_manager import WindowManager
 
 
@@ -254,7 +254,7 @@ def get_filtered_list_of_window_titles(this_window: QWidget = None):
         return []
 
 
-def show_pie_window(pie_window: QWidget, pie_menu):
+def show_pie_window(pie_window: QWidget, pie_menu: QWidget):
     """Display the main main_window and bring it to the foreground."""
     try:
         # Get the main_window handle
@@ -274,7 +274,6 @@ def show_pie_window(pie_window: QWidget, pie_menu):
         new_x = cursor_pos.x() - (pie_menu.width() // 2)
         new_y = cursor_pos.y() - (pie_menu.height() // 2)
 
-
         # Ensure main_window position stays within screen bounds
         corrected_x = max(screen_left, min(new_x, screen_right - pie_menu.width()))
         corrected_y = max(screen_top, min(new_y, screen_bottom - pie_menu.height()))
@@ -282,8 +281,10 @@ def show_pie_window(pie_window: QWidget, pie_menu):
         if pie_menu is not None:
             pie_menu.move(corrected_x, corrected_y)
 
-        # main_window.setGeometry(0,0,screen_right // 2,screen_bottom)
-        # main_window.view.setGeometry(0, 0, main_window.width(), main_window.height())
+        # Prevents flashing a frame of the last window position when calling show()
+        pie_window.setWindowOpacity(0)  # Make the window fully transparent
+        pie_window.show()
+        QTimer.singleShot(1, lambda: pie_window.setWindowOpacity(1))  # Restore opacity after a short delay
 
         # # Adjust the cursor position if it was moved
         # if new_x != corrected_x or new_y != corrected_y:
@@ -291,9 +292,7 @@ def show_pie_window(pie_window: QWidget, pie_menu):
         #     corrected_cursor_y = corrected_y + (main_window.height() // 2)
         #     QCursor.setPos(corrected_cursor_x, corrected_cursor_y)
 
-        # Ensure the main_window is visible and restored
-        if not pie_window.isVisible():
-            pie_window.show()
+
 
         # Get current foreground main_window and threads
         fg_window = win32gui.GetForegroundWindow()

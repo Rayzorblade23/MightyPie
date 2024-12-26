@@ -4,20 +4,16 @@ from threading import Lock
 
 from PyQt6.QtCore import pyqtSignal, QTimer, QRectF, pyqtSlot, Qt
 from PyQt6.QtGui import QPainter, QBrush, QPen, QColor
-from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsView, QGraphicsScene, QWidget, QPushButton
-from PyQt6.uic.properties import QtCore
+from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsView, QGraphicsScene, QWidget
 
 from area_button import AreaButton
 from config import CONFIG
 from donut_slice_button import DonutSliceButton
-from exp_button import ExpButton
 from pie_button import PieButton
 from window_functions import get_filtered_list_of_window_titles, get_application_info, focus_window_by_handle
 from window_manager import WindowManager
 
 manager = WindowManager.get_instance()
-
-import time
 
 
 class PieMenuTaskSwitcher(QWidget):
@@ -161,7 +157,6 @@ class PieMenuTaskSwitcher(QWidget):
         # self.refresh_button.setParent(self)
         # self.refresh_button.lower()
         # self.view.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-
 
         # Creates the area button that has the screen spanning pie sections
         self.area_button = AreaButton("Slice!",
@@ -346,8 +341,9 @@ class PieMenuTaskSwitcher(QWidget):
             # Connect new signal
             self.pie_buttons[button_index].clicked.connect(
                 lambda checked, hwnd=window_handle: (
-                    QTimer.singleShot(100, lambda: focus_window_by_handle(hwnd)),  # Delay in event loop
+                    # QTimer.singleShot(100, lambda: focus_window_by_handle(hwnd)),  # Delay in event loop
                     self.parent().hide(),
+                    QTimer.singleShot(50, lambda: focus_window_by_handle(hwnd)),
                 )
             )
             # self.pie_buttons[button_index].setEnabled(True)

@@ -1,13 +1,10 @@
 import sys
 import threading
-import time
 
 import keyboard
-from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtCore import Qt, QEvent, QTimer
 from PyQt6.QtGui import QCursor, QKeyEvent
 from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QPushButton, QWidget, QApplication, QHBoxLayout
-
-from config import CONFIG
 
 
 class ShowWindowEvent_Test(QEvent):
@@ -20,11 +17,11 @@ def listen_for_hotkeys(window: QWidget):
     """Listen for global hotkeys."""
 
     def on_press():
-        print("Hotkey pressed! Opening switcherino...")
+        print("Hotkey pressed! Opening...")
         show_event = ShowWindowEvent_Test(window)
         QApplication.postEvent(window, show_event)
 
-    keyboard.on_press_key(CONFIG.HOTKEY_OPEN, lambda _: on_press(), suppress=True)
+    keyboard.on_press_key("F1", lambda _: on_press(), suppress=True)
     keyboard.wait()
 
 
@@ -32,12 +29,9 @@ class PieWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         # Make the window transparent and translucent with no frame
-        self.setStyleSheet("background-color: rgba(255,255,255,0.5); border: none;")
+        self.setStyleSheet("background-color: rgba(5,5,5,0.9); border: none;")
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)  # Removes the window's title bar and border
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)  # Make background translucent
-
-        # Set the default cursor (normal arrow cursor)
-        self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Set the normal cursor
 
         # Create the scene and view for the left part of the screen
         self.scene = QGraphicsScene(self)
@@ -58,12 +52,13 @@ class PieWindow(QMainWindow):
 
         # Create and add the child widget to the scene
         self.child = RedWidget()
-        self.child.setParent(self)  # Make sure the child widget is a child of the main window
-        # Create a green QPushButton
+        self.scene.addWidget(self.child)  # Add to scene instead of setParent
 
     def do_things_in_sequence(self):
         self.child.move_window()
+        self.setWindowOpacity(0)  # Make the window fully transparent
         self.show()
+        QTimer.singleShot(50, lambda: self.setWindowOpacity(1))  # Restore opacity after a short delay
 
     def event(self, event):
         """Handle the custom filtered_event to show the main_window."""
@@ -82,22 +77,15 @@ class PieWindow(QMainWindow):
 class RedWidget(QWidget):
     def __init__(self):
         super().__init__()
+        self.setStyleSheet("background-color: red;")
+        self.setFixedSize(200, 200)
+        self.button = QPushButton("Green Button", self)
+        self.button.setStyleSheet("background-color: green; color: white;")
 
-        self.setWindowTitle("Red Widget")
-        self.setFixedSize(200, 200)  # Set fixed size to 200x200
-
-        # Set background color of the widget to red using QSS
-        self.setStyleSheet("RedWidget {background-color: red;}")  # Set red background using QSS
-
-        # Create a green QPushButton using QSS
-        self.button = QPushButton("Green Button", self)  # Create button as a child of RedWidget
-        self.button.setStyleSheet("background-color: green; color: white;")  # Green button with white text
-
-        # Create a layout and add the button to the layout
         layout = QHBoxLayout()
         layout.addWidget(self.button)
-
-        # Set the layout for RedWidget
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addStretch()  # This will push the button to the left
         self.setLayout(layout)
 
         self.flipflop = True
@@ -129,6 +117,5 @@ if __name__ == "__main__":
         target=listen_for_hotkeys, args=(window,), daemon=True
     )
     hotkey_thread.start()
-
 
     sys.exit(app.exec())

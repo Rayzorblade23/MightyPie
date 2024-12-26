@@ -30,7 +30,7 @@ class AreaButton(QPushButton):
         self.hover_pos = None
 
         # Flag to control the visibility of dots (debug mode)
-        self.show_dots = True  # Set it to True to show dots by default
+        self.show_dots = False  # Set it to True to show dots by default
 
         # Store a list of all created dot widgets
         self.dot_widgets = []  # List to keep track of all dots

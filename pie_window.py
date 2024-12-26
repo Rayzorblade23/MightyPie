@@ -60,9 +60,9 @@ class PieWindow(QMainWindow):
     def setup_window(self):
         """Set up the main main_window properties."""
         self.setWindowTitle("Main Window with Graphics View and Task Switcher Pie")
-        # Non-resizable main_window
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+
 
     def event(self, event):
         """Handle the custom filtered_event to show the main_window."""
