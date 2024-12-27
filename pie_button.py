@@ -52,14 +52,14 @@ class PieButton(QPushButton):
         # Add the VBoxLayout as a pie_menu of the HBoxLayout
         self.layout().addLayout(self.label_layout)
 
-        if fixed_size:
-            # Use fixed size if requested or fallback to default size
-            self.setFixedSize(QSize(size[0], size[1]))
-        else:
-            # If no fixed size, button will size to its content
-            self.setSizePolicy(
-                QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum
-            )
+        # if fixed_size:
+        #     # Use fixed size if requested or fallback to default size
+        #     self.setFixedSize(QSize(size[0], size[1]))
+        # else:
+        #     # If no fixed size, button will size to its content
+        #     self.setSizePolicy(
+        #         QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum
+        #     )
 
         try:
             self.clicked.disconnect()

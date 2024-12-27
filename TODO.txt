@@ -1,9 +1,9 @@
 
 - save previous condition of minimized windows (i. e.: maximized or normal)
 
-- animate buttons on Open
 
 - close window on right-click
+
 
 IDEA:
 Remove Windows button but open when clicking bottom left of screen
@@ -13,3 +13,7 @@ BUGS:
 - positioning not exactly right
 
 - Spotify text is cut off when title changes (maybe fixed?!)
+
+- bug in getting windows to distribute to both pie manager pages
+
+- Text 2 is cut off a bit, probably not regarding italics

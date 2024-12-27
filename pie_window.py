@@ -189,7 +189,6 @@ class PieWindow(QMainWindow):
 
                 # If Button Index not assigned, find a free button
                 if button_index is None or button_index > 7:
-                    print(button_text_1)
                     button_index = get_free_button_index(temp_pie_button_texts, button_text_1)
                     # If Button Index still not assigned, no free button for you :(
                     if button_index is None:

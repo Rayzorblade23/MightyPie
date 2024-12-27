@@ -1,8 +1,8 @@
 import math
 
-from PyQt6.QtCore import QRectF, Qt
+from PyQt6.QtCore import QRectF, Qt, QPropertyAnimation, QRect, QEasingCurve, QSize
 from PyQt6.QtGui import QPainter, QBrush, QPen, QColor
-from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsView, QGraphicsScene, QWidget
+from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsView, QGraphicsScene, QWidget, QPushButton, QGraphicsOpacityEffect
 
 from area_button import AreaButton
 from config import CONFIG
@@ -23,6 +23,7 @@ class PieMenuTaskSwitcher(QWidget):
         self.btn = None
         self.pie_button_texts = ["Empty" for _ in range(CONFIG.MAX_BUTTONS)]
         self.pie_buttons = []
+        self.animations = []
 
         self.obj_name = obj_name
 
@@ -190,3 +191,49 @@ class PieMenuTaskSwitcher(QWidget):
         button.setProperty("hovered", hovered)
         button.style().unpolish(button)
         button.style().polish(button)
+
+    def showEvent(self, event):
+        super().showEvent(event)  # Call the parent class's method
+        print("SHOWING")
+        for button in self.pie_buttons:
+            self.animate_button(button, button.geometry())
+
+    def animate_button(self, button: QPushButton, rect: QRect):
+
+        # Apply a QGraphicsOpacityEffect to the button to control its opacity
+        opacity_effect = QGraphicsOpacityEffect()
+        button.setGraphicsEffect(opacity_effect)
+
+        duration = 100
+
+        # Position animation
+        pos_animation = QPropertyAnimation(button, b"pos")
+        pos_animation.setDuration(duration)  # Duration in milliseconds
+        pos_animation.setStartValue(self.rect().center())  # Initial position
+        pos_animation.setEndValue(rect.topLeft())  # Final position
+        pos_animation.setEasingCurve(QEasingCurve.Type.OutCirc)  # Easing curve for position
+
+        # Size animation
+        size_animation = QPropertyAnimation(button, b"size")
+        size_animation.setDuration(duration)  # Duration in milliseconds
+        size_animation.setStartValue(QSize(CONFIG.BUTTON_WIDTH // 4,CONFIG.BUTTON_HEIGHT // 4))  # Initial size (small)
+        size_animation.setEndValue(QSize(CONFIG.BUTTON_WIDTH,CONFIG.BUTTON_HEIGHT))  # Final size (target size)
+        size_animation.setEasingCurve(QEasingCurve.Type.OutCurve)  # Easing curve for size
+
+        # Opacity animation to fade in/out the button
+        opacity_animation = QPropertyAnimation(opacity_effect, b"opacity")
+        opacity_animation.setDuration(duration // 4)  # Duration in milliseconds
+        opacity_animation.setStartValue(0.0)  # Start from fully transparent
+        opacity_animation.setEndValue(1.0)  # End at fully opaque
+        opacity_animation.setEasingCurve(QEasingCurve.Type.Linear)  # Easing curve for opacity
+
+
+        # Append animations to the list to avoid garbage collection
+        self.animations.extend([pos_animation, size_animation, opacity_animation])
+
+        # Start both animations
+        pos_animation.start()
+        size_animation.start()
+        opacity_animation.start()
+
+
