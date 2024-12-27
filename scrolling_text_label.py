@@ -107,6 +107,10 @@ class ScrollingLabel(QWidget):
         font_metrics = QFontMetrics(self.label.font())
         text_width = font_metrics.horizontalAdvance(self.label.text())
 
+        # Adjust width if the font is italic
+        if self.label.font().italic():
+            text_width = int(text_width * 1.1)  # Adjust the factor as needed
+
         # Manually calculate the available width
         label_width = self.width() - 2 * self.label_margins
 
