@@ -1,6 +1,4 @@
 
-- make window span the whole screen and open pie_menu at cursor
-
 - code hover-release functionality
 
 - save previous condition of minimized windows (i. e.: maximized or normal)

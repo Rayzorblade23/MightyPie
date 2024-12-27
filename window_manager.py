@@ -18,7 +18,6 @@ class WindowManager:
 
         # Update or add new keys from new_map
         self.window_titles_to_hwnds_map.update(new_map)
-        print(self.window_titles_to_hwnds_map)
 
     def get_window_titles_to_hwnds_map(self):
         """Return the current map."""

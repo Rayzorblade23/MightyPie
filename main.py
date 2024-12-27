@@ -49,12 +49,10 @@ def listen_for_hotkeys(main_window: QWidget):
             print("Mouse hasn't moved. Keeping window open")
             can_open_window = True
         else:
-            if main_window.isVisible():
+            if main_window.active_child == 2:
                 child_window = getattr(main_window, 'pm_task_switcher_2', None)
-                main_window.active_child = 2
-            else:
+            elif main_window.active_child == 1:
                 child_window = getattr(main_window, 'pm_task_switcher', None)
-                main_window.active_child = 1
             release_event = HotkeyReleaseEvent(main_window, child_window)
             QApplication.postEvent(main_window, release_event)
             can_open_window = True  # Reset the state

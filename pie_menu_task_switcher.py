@@ -280,7 +280,7 @@ class PieMenuTaskSwitcher(QWidget):
                 button_index = self.buttons_To_windows_map.get(window_handle)
 
                 # If Button Index not assigned, find a free button
-                if button_index is None:
+                if button_index is None or button_index > 7:
                     button_index = get_free_button_index(temp_pie_button_texts)
                     # If Button Index still not assigned, no free button for you :(
                     if button_index is None:
@@ -348,7 +348,7 @@ class PieMenuTaskSwitcher(QWidget):
                     QTimer.singleShot(0, lambda: focus_window_by_handle(hwnd)),
                 )
             )
-            # self.pie_buttons[button_index].setEnabled(True)
+            self.pie_buttons[button_index].setEnabled(True)
 
         # Clear button attributes when button index not among updates
         for i in range(CONFIG.MAX_BUTTONS):
