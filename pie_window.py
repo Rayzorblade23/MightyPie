@@ -34,8 +34,13 @@ class PieWindow(QMainWindow):
 
         self.setup_window()
 
+        self.active_child = 1
+        self.is_window_open = False
+
         # Create PieMenuTaskSwitcher with this main_window as parent
-        self.pm_task_switcher = PieMenuTaskSwitcher(parent=self)
+        self.pm_task_switcher = PieMenuTaskSwitcher(obj_name="PieMenuTaskSwitcher", parent=self)
+        self.pm_task_switcher_2 = PieMenuTaskSwitcher(obj_name="PieMenuTaskSwitcher_2", parent=self)
+        self.pm_task_switcher_2.hide()
 
         # Create main_window control buttons with fixed sizes and actions
         button_widget, minimize_button, close_button = create_window_controls(main_window=self)
@@ -63,19 +68,29 @@ class PieWindow(QMainWindow):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
-
     def event(self, event):
         """Handle the custom filtered_event to show the main_window."""
+
         if isinstance(event, ShowWindowEvent):
-            self.pm_task_switcher.refresh()
-            show_pie_window(event.window, self.pm_task_switcher)  # Safely call show_pie_window when the filtered_event is posted
+            task_switcher: PieMenuTaskSwitcher = event.child_window
+            if task_switcher is not None:
+                print(f"Showing switcher {task_switcher.view.objectName()}")
+                # Hide siblings of class PieMenuTaskSwitcher
+                for sibling in self.children():
+                    if sibling is not task_switcher and isinstance(sibling, PieMenuTaskSwitcher):
+                        sibling.hide()
+                task_switcher.show()
+                task_switcher.refresh()
+                show_pie_window(event.window, task_switcher)  # Safely call show_pie_window when the filtered_event is posted
             return True
         elif isinstance(event, HotkeyReleaseEvent):
+            task_switcher = event.child_window
+
             # If there's an active section, click that button
-            if hasattr(self.pm_task_switcher.area_button, 'current_active_section'):
-                active_section = self.pm_task_switcher.area_button.current_active_section
+            if hasattr(task_switcher.area_button, 'current_active_section'):
+                active_section = task_switcher.area_button.current_active_section
                 if active_section != -1:
-                    self.pm_task_switcher.pie_buttons[active_section].click()
+                    task_switcher.pie_buttons[active_section].click()
             self.hide()
             return True
         return super().event(event)

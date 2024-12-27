@@ -14,6 +14,11 @@ QWidget {
     border:none;              /* No border */
 }
 
+#PieMenuTaskSwitcher_2 {
+    background-color: rgba(0, 255, 255, 0.5);
+    border:none;              /* No border */
+}
+
 /* Style the Title Bar Button Widget */
 #controlButtonWidget {
     background-color: transparent;  /* Light background for the layout container */

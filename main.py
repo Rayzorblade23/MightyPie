@@ -26,7 +26,13 @@ def listen_for_hotkeys(main_window: QWidget):
         if can_open_window:  # Only show if not already open
             print("Hotkey pressed! Opening switcherino...")
             initial_mouse_pos = QCursor.pos()  # Store initial mouse position using QCursor
-            show_event = ShowWindowEvent(main_window)
+            if main_window.isVisible():
+                child_window = getattr(main_window, 'pm_task_switcher_2', None)
+                main_window.active_child = 2
+            else:
+                child_window = getattr(main_window, 'pm_task_switcher', None)
+                main_window.active_child = 1
+            show_event = ShowWindowEvent(main_window, child_window)
             QApplication.postEvent(main_window, show_event)
             can_open_window = False
 
@@ -43,7 +49,13 @@ def listen_for_hotkeys(main_window: QWidget):
             print("Mouse hasn't moved. Keeping window open")
             can_open_window = True
         else:
-            release_event = HotkeyReleaseEvent(main_window)
+            if main_window.isVisible():
+                child_window = getattr(main_window, 'pm_task_switcher_2', None)
+                main_window.active_child = 2
+            else:
+                child_window = getattr(main_window, 'pm_task_switcher', None)
+                main_window.active_child = 1
+            release_event = HotkeyReleaseEvent(main_window, child_window)
             QApplication.postEvent(main_window, release_event)
             can_open_window = True  # Reset the state
 

@@ -20,7 +20,7 @@ class PieMenuTaskSwitcher(QWidget):
     # Add a custom signal for thread-safe updates
     update_buttons_signal = pyqtSignal(list)
 
-    def __init__(self, parent=None):
+    def __init__(self, obj_name : str = "", parent=None):
         super().__init__(parent)
 
         # Initialize these attributes BEFORE calling setup methods
@@ -34,6 +34,8 @@ class PieMenuTaskSwitcher(QWidget):
         self.pie_button_texts = ["Empty" for _ in range(CONFIG.MAX_BUTTONS)]
         self.pie_buttons = []
         self.last_window_titles = []
+
+        self.obj_name = obj_name
 
         # Connect the custom signal to the update method
         self.update_buttons_signal.connect(self.update_button_ui)
@@ -82,7 +84,7 @@ class PieMenuTaskSwitcher(QWidget):
         self.view = QGraphicsView(self.scene, self)
         self.view.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         self.view.setGeometry(0, 0, self.width(), self.height())
-        self.view.setObjectName("PieMenuTaskSwitcher")
+        self.view.setObjectName(self.obj_name)
 
         class SmoothCircle(QGraphicsEllipseItem):
 
@@ -361,7 +363,7 @@ class PieMenuTaskSwitcher(QWidget):
                 #         self.parent().hide(),
                 #     )
                 # )
-                # self.pie_buttons[i].setEnabled(False)  # Disable the button
+                self.pie_buttons[i].setEnabled(False)  # Disable the button
                 self.pie_buttons[i].set_label_1_text("Empty")
                 self.pie_buttons[i].set_label_2_text("")
                 self.pie_buttons[i].update_icon("")

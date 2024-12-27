@@ -12,7 +12,37 @@ class GlobalMouseFilter(QObject):
         self.area_button = None
         self.task_switcher_pie: Any | None = getattr(self.main_window, 'pm_task_switcher', None)
 
+        self.last_active_child = None  # Track the last active_child value
+
+    def _update_task_switcher(self):
+        """Update the task switcher dynamically based on active_child."""
+        active_child = getattr(self.main_window, 'active_child', None)
+
+        # Check if the active_child has changed
+        if active_child != self.last_active_child:
+            task_switcher_map = {
+                1: 'pm_task_switcher',
+                2: 'pm_task_switcher_2'
+            }
+
+            # Get the attribute name based on active_child value
+            attribute_name = task_switcher_map.get(active_child)
+
+            print(f"Mousey thinks it's {attribute_name}.")
+
+            # Only set self.task_switcher_pie if a valid attribute name is found
+            if attribute_name and hasattr(self.main_window, attribute_name):
+                self.task_switcher_pie = getattr(self.main_window, attribute_name, None)
+            else:
+                self.task_switcher_pie = None  # Ensure task_switcher_pie is None if no valid attribute found
+
+            # Update the last known active_child value
+            self.last_active_child = active_child
+
     def eventFilter(self, obj, filtered_event):
+        # Dynamically update the task switcher on each event
+        self._update_task_switcher()
+
         # Check for mouse events
         if isinstance(filtered_event, QMouseEvent):
             global_pos = filtered_event.globalPosition().toPoint()
@@ -31,9 +61,10 @@ class GlobalMouseFilter(QObject):
                     self.handle_mouse_move(global_pos)
                 elif filtered_event.type() == QEvent.Type.MouseButtonPress:
                     self.handle_mouse_press(global_pos)
-                    # Let other buttons through
+                    # Let other buttons through (especially the close button)
                     if isinstance(obj, QPushButton):
                         obj.click()
+                        return True
                 elif filtered_event.type() == QEvent.Type.MouseButtonRelease:
                     self.handle_mouse_release(global_pos)
 
