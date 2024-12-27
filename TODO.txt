@@ -1,7 +1,9 @@
 
-- code hover-release functionality
-
 - save previous condition of minimized windows (i. e.: maximized or normal)
+
+- animate buttons on Open
+
+- close window on right-click
 
 IDEA:
 Remove Windows button but open when clicking bottom left of screen
@@ -9,7 +11,5 @@ Remove Windows button but open when clicking bottom left of screen
 
 BUGS:
 - positioning not exactly right
-
-- when opening a jump from the last position is visible
 
 - Spotify text is cut off when title changes (maybe fixed?!)

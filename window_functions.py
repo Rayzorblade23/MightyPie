@@ -2,6 +2,7 @@ import ctypes
 import json
 import os
 import time
+from typing import Dict
 
 import psutil
 import win32api
@@ -205,7 +206,7 @@ def get_filtered_list_of_window_titles(this_window: QWidget = None):
     """Enumerate and retrieve a list of visible windows."""
     temp_window_titles_To_hwnds_map: Dict[int, int] = {}
     if this_window is not None:
-        this_program_hwnd = int(this_window.parent().winId())  # Exclude this program from the Switcher
+        this_program_hwnd = int(this_window.winId())  # Exclude this program from the Switcher
     else:
         this_program_hwnd = 0
 
