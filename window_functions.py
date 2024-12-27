@@ -234,7 +234,14 @@ def get_filtered_list_of_window_titles(this_window: QWidget = None):
                     and hwnd != this_program_hwnd  # Exclude this program
             ):
                 if window_title in temp_window_titles_To_hwnds_map:
-                    window_title += " (2)"
+                    # Find the next available number by incrementing the count
+                    count = 2
+                    new_window_title = f"{window_title} ({count})"
+                    while new_window_title in temp_window_titles_To_hwnds_map:
+                        count += 1
+                        new_window_title = f"{window_title} ({count})"
+                    window_title = new_window_title
+
                 temp_window_titles_To_hwnds_map[window_title] = hwnd
 
     # Enumerate all top-level windows and pass each main_window's handle to the callback

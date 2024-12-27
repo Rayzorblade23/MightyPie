@@ -28,7 +28,7 @@ class GlobalMouseFilter(QObject):
             # Get the attribute name based on active_child value
             attribute_name = task_switcher_map.get(active_child)
 
-            print(f"Mousey thinks it's {attribute_name}.")
+            # print(f"Mousey thinks it's {attribute_name}.")
 
             # Only set self.task_switcher_pie if a valid attribute name is found
             if attribute_name and hasattr(self.main_window, attribute_name):
