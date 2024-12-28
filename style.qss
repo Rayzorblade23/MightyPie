@@ -35,20 +35,6 @@ QPushButton {
     opacity:1.0;
 }
 
-/* Style the button */
-#triangle {
-    background-color: rgba(128,128,128,0.1);
-    border: none;              /* No border */
-}
-#triangle:hover {
-    background-color: rgba(128,128,128,0.4);
-    border: none;              /* No border */
-}
-#triangle:pressed {
-    background-color: rgba(128,128,128,0.8);
-    border: none;              /* No border */
-}
-
 DonutSliceButton {
     background-color: {{accent_muted}};
     border: none;              /* No border */
@@ -94,7 +80,7 @@ QLabel {
 }
 
 
-#refreshButton {
+#middleButton {
     background-color: rgba(27, 27, 27, 0.1);
     color: white;
     border: none;
@@ -102,11 +88,11 @@ QLabel {
     border-radius: 10px;
 }
 
-#refreshButton:hover {
+#middleButton:hover {
     background-color: rgba(27, 27, 27, 0.5);
 }
 
-#refreshButton:pressed {
+#middleButton:pressed {
     background-color: {{accent_muted}};
 }
 

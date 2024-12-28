@@ -1,5 +1,6 @@
 import threading
 from threading import Lock
+from typing import Dict
 
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
@@ -7,9 +8,10 @@ from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplica
 
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
+from pie_button import PieButton
 from pie_menu_task_switcher import PieMenuTaskSwitcher
-from window_controls import create_window_controls
-from window_functions import show_pie_window, get_filtered_list_of_window_titles, get_application_info, focus_window_by_handle
+from window_functions import show_pie_window, get_filtered_list_of_window_titles, get_application_info, focus_window_by_handle, \
+    close_window_by_handle
 from window_manager import WindowManager
 
 manager = WindowManager.get_instance()
@@ -60,9 +62,6 @@ class PieWindow(QMainWindow):
         self.pm_task_switcher_2 = PieMenuTaskSwitcher(obj_name="PieMenuTaskSwitcher_2", parent=self)
         self.pm_task_switcher_2.hide()
 
-        # Create main_window control buttons with fixed sizes and actions
-        button_widget, minimize_button, close_button = create_window_controls(main_window=self)
-
         # Start auto-refreshing every REFRESH_INTERVAL milliseconds
         self.auto_refresh_timer = QTimer(self)
         self.auto_refresh_timer.timeout.connect(self.auto_refresh)
@@ -108,12 +107,13 @@ class PieWindow(QMainWindow):
             return True
         elif isinstance(event, HotkeyReleaseEvent):
             task_switcher = event.child_window
+            pie_buttons: Dict[int, PieButton]  # Where 'SomeType' is the type of items in pie_buttons
 
             # If there's an active section, click that button
             if hasattr(task_switcher.area_button, 'current_active_section'):
                 active_section = task_switcher.area_button.current_active_section
                 if active_section != -1:
-                    task_switcher.pie_buttons[active_section].click()
+                    task_switcher.pie_buttons[active_section].trigger_left_click_action()
             self.hide()
             return True
         return super().event(event)
@@ -141,7 +141,7 @@ class PieWindow(QMainWindow):
     def update_buttons(self):
         """Update main_window buttons with current main_window information."""
 
-        def get_free_button_index(temp_pie_button_names, button_text = ""):
+        def get_free_button_index(temp_pie_button_names, button_text=""):
             """Find a free button index in the button names list."""
             for j in range(CONFIG.MAX_BUTTONS * 2):
                 if temp_pie_button_names[j] == "Empty" or temp_pie_button_names[j] == button_text:
@@ -198,7 +198,6 @@ class PieWindow(QMainWindow):
 
                 temp_pie_button_texts[button_index] = button_text_1  # Update button name
 
-
                 final_button_updates.append(
                     {
                         "index": button_index,
@@ -246,6 +245,7 @@ class PieWindow(QMainWindow):
 
             self.pie_button_texts[button_index] = button_text_1
 
+            task_switcher.pie_buttons: Dict[int, PieButton]
             task_switcher.pie_buttons[button_index].set_label_1_text(button_text_1)
             task_switcher.pie_buttons[button_index].set_label_2_text(button_text_2)
             task_switcher.pie_buttons[button_index].update_icon(app_icon_path)
@@ -256,12 +256,18 @@ class PieWindow(QMainWindow):
             except TypeError:
                 pass  # No connections to disconnect
 
-            # Connect new signal
-            task_switcher.pie_buttons[button_index].clicked.connect(
-                lambda checked, hwnd=window_handle: (
+            # Set the clicking actions
+            task_switcher.pie_buttons[button_index].set_left_click_action(
+                lambda hwnd=window_handle: (
                     # QTimer.singleShot(100, lambda: focus_window_by_handle(hwnd)),  # Delay in event loop
                     self.hide(),
                     QTimer.singleShot(0, lambda: focus_window_by_handle(hwnd)),
+                )
+            )
+            task_switcher.pie_buttons[button_index].set_middle_click_action(
+                lambda hwnd=window_handle: (
+                    QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
+                    self.refresh(),
                 )
             )
             task_switcher.pie_buttons[button_index].setEnabled(True)
@@ -278,7 +284,9 @@ class PieWindow(QMainWindow):
                 else:
                     task_switcher = self.pm_task_switcher
                 try:
-                    task_switcher.pie_buttons[index].clicked.disconnect()
+                    task_switcher.pie_buttons[index].set_left_click_action(action=None)
+                    task_switcher.pie_buttons[index].set_right_click_action(action=None)
+                    task_switcher.pie_buttons[index].set_middle_click_action(action=None)
 
                 except TypeError:
                     pass

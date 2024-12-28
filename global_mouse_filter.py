@@ -1,6 +1,6 @@
 from typing import Any
 
-from PyQt6.QtCore import QObject, QEvent
+from PyQt6.QtCore import QObject, QEvent, Qt
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QPushButton
 
@@ -60,13 +60,9 @@ class GlobalMouseFilter(QObject):
                 if filtered_event.type() == QEvent.Type.MouseMove:
                     self.handle_mouse_move(global_pos)
                 elif filtered_event.type() == QEvent.Type.MouseButtonPress:
-                    self.handle_mouse_press(global_pos)
-                    # Let other buttons through (especially the close button)
-                    if isinstance(obj, QPushButton):
-                        obj.click()
-                        return True
+                    self.handle_mouse_press(filtered_event)  # Pass the QMouseEvent instead
                 elif filtered_event.type() == QEvent.Type.MouseButtonRelease:
-                    self.handle_mouse_release(global_pos)
+                    self.handle_mouse_release(filtered_event)  # Pass the event directly
 
         return super().eventFilter(obj, filtered_event)
 
@@ -90,17 +86,43 @@ class GlobalMouseFilter(QObject):
 
             self.area_button.set_hover_pos(global_pos)
 
-    def handle_mouse_press(self, global_pos):
+    def handle_mouse_press(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            global_pos = event.globalPosition().toPoint()
+            local_pos = self.area_button.mapFromGlobal(global_pos)
+            active_section = self.area_button.check_active_area(local_pos.x(), local_pos.y())
+
+            if active_section != -1:
+                self.area_button.is_pressed = True
+                self.area_button.pressed_section = active_section  # Store which section was pressed
+                self.task_switcher_pie.pie_buttons[active_section].setDown(True)
+                self.area_button.update()
+        elif event.button() == Qt.MouseButton.RightButton:
+            global_pos = event.globalPosition().toPoint()
+            local_pos = self.area_button.mapFromGlobal(global_pos)
+            active_section = self.area_button.check_active_area(local_pos.x(), local_pos.y())
+
+            if active_section != -1:
+                self.area_button.is_pressed = True
+                self.area_button.pressed_section = active_section  # Store which section was pressed
+                self.task_switcher_pie.pie_buttons[active_section].setDown(True)
+                self.area_button.update()
+        elif event.button() == Qt.MouseButton.MiddleButton:
+            global_pos = event.globalPosition().toPoint()
+            local_pos = self.area_button.mapFromGlobal(global_pos)
+            active_section = self.area_button.check_active_area(local_pos.x(), local_pos.y())
+
+            if active_section != -1:
+                self.area_button.is_pressed = True
+                self.area_button.pressed_section = active_section  # Store which section was pressed
+                self.task_switcher_pie.pie_buttons[active_section].setDown(True)
+                self.area_button.update()
+
+    def handle_mouse_release(self, event: QMouseEvent):
+        global_pos = event.globalPosition().toPoint()
         local_pos = self.area_button.mapFromGlobal(global_pos)
-        active_section = self.area_button.check_active_area(local_pos.x(), local_pos.y())
+        released_section = self.area_button.check_active_area(local_pos.x(), local_pos.y())
 
-        if active_section != -1:
-            self.area_button.is_pressed = True
-            self.area_button.pressed_section = active_section  # Store which section was pressed
-            self.task_switcher_pie.pie_buttons[active_section].setDown(True)
-            self.area_button.update()
-
-    def handle_mouse_release(self, global_pos):
         if self.area_button.is_pressed:
             self.area_button.is_pressed = False
             pressed_section = getattr(self.area_button, 'pressed_section', -1)
@@ -108,13 +130,16 @@ class GlobalMouseFilter(QObject):
             if pressed_section != -1:
                 self.task_switcher_pie.pie_buttons[pressed_section].setDown(False)
 
-                local_pos = self.area_button.mapFromGlobal(global_pos)
-                released_section = self.area_button.check_active_area(local_pos.x(), local_pos.y())
-
-                # Only trigger click if released in same section as pressed
+                # Check if released in the same section
                 if released_section == pressed_section:
-                    self.task_switcher_pie.pie_buttons[released_section].click()
+                    if event.button() == Qt.MouseButton.LeftButton:
+                        self.task_switcher_pie.pie_buttons[released_section].trigger_left_click_action()
+                    elif event.button() == Qt.MouseButton.RightButton:
+                        self.task_switcher_pie.pie_buttons[released_section].trigger_right_click_action()
+                    elif event.button() == Qt.MouseButton.MiddleButton:
+                        self.task_switcher_pie.pie_buttons[released_section].trigger_middle_click_action()
                 else:
-                    print(f"Released in different section or outside (pressed: {pressed_section}, released: {released_section})")
+                    print(f"Released in a different section or outside (pressed: {pressed_section}, released: {released_section})")
 
             self.area_button.pressed_section = -1  # Reset pressed section
+

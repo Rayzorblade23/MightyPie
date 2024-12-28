@@ -70,6 +70,13 @@ def focus_window_by_handle(hwnd):
     except Exception as e:
         print(f"Could not focus main_window with handle '{get_window_title(hwnd)}': {e}")
 
+def close_window_by_handle(hwnd):
+    """Close a window given its handle."""
+    try:
+        win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
+    except Exception as e:
+        print(f"Could not close window with handle '{hwnd}': {e}")
+
 
 def get_friendly_app_name(exe_path: str):
     """Get the FileDescription (friendly app name) from the executable."""

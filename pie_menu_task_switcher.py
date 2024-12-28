@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QPushButton,
 from area_button import AreaButton
 from config import CONFIG
 from donut_slice_button import DonutSliceButton
+from exp_button import ExpButton
 from pie_button import PieButton
 from rings import SmoothCircle
 
@@ -111,19 +112,19 @@ class PieMenuTaskSwitcher(QWidget):
         # self.outer_ring.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         # self.outer_ring.lower()
 
-        # # Create and configure the refresh button
-        # self.refresh_button = ExpButton(
-        #     text="",
-        #     object_name="refreshButton",
-        #     action=lambda checked: print("What"),
-        #     fixed_size=True,
-        #     # Using size instead of geometry
-        #     size=(CONFIG.INNER_RADIUS * 2, CONFIG.INNER_RADIUS * 2),
-        #     pos=(self.width() // 2 - CONFIG.INNER_RADIUS, self.height() // 2 - CONFIG.INNER_RADIUS)  # Using position for x and y
-        # )
-        # self.refresh_button.setParent(self)
-        # self.refresh_button.lower()
-        # self.view.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        # Create and configure the refresh button
+        self.middle_button = ExpButton(
+            text="",
+            object_name="middleButton",
+            action=lambda: self.parent().hide(),
+            fixed_size=True,
+            # Using size instead of geometry
+            size=(CONFIG.INNER_RADIUS * 2, CONFIG.INNER_RADIUS * 2),
+            pos=(self.width() // 2 - CONFIG.INNER_RADIUS, self.height() // 2 - CONFIG.INNER_RADIUS)  # Using position for x and y
+        )
+        self.middle_button.setParent(self)
+        self.middle_button.lower()
+        self.view.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         # Creates the area button that has the screen spanning pie sections
         self.area_button = AreaButton("Slice!",

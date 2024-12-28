@@ -27,6 +27,12 @@ class PieButton(QPushButton):
         super().__init__(parent)
 
         self.setObjectName(object_name)
+
+        # Store actions for each mouse button
+        self.left_click_action = None
+        self.right_click_action = None
+        self.middle_click_action = None
+
         self.hovered = False
         # Create a QVBoxLayout for the label
         self.label_layout = QVBoxLayout()
@@ -61,16 +67,16 @@ class PieButton(QPushButton):
         #         QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum
         #     )
 
-        try:
-            self.clicked.disconnect()
-        except TypeError:
-            pass  # No existing connections to disconnect
-
-        # Check if action is provided and is callable
-        if callable(action):
-            self.clicked.connect(action)
-        else:
-            self.clicked.connect(self.default_action)
+        # try:
+        #     self.clicked.disconnect()
+        # except TypeError:
+        #     pass  # No existing connections to disconnect
+        #
+        # # Check if action is provided and is callable
+        # if callable(action):
+        #     self.clicked.connect(action)
+        # else:
+        #     self.clicked.connect(self.default_action)
 
         # Set position if provided
         x, y = pos
@@ -106,6 +112,8 @@ class PieButton(QPushButton):
                 self.label_layout.removeWidget(self.label_2)
                 self.label_2.deleteLater()  # Safely delete the widget
                 del self.label_2  # Delete the attribute to avoid future references
+
+
 
     def update_icon(self, app_icon_path=None):
         """Add or remove an icon and spacer in the given layout based on the provided icon path."""
@@ -149,6 +157,52 @@ class PieButton(QPushButton):
                 icon_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
 
                 self.layout().insertWidget(1, icon_label)
+
+    # def mousePressEvent(self, event):
+    #     if event.button() == Qt.MouseButton.LeftButton:
+    #         print("MIDDDLE CLICKKEKD")
+    #
+    #         self.left_click_action()
+    #     elif event.button() == Qt.MouseButton.MiddleButton:
+    #         print("MIDDDLE CLICKKEKD")
+    #         self.middle_click_action()
+    #     elif event.button() == Qt.MouseButton.RightButton:
+    #         self.right_click_action()
+    #     # We do NOT call the base class method (super) here
+    #     # to prevent the default action (like emitting the clicked signal).
+
+    def set_left_click_action(self, action):
+        """Set the action for left-click."""
+        self.left_click_action = action
+
+    def set_right_click_action(self, action):
+        """Set the action for right-click."""
+        self.right_click_action = action
+
+    def set_middle_click_action(self, action):
+        """Set the action for middle-click."""
+        self.middle_click_action = action
+
+    def trigger_left_click_action(self):
+        """Trigger the left-click action."""
+        if self.left_click_action:
+            self.left_click_action()
+        else:
+            print(f"Left-click action has not been set for button: {self.objectName()}")
+
+    def trigger_right_click_action(self):
+        """Trigger the right-click action."""
+        if self.right_click_action:
+            self.right_click_action()
+        else:
+            print(f"Right-click action has not been set for button: {self.objectName()}")
+
+    def trigger_middle_click_action(self):
+        """Trigger the middle-click action."""
+        if self.middle_click_action:
+            self.middle_click_action()
+        else:
+            print(f"Middle-click action has not been set for button: {self.objectName()}")
 
     def enterEvent(self, event):
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))  # Change cursor on hover
