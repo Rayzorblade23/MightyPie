@@ -74,14 +74,13 @@ class ScrollingLabel(QWidget):
         rect.moveLeft((self.rect().width() - rect.width()) // 2)
         rect.moveTop(-self.v_offset)
         self._container.setGeometry(rect)
-        self._check_text_fit()
+        # self._check_text_fit()
 
     def update_text(self, new_text: str):
         """Update the text of the scrolling label."""
         self.label.setText(new_text)
         self.text_scroll_pos = 0  # Reset scroll position
-        # self._check_text_fit()  # Re-evaluate if scrolling is needed
-        # self.resizeEvent()
+        self._check_text_fit()  # Re-evaluate if scrolling is needed
 
     def _set_font_style(self, font_style: FontStyle):
         """Set the font style based on the font_styles.py enum."""
@@ -112,22 +111,24 @@ class ScrollingLabel(QWidget):
             text_width = int(text_width * 1.1)  # Adjust the factor as needed
 
         # Manually calculate the available width
-        label_width = self.width() - 2 * self.label_margins
+        label_width = self.rect().width() - 2 * self.label_margins
+
+        # print(f"{self.label.text()}\n Text width is: {text_width} \n Label width is  {label_width} \n")
 
         if text_width > label_width:
             if not self.text_scroll_active:
                 self.text_scroll_active = True
                 self.timer.start()
 
-                # Ensure label is wide enough to show full text
-                self.label.setFixedWidth(text_width)
         else:
             if self.text_scroll_active:
                 self.text_scroll_active = False
                 self.timer.stop()
 
-            # Reset label width and position
-            self.label.setFixedWidth(text_width)
+        # Reset label width and position
+        self.label.setFixedWidth(text_width)
+        # print(f"Afterwards Label width is  {self.label.width()} \n")
+
 
     def _scroll_text(self):
         """Animate scrolling text with pauses."""
