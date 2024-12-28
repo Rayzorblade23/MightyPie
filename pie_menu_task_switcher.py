@@ -2,12 +2,13 @@ import math
 
 from PyQt6.QtCore import QRectF, Qt, QPropertyAnimation, QRect, QEasingCurve, QSize
 from PyQt6.QtGui import QPainter, QBrush, QPen, QColor
-from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsView, QGraphicsScene, QWidget, QPushButton, QGraphicsOpacityEffect
+from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QPushButton, QGraphicsOpacityEffect
 
 from area_button import AreaButton
 from config import CONFIG
 from donut_slice_button import DonutSliceButton
 from pie_button import PieButton
+from rings import SmoothCircle
 
 
 class PieMenuTaskSwitcher(QWidget):
@@ -48,15 +49,6 @@ class PieMenuTaskSwitcher(QWidget):
         self.view.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         self.view.setGeometry(0, 0, self.width(), self.height())
         self.view.setObjectName(self.obj_name)
-
-        class SmoothCircle(QGraphicsEllipseItem):
-
-            def paint(self, painter: QPainter, option, widget=None):
-                # Ensure antialiasing
-                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-                painter.setBrush(self.brush())
-                painter.setPen(self.pen())
-                painter.drawEllipse(self.rect())
 
         # Use the subclass instead of QGraphicsEllipseItem
         self.inner_circle_main = SmoothCircle(
@@ -108,6 +100,16 @@ class PieMenuTaskSwitcher(QWidget):
             parent=self
         )
         self.donut_button.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+
+        # self.outer_ring = GradientCircle(
+        #     object_name="GradientCircle",
+        #     outer_radius=CONFIG.INNER_RADIUS + 30,
+        #     inner_radius=CONFIG.INNER_RADIUS + 10,
+        #     pos=(self.rect().center().x(), self.rect().center().y()),
+        #     parent=self
+        # )
+        # self.outer_ring.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        # self.outer_ring.lower()
 
         # # Create and configure the refresh button
         # self.refresh_button = ExpButton(
@@ -216,8 +218,8 @@ class PieMenuTaskSwitcher(QWidget):
         # Size animation
         size_animation = QPropertyAnimation(button, b"size")
         size_animation.setDuration(duration)  # Duration in milliseconds
-        size_animation.setStartValue(QSize(CONFIG.BUTTON_WIDTH // 4,CONFIG.BUTTON_HEIGHT // 4))  # Initial size (small)
-        size_animation.setEndValue(QSize(CONFIG.BUTTON_WIDTH,CONFIG.BUTTON_HEIGHT))  # Final size (target size)
+        size_animation.setStartValue(QSize(CONFIG.BUTTON_WIDTH // 4, CONFIG.BUTTON_HEIGHT // 4))  # Initial size (small)
+        size_animation.setEndValue(QSize(CONFIG.BUTTON_WIDTH, CONFIG.BUTTON_HEIGHT))  # Final size (target size)
         size_animation.setEasingCurve(QEasingCurve.Type.OutCurve)  # Easing curve for size
 
         # Opacity animation to fade in/out the button
@@ -227,7 +229,6 @@ class PieMenuTaskSwitcher(QWidget):
         opacity_animation.setEndValue(1.0)  # End at fully opaque
         opacity_animation.setEasingCurve(QEasingCurve.Type.Linear)  # Easing curve for opacity
 
-
         # Append animations to the list to avoid garbage collection
         self.animations.extend([pos_animation, size_animation, opacity_animation])
 
@@ -235,5 +236,3 @@ class PieMenuTaskSwitcher(QWidget):
         pos_animation.start()
         size_animation.start()
         opacity_animation.start()
-
-

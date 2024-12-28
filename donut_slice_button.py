@@ -16,6 +16,7 @@ class DonutSliceButton(QPushButton):
                  span_angle: float = 45,
                  action: Optional[Callable] = None,
                  pos: Tuple[int, int] = (0, 0),
+                 is_gradient: bool = False,
                  *args, **kwargs):
         """Initialize the donut slice button with inner and outer radius and angles."""
         super().__init__(*args, **kwargs)
@@ -24,7 +25,7 @@ class DonutSliceButton(QPushButton):
         self.inner_radius = inner_radius
         self.start_angle = start_angle  # 0 = 3 o'clock, increases counter-clockwise
         self.span_angle = span_angle
-        self.use_gradient_painting = False
+        self.use_gradient_painting = is_gradient
 
         # Calculate size needed to contain the full donut slice
         self.button_size = self.outer_radius * 2
