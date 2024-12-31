@@ -2,9 +2,6 @@
 - save previous condition of minimized windows (i. e.: maximized or normal)
 
 
-- close window on right-click
-
-
 IDEA:
 Remove Windows button but open when clicking bottom left of screen
 
@@ -14,6 +11,6 @@ BUGS:
 
 - Spotify text is cut off when title changes (maybe fixed?!)
 
-- bug in getting windows to distribute to both pie manager pages
+- changing titles don't refresh when Switcher is open
 
-- Text 2 is cut off a bit, probably not regarding italics
+letzte zahl im tuple ist ein index für das wievielte instanz ... oder lieber wie viele instanzen es gibt... ?

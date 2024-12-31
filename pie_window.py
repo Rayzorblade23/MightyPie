@@ -1,17 +1,17 @@
 import threading
 from threading import Lock
-from typing import Dict
+from typing import Dict, List
 
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
-from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication
+from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication, QWidget
 
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
 from pie_button import PieButton
 from pie_menu_task_switcher import PieMenuTaskSwitcher
-from window_functions import show_pie_window, get_filtered_list_of_window_titles, get_application_info, focus_window_by_handle, \
-    close_window_by_handle
+from window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
+    close_window_by_handle, load_cache
 from window_manager import WindowManager
 
 manager = WindowManager.get_instance()
@@ -49,10 +49,11 @@ class PieWindow(QMainWindow):
 
         self.setup_window()
 
+        self.num_pie_menus = 2
         self.button_mapping_lock = Lock()
-        self.last_window_titles = []
-        self.pie_button_texts = ["Empty" for _ in range(CONFIG.MAX_BUTTONS * 2)]
-        self.buttons_To_windows_map = {}
+        self.last_window_handles = []
+        self.pie_button_texts = ["Empty" for _ in range(CONFIG.MAX_BUTTONS * self.num_pie_menus)]
+        self.windowHandles_To_buttonIndexes_map = {}
 
         self.active_child = 1
         self.is_window_open = False
@@ -124,10 +125,10 @@ class PieWindow(QMainWindow):
 
         # Lock access to shared data to ensure thread safety
         with self.button_mapping_lock:
-            current_window_titles = get_filtered_list_of_window_titles(self)
+            current_window_handles = list(get_filtered_list_of_windows(self))
             # only actually refresh when windows have opened or closed
-            if current_window_titles != self.last_window_titles:
-                self.last_window_titles = current_window_titles
+            if current_window_handles != self.last_window_handles:
+                self.last_window_handles = current_window_handles
                 self.refresh()  # Safely call the refresh method to update UI
 
         # elapsed_time = time.time() - start_time
@@ -141,60 +142,47 @@ class PieWindow(QMainWindow):
     def update_buttons(self):
         """Update main_window buttons with current main_window information."""
 
-        def get_free_button_index(temp_pie_button_names, button_text=""):
-            """Find a free button index in the button names list."""
-            for j in range(CONFIG.MAX_BUTTONS * 2):
-                if temp_pie_button_names[j] == "Empty" or temp_pie_button_names[j] == button_text:
-                    return j
-            return None
-
         def background_task():
-            windows_titles = get_filtered_list_of_window_titles(self)
+            window_mapping = get_filtered_list_of_windows(self)
 
+            # Update data for 2x8 buttons
             final_button_updates = []
 
+            # Button Texts for 2x8 buttons
             temp_pie_button_texts = (
                 self.pie_button_texts
             )  # because the names need to be evaluated here
 
-            for i, window_title in enumerate(windows_titles):
-                window_handle = manager.get_window_titles_to_hwnds_map().get(window_title)
-                if not window_handle:  # Exclude windows with no handle
-                    continue
+            app_name_cache = load_cache()
 
-                result = get_application_info(window_handle)
+            for window_handle, (window_title, exe_name, instance_number) in window_mapping.items():
+                # Use .get() to safely access the dictionary, defaulting to None if not found
+                app_name = app_name_cache.get(exe_name, {}).get("app_name", None)
+                app_icon_path = app_name_cache.get(exe_name, {}).get("icon_path", None)
 
-                # Check if the result is a tuple (app_name, app_icon_path)
-                if isinstance(result, tuple):
-                    app_name, app_icon_path = result
-                elif isinstance(result, str):
-                    # If result is a string, print the error and handle it
-                    print(f"Error: {result}")
-                    app_name, app_icon_path = None, None  # Default values or handle the error case
+                if instance_number != 0:
+                    button_text_1 = f"{window_title} ({instance_number})"
                 else:
-                    # Handle unexpected result type
-                    print(f"Unexpected result: {result}")
-                    app_name, app_icon_path = None, None  # Default values or handle the error case
-
-                button_title = (
-                    window_title
-                    if f" - {app_name}" not in window_title
-                    else window_title.replace(f" - {app_name}", "")
-                )
-                button_text_1 = button_title
+                    button_text_1 = f"{window_title}"
                 button_text_2 = app_name
 
                 # Check if the main_window is already assigned a button
-                button_index = self.buttons_To_windows_map.get(window_handle)
+                button_index = self.windowHandles_To_buttonIndexes_map.get(window_handle)
+
+                free_button_indexes = []
+                for j in range(CONFIG.MAX_BUTTONS * self.num_pie_menus):
+                    if temp_pie_button_texts[j] == "Empty":
+                        free_button_indexes.append(j)
 
                 # If Button Index not assigned, find a free button
-                if button_index is None or button_index > 7:
-                    button_index = get_free_button_index(temp_pie_button_texts, button_text_1)
-                    # If Button Index still not assigned, no free button for you :(
-                    if button_index is None:
-                        continue
-                    # Assign Button Index to the main_window handle
-                    self.buttons_To_windows_map[window_handle] = button_index
+                if len(free_button_indexes) < 1:
+                    # No free button for you :(
+                    continue
+                else:
+                    if button_index is None or (button_index > 7 and button_index > min(free_button_indexes)):
+                        button_index = free_button_indexes[0]
+                        # Assign Button Index to the main_window handle
+                        self.windowHandles_To_buttonIndexes_map[window_handle] = button_index
 
                 temp_pie_button_texts[button_index] = button_text_1  # Update button name
 
@@ -208,17 +196,20 @@ class PieWindow(QMainWindow):
                     }
                 )
 
-            # Clean buttons_To_windows_map dict of old windows
-            if len(self.buttons_To_windows_map) > 20:
+            # print(self.windowHandles_To_buttonIndexes_map)
+            # print("###############")
+
+            # Clean windowHandles_To_buttonIndexes_map dict of old windows
+            if len(self.windowHandles_To_buttonIndexes_map) > 20:
                 # Step 1: Extract valid window_titles_To_hwnds_map from button_updates
                 valid_window_handles = {
                     update["window_handle"] for update in final_button_updates
                 }
 
-                # Step 2: Filter buttons_To_windows_map to only keep pairs where the window_handle is in valid_window_handles
-                self.buttons_To_windows_map = {
+                # Step 2: Filter windowHandles_To_buttonIndexes_map to only keep pairs where the window_handle is in valid_window_handles
+                self.windowHandles_To_buttonIndexes_map = {
                     handle: button_id
-                    for handle, button_id in self.buttons_To_windows_map.items()
+                    for handle, button_id in self.windowHandles_To_buttonIndexes_map.items()
                     if handle in valid_window_handles
                 }
             # Emit the signal instead of using invokeMethod
@@ -245,7 +236,8 @@ class PieWindow(QMainWindow):
 
             self.pie_button_texts[button_index] = button_text_1
 
-            task_switcher.pie_buttons: Dict[int, PieButton]
+            task_switcher: QWidget
+            task_switcher.pie_buttons: List[PieButton]
             task_switcher.pie_buttons[button_index].set_label_1_text(button_text_1)
             task_switcher.pie_buttons[button_index].set_label_2_text(button_text_2)
             task_switcher.pie_buttons[button_index].update_icon(app_icon_path)
@@ -273,7 +265,7 @@ class PieWindow(QMainWindow):
             task_switcher.pie_buttons[button_index].setEnabled(True)
 
         # Clear button attributes when button index not among updates
-        for i in range(CONFIG.MAX_BUTTONS * 2):
+        for i in range(CONFIG.MAX_BUTTONS * self.num_pie_menus):
             if i not in [update["index"] for update in button_updates]:
                 index = i
                 self.pie_button_texts[i] = "Empty"

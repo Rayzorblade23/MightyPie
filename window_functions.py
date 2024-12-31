@@ -1,8 +1,7 @@
 import ctypes
 import json
 import os
-import time
-from typing import Dict
+from typing import Dict, Tuple
 
 import psutil
 import win32api
@@ -11,7 +10,7 @@ import win32gui
 import win32process
 import win32ui
 from PIL import Image
-from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget
 
@@ -48,7 +47,126 @@ app_cache = load_cache()
 manager = WindowManager.get_instance()
 
 
-def get_pid_from_window_handle(hwnd):
+def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple[str, str, int]]:
+    """Enumerate and retrieve a list of visible windows
+
+    This is the window info, where:
+        - The key is the HWND (int).
+        - The values are a tuple containing:
+            1. Window title (str): The title of the window.
+            2. Exe name (str): The human-friendly name of the executable.
+            3. Instance number (int): A unique instance number for this window.
+    """
+    temp_window_hwnds_mapping: Dict[int, Tuple[str, str, int]] = {}
+    if this_window is not None:
+        this_program_hwnd = int(this_window.winId())  # Exclude this program from the Switcher
+    else:
+        this_program_hwnd = 0
+
+    def enum_windows_callback(hwnd, lparam):
+        # Check if the main_window is visible
+        if win32gui.IsWindowVisible(hwnd):
+
+            raw_window_title = win32gui.GetWindowText(hwnd)
+            class_name = win32gui.GetClassName(hwnd)
+
+            # print(f"hwnd: {hwnd} and main_window title: {window_title}. This is the main_window functions script \n")
+
+            # Check if the main_window is cloaked (hidden or transparent)
+            isCloaked = ctypes.c_int(0)
+            ctypes.WinDLL("dwmapi").DwmGetWindowAttribute(
+                hwnd, 14, ctypes.byref(isCloaked), ctypes.sizeof(isCloaked)
+            )
+            # Apply filtering conditions to determine if we want to include this main_window
+
+            if (
+                    win32gui.IsWindowVisible(hwnd)  # Window must be visible
+                    and isCloaked.value == 0  # Window must not be cloaked (hidden)
+                    and raw_window_title.strip()  # Window must have a non-empty title
+                    and class_name != "Progman"  # Exclude system windows like "Progman"
+                    and class_name != "AutoHotkeyGUI"  # Exclude "AutoHotkey" windows
+                    and hwnd != this_program_hwnd  # Exclude this program
+            ):
+                # entry for temp_window_hwnds_mapping
+                entry, app_name = _get_window_info(hwnd)
+                # Remove the app_name from window_title if it is there
+                for _hwnd, (_window_title, _exe_name, _) in entry.items():
+                    _window_title = (
+                        _window_title
+                        if f" - {app_name}" not in _window_title
+                        else _window_title.replace(f" - {app_name}", "")
+                    )
+                    # Now window_title is updated without the app_name suffix if applicable
+                    temp_window_hwnds_mapping[hwnd] = _window_title, _exe_name, 0
+
+    # Enumerate all top-level windows and pass each main_window's handle to the callback
+    try:
+        win32gui.EnumWindows(enum_windows_callback, None)
+
+        # print(temp_window_hwnds_mapping)
+        # print("###############\n")
+        temp_window_hwnds_mapping = assign_instance_numbers(temp_window_hwnds_mapping)
+
+        # Update the main mapping dictionary with the filtered main_window handles
+        manager.update_window_hwnd_mapping(temp_window_hwnds_mapping)
+
+        return manager.get_window_hwnd_mapping()
+    except Exception as e:
+        print(f"Error getting windows: {e}")
+        return []
+
+
+def assign_instance_numbers(temp_window_hwnds_mapping: Dict[int, Tuple[str, str, int]]) -> Dict[int, Tuple[str, str, int]]:
+    """Assign unique instance numbers to windows with the same title and executable name."""
+
+    # Get the current mapping of HWNDs to window info from the manager
+    existing_mapping = manager.get_window_hwnd_mapping()
+
+    # Create our result mapping
+    result_mapping = {}
+
+    # Track used instance numbers for each title/exe pair
+    title_exe_mapping: Dict[Tuple[str, str], set] = {}
+
+    # First step: Register all instances from the manager
+    for hwnd, (title, exe, instance) in existing_mapping.items():
+        key = (title, exe)
+        if key not in title_exe_mapping:
+            title_exe_mapping[key] = set()
+        title_exe_mapping[key].add(instance)
+
+    print(title_exe_mapping)
+
+    # Second step: Process each window
+    for hwnd, (title, exe, instance) in temp_window_hwnds_mapping.items():
+        # If window exists in manager, update its title and exe but keep the instance number
+        if hwnd in existing_mapping:
+            _, _, instance = existing_mapping[hwnd]  # Preserve the existing instance number
+            new_title, _, _ = temp_window_hwnds_mapping[hwnd]  # Get the updated title and exe
+            if new_title != title:
+                instance = 0
+            result_mapping[hwnd] = (new_title, exe, instance)
+            continue
+
+        key = (title, exe)
+        if key not in title_exe_mapping:
+            title_exe_mapping[key] = set()
+
+        # Always try to find the next available instance number
+        new_instance = 0
+        while new_instance in title_exe_mapping[key]:
+            # print(f"DEBUG: Incrementing instance for ({title}, {exe}) from {new_instance} to {new_instance + 1}")
+            new_instance += 1
+
+        # Add the new instance to our tracking set
+        title_exe_mapping[key].add(new_instance)
+        result_mapping[hwnd] = (title, exe, new_instance)
+
+        print(result_mapping)
+    return result_mapping
+
+
+def _get_pid_from_window_handle(hwnd):
     """Retrieve the Process ID (PID) for a given main_window handle."""
     try:
         _, pid = win32process.GetWindowThreadProcessId(hwnd)
@@ -68,7 +186,8 @@ def focus_window_by_handle(hwnd):
         win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
                               win32con.SWP_SHOWWINDOW + win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
     except Exception as e:
-        print(f"Could not focus main_window with handle '{get_window_title(hwnd)}': {e}")
+        print(f"Could not focus main_window with handle '{_get_window_title(hwnd)}': {e}")
+
 
 def close_window_by_handle(hwnd):
     """Close a window given its handle."""
@@ -78,7 +197,47 @@ def close_window_by_handle(hwnd):
         print(f"Could not close window with handle '{hwnd}': {e}")
 
 
-def get_friendly_app_name(exe_path: str):
+def _get_window_info(window_handle):
+    """Retrieve the application name, window title, exe_name, and default instance number 0 for a given main_window handle.
+
+    Args:
+        window_handle (any): The handle of the main_window for which to retrieve application info.
+
+    Returns:
+        dict: A dictionary where the key is the window_handle (int) and the value is a tuple (window_title, exe_name, 0).
+    """
+    result = {}
+    window_title = _get_window_title(window_handle)
+
+    if window_handle:
+        pid = _get_pid_from_window_handle(window_handle)
+        if pid:
+            try:
+                process = psutil.Process(pid)
+                exe_path = process.exe()
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as e:
+                print(f"Error accessing executable for PID {pid}: {e}")
+                result[window_handle] = (window_title, "Unknown App", 0)
+                return result
+
+            if os.path.exists(exe_path):
+                exe_name = os.path.basename(exe_path).lower()
+                if exe_name in app_cache:
+                    app_name = app_cache[exe_name]["app_name"]
+                else:
+                    app_name = _get_friendly_app_name(exe_path)
+                    app_cache[exe_name] = {"app_name": app_name, "icon_path": _get_window_icon(exe_path, window_handle)}
+                    save_cache(app_cache)
+                result[window_handle] = (window_title, exe_name, 0)
+                return result, app_name
+            else:
+                print(f"Executable path does not exist: {exe_path}")
+        result[window_handle] = (window_title, "Unknown App", 0)
+
+    return result
+
+
+def _get_friendly_app_name(exe_path: str):
     """Get the FileDescription (friendly app name) from the executable."""
     try:
         language, codepage = win32api.GetFileVersionInfo(
@@ -96,46 +255,7 @@ def get_friendly_app_name(exe_path: str):
         return "Unknown App"
 
 
-def get_application_info(window_handle):
-    """Retrieve the application name and icon path for a given main_window handle (and save friendly name).
-
-    Args:
-        window_handle (any): The handle of the main_window for which to retrieve application info.
-
-    Returns:
-        tuple: A tuple containing the application name (str) and icon path (str) if the main_window handle is valid and information is found.
-        str: A string indicating either the main_window title (str) if the main_window handle is invalid, or an error message (str) if an exception occurs.
-    """
-    window_title = get_window_title(window_handle)
-    try:
-        if window_handle:
-            pid = get_pid_from_window_handle(window_handle)
-            if pid:
-                process = psutil.Process(pid)
-                try:
-                    exe_path = process.exe()
-                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as e:
-                    print(f"Error accessing executable for PID {pid}: {e}")
-                    return "Unknown App"
-                if os.path.exists(exe_path):
-                    exe_name = os.path.basename(exe_path).lower()
-                    if exe_name in app_cache:
-                        app_name = app_cache[exe_name]["app_name"]
-                        icon_path = app_cache[exe_name]["icon_path"]
-                    else:
-                        icon_path = get_window_icon(exe_path, window_handle)
-                        app_name = get_friendly_app_name(exe_path)
-                        app_cache[exe_name] = {"app_name": app_name, "icon_path": icon_path}
-                        save_cache(app_cache)
-                    return app_name, icon_path
-
-        return window_title
-    except Exception as e:
-        print(f"Error fetching application name for {window_title}: {e}")
-        return "Unknown App, main_window title: " + window_title
-
-
-def get_window_icon(exe_path, hwnd):
+def _get_window_icon(exe_path, hwnd):
     try:
         if not exe_path:
             print(f"Executable path not found for hwnd: {hwnd}")
@@ -200,68 +320,13 @@ def get_window_icon(exe_path, hwnd):
         return None
 
 
-def get_window_title(hwnd):
+def _get_window_title(hwnd):
     """Retrieve the title of the main_window for a given main_window handle."""
     try:
         return win32gui.GetWindowText(hwnd)
     except Exception as e:
         print(f"Error retrieving main_window title for handle {hwnd}: {e}")
         return "Unknown Window Title"
-
-
-def get_filtered_list_of_window_titles(this_window: QWidget = None):
-    """Enumerate and retrieve a list of visible windows."""
-    temp_window_titles_To_hwnds_map: Dict[int, int] = {}
-    if this_window is not None:
-        this_program_hwnd = int(this_window.winId())  # Exclude this program from the Switcher
-    else:
-        this_program_hwnd = 0
-
-    def enum_windows_callback(hwnd, lparam):
-        # Check if the main_window is visible
-        if win32gui.IsWindowVisible(hwnd):
-
-            window_title = win32gui.GetWindowText(hwnd)
-            class_name = win32gui.GetClassName(hwnd)
-
-            # print(f"hwnd: {hwnd} and main_window title: {window_title}. This is the main_window functions script \n")
-
-            # Check if the main_window is cloaked (hidden or transparent)
-            isCloaked = ctypes.c_int(0)
-            ctypes.WinDLL("dwmapi").DwmGetWindowAttribute(
-                hwnd, 14, ctypes.byref(isCloaked), ctypes.sizeof(isCloaked)
-            )
-            # Apply filtering conditions to determine if we want to include this main_window
-
-            if (
-                    win32gui.IsWindowVisible(hwnd)  # Window must be visible
-                    and isCloaked.value == 0  # Window must not be cloaked (hidden)
-                    and window_title.strip()  # Window must have a non-empty title
-                    and class_name != "Progman"  # Exclude system windows like "Progman"
-                    and class_name != "AutoHotkeyGUI"  # Exclude "AutoHotkey" windows
-                    and hwnd != this_program_hwnd  # Exclude this program
-            ):
-                if window_title in temp_window_titles_To_hwnds_map:
-                    # Find the next available number by incrementing the count
-                    count = 2
-                    new_window_title = f"{window_title} ({count})"
-                    while new_window_title in temp_window_titles_To_hwnds_map:
-                        count += 1
-                        new_window_title = f"{window_title} ({count})"
-                    window_title = new_window_title
-
-                temp_window_titles_To_hwnds_map[window_title] = hwnd
-
-    # Enumerate all top-level windows and pass each main_window's handle to the callback
-    try:
-        win32gui.EnumWindows(enum_windows_callback, None)
-        # Update the main mapping dictionary with the filtered main_window handles
-        manager.update_window_titles_to_hwnds_map(temp_window_titles_To_hwnds_map)
-
-        return list(manager.get_window_titles_to_hwnds_map().keys())
-    except Exception as e:
-        print(f"Error getting windows: {e}")
-        return []
 
 
 def show_pie_window(pie_window: QWidget, pie_menu: QWidget):
