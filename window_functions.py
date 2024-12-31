@@ -135,18 +135,19 @@ def assign_instance_numbers(temp_window_hwnds_mapping: Dict[int, Tuple[str, str,
             title_exe_mapping[key] = set()
         title_exe_mapping[key].add(instance)
 
-    print(title_exe_mapping)
-
     # Second step: Process each window
     for hwnd, (title, exe, instance) in temp_window_hwnds_mapping.items():
         # If window exists in manager, update its title and exe but keep the instance number
         if hwnd in existing_mapping:
-            _, _, instance = existing_mapping[hwnd]  # Preserve the existing instance number
+            # print(f"Window {title} was there.")
+            old_title, _, instance = existing_mapping[hwnd]  # Preserve the existing instance number
             new_title, _, _ = temp_window_hwnds_mapping[hwnd]  # Get the updated title and exe
-            if new_title != title:
+            if new_title != old_title:
+                print("itle changed!")
                 instance = 0
-            result_mapping[hwnd] = (new_title, exe, instance)
-            continue
+            else:
+                result_mapping[hwnd] = (new_title, exe, instance)
+                continue
 
         key = (title, exe)
         if key not in title_exe_mapping:
@@ -162,7 +163,7 @@ def assign_instance_numbers(temp_window_hwnds_mapping: Dict[int, Tuple[str, str,
         title_exe_mapping[key].add(new_instance)
         result_mapping[hwnd] = (title, exe, new_instance)
 
-        print(result_mapping)
+        # print(result_mapping)
     return result_mapping
 
 

@@ -125,7 +125,9 @@ class PieWindow(QMainWindow):
 
         # Lock access to shared data to ensure thread safety
         with self.button_mapping_lock:
-            current_window_handles = list(get_filtered_list_of_windows(self))
+            current_window_handles = [
+                values[0] for values in get_filtered_list_of_windows(self).values()
+            ]
             # only actually refresh when windows have opened or closed
             if current_window_handles != self.last_window_handles:
                 self.last_window_handles = current_window_handles
