@@ -1,7 +1,11 @@
 import ctypes
-from ctypes import wintypes
+import sys
+from ctypes import byref, Structure, wintypes
+
 from PIL import Image
-from io import BytesIO
+from PIL.ImageQt import ImageQt
+from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton
 
 # Load necessary Windows API libraries
 user32 = ctypes.windll.user32
@@ -9,11 +13,13 @@ kernel32 = ctypes.windll.kernel32
 gdi32 = ctypes.windll.gdi32
 
 # Define constants
-WM_LBUTTONDBLCLK = 0x0203  # Left mouse button double-click message
 WM_MOUSEACTIVATE = 0x21
-WM_RBUTTONDOWN = 0x0204
-WM_RBUTTONUP = 0x0205
-WM_RBUTTONDBLCLK = 0x0206
+WM_LBUTTONDOWN = 0x0201  # Left mouse button down
+WM_LBUTTONUP = 0x0202  # Left mouse button up
+WM_LBUTTONDBLCLK = 0x0203  # Left mouse button double-click
+WM_RBUTTONDOWN = 0x0204  # Right mouse button down
+WM_RBUTTONUP = 0x0205  # Right mouse button up
+WM_RBUTTONDBLCLK = 0x0206  # Right mouse button double-click
 TB_BUTTONCOUNT = 0x0418
 TB_GETBUTTON = 0x0417
 PROCESS_VM_READ = 0x0010
@@ -21,6 +27,7 @@ PROCESS_VM_OPERATION = 0x0008
 PROCESS_VM_WRITE = 0x0020
 PROCESS_QUERY_INFORMATION = 0x0400
 TBSTATE_HIDDEN = 0x08  # Toolbar button state flag: Hidden
+WM_CONTEXTMENU = 0x007B  # Context menu message
 
 
 # Define ctypes structures
@@ -70,6 +77,7 @@ class BITMAPINFOHEADER(ctypes.Structure):
         ("biClrUsed", wintypes.DWORD),
         ("biClrImportant", wintypes.DWORD),
     ]
+
 
 def get_tray_icons(tray_wnd):
     """Retrieve tooltips and associated process IDs of tray icons."""
@@ -138,53 +146,6 @@ def get_tray_icons(tray_wnd):
     return tray_icons
 
 
-
-
-# Convert HICON to PIL Image
-def icon_to_pil_image(hIcon):
-    """Convert HICON to a PIL Image."""
-    # Get icon info from user32.dll (corrected)
-    icon_info = ICONINFO()
-    user32.GetIconInfo(hIcon, ctypes.byref(icon_info))  # Corrected call to GetIconInfo
-
-    # Extract the icon's bitmap
-    bitmap = icon_info.hbmColor
-    width = icon_info.xHotspot * 2
-    height = icon_info.yHotspot * 2
-
-    # Get bitmap data
-    hdc = gdi32.CreateCompatibleDC(0)
-    hBitmap = ctypes.c_void_p(bitmap)  # Ensure it's treated as a pointer handle
-    gdi32.SelectObject(hdc, hBitmap)
-
-    # Create a bitmap header
-    bitmap_header = BITMAPINFOHEADER()
-    bitmap_header.biSize = ctypes.sizeof(BITMAPINFOHEADER)
-    bitmap_header.biWidth = width
-    bitmap_header.biHeight = height
-    bitmap_header.biPlanes = 1
-    bitmap_header.biBitCount = 32
-    bitmap_header.biCompression = 0
-    bitmap_header.biSizeImage = width * height * 4
-    bitmap_header.biClrImportant = 0
-
-    # Create buffer to store bitmap pixels
-    buffer = ctypes.create_string_buffer(width * height * 4)
-
-    # Get bitmap pixels
-    gdi32.GetDIBits(hdc, hBitmap, 0, height, buffer, ctypes.byref(bitmap_header), 0)
-
-    # Convert to PIL Image
-    image_data = buffer.raw
-    pil_image = Image.frombytes('RGBA', (width, height), image_data)
-
-    # Clean up
-    gdi32.DeleteObject(hBitmap)
-    gdi32.DeleteDC(hdc)
-
-    return pil_image
-
-
 # Step 1: Find the tray window
 def find_tray_window():
     """Finds the system tray toolbar window."""
@@ -204,11 +165,36 @@ def find_tray_window():
     return tray_wnd
 
 
-# Simulate a click on the tray icon
-def trigger_tray_icon(hwnd):
-    """Simulate a left mouse button double-click on the tray icon."""
-    user32.PostMessageW(hwnd, WM_LBUTTONDBLCLK, 0, 0)
-    print(f"Simulated a double-click on tray icon with hwnd {hwnd}.")
+def trigger_tray_icon_left_click(hwnd, uCallbackMessage, uID):
+    """Trigger the full left-click interaction sequence for the tray icon, including WM_MOUSEACTIVATE."""
+    if not hwnd:
+        print("Invalid window handle (hwnd).")
+        return
+
+    # Ensure that the window can receive messages
+    result = user32.IsWindow(hwnd)
+    if not result:
+        print(f"Window handle {hwnd} is invalid.")
+        return
+
+    # Simulate WM_MOUSEACTIVATE (Activate window on click)
+    print(f"Sending WM_MOUSEACTIVATE to hwnd {hwnd}.")
+    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_MOUSEACTIVATE)  # Simulating Mouse Activate
+
+    # Simulate the entire sequence of left-click interactions
+    print(f"Sending WM_LBUTTONDOWN to hwnd {hwnd}.")
+    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONDOWN)  # Simulating Left Mouse Button Down
+
+    print(f"Sending WM_LBUTTONUP to hwnd {hwnd}.")
+    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONUP)  # Simulating Left Mouse Button Up
+
+    print(f"Sending WM_LBUTTONDBLCLK to hwnd {hwnd}.")
+    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONDBLCLK)  # Simulating Left Mouse Button Double Click
+
+    print(f"Sending WM_LBUTTONUP to hwnd {hwnd}.")
+    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONUP)  # Simulating Left Mouse Button Up
+
+    print(f"Simulated full left-click interaction and callback for tray icon with hwnd {hwnd}.")
 
 
 def trigger_tray_icon_right_click(hwnd, uCallbackMessage, uID):
@@ -243,21 +229,120 @@ def trigger_tray_icon_right_click(hwnd, uCallbackMessage, uID):
     print(f"Simulated full right-click interaction and callback for tray icon with hwnd {hwnd}.")
 
 
-# Example Usage:
-tray_window = find_tray_window()
-if tray_window:
-    icons = get_tray_icons(tray_window)
-    if icons:
-        first_icon = icons[1]
-        hwnd = first_icon["hwnd"]
-        uCallbackMessage = first_icon["uCallbackMessage"]
-        uID = first_icon["uID"]
-        tooltip = first_icon["tooltip"]  # Retrieve the tooltip for this icon
-        print(f"First tray icon hwnd: {hwnd}")
-        print(f"Tooltip: {tooltip}")  # Print the tooltip text
-        print(f"Callback message: {uCallbackMessage}, uID: {uID}")
-        trigger_tray_icon_right_click(hwnd, uCallbackMessage, uID)
+def icon_to_qpixmap(hIcon):
+    """Convert HICON to QPixmap with color fix."""
+    icon_info = ICONINFO()
+    user32.GetIconInfo(hIcon, ctypes.byref(icon_info))
+
+    # Extract the icon's bitmap
+    bitmap = icon_info.hbmColor
+    width = icon_info.xHotspot * 2
+    height = icon_info.yHotspot * 2
+
+    # Get bitmap data
+    hdc = gdi32.CreateCompatibleDC(0)
+    hBitmap = ctypes.c_void_p(bitmap)
+    gdi32.SelectObject(hdc, hBitmap)
+
+    # Create a bitmap header
+    bitmap_header = BITMAPINFOHEADER()
+    bitmap_header.biSize = ctypes.sizeof(BITMAPINFOHEADER)
+    bitmap_header.biWidth = width
+    bitmap_header.biHeight = height
+    bitmap_header.biPlanes = 1
+    bitmap_header.biBitCount = 32
+    bitmap_header.biCompression = 0
+    bitmap_header.biSizeImage = width * height * 4
+    bitmap_header.biClrImportant = 0
+
+    # Create buffer to store bitmap pixels
+    buffer = ctypes.create_string_buffer(width * height * 4)
+
+    # Get bitmap pixels
+    gdi32.GetDIBits(hdc, hBitmap, 0, height, buffer, ctypes.byref(bitmap_header), 0)
+
+    # Convert raw bytes to PIL Image
+    image_data = buffer.raw
+    pil_image = Image.frombytes('RGBA', (width, height), image_data)
+
+    # Fix color channels (BGR -> RGBA)
+    pixels = pil_image.load()  # Access pixels
+    for y in range(pil_image.height):
+        for x in range(pil_image.width):
+            r, g, b, a = pixels[x, y]
+            # Swap R and B to correct the color shift
+            pixels[x, y] = (b, g, r, a)
+
+    # Flip the image vertically (this is the fix for the upside-down issue)
+    pil_image = pil_image.transpose(Image.FLIP_TOP_BOTTOM)
+
+    # Convert PIL image directly to QPixmap
+    qimage = ImageQt(pil_image)  # Convert PIL image to QImage
+    qpixmap = QPixmap.fromImage(qimage)  # Convert QImage to QPixmap
+
+    # Clean up
+    gdi32.DeleteObject(hBitmap)
+    gdi32.DeleteDC(hdc)
+
+    return qpixmap
+
+
+class TrayIconButtonsWindow(QWidget):
+    def __init__(self, tray_icons, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Tray Icon Buttons")
+        self.layout = QVBoxLayout()
+
+        # Create buttons for each tray icon
+        for icon_info in tray_icons:
+            button = QPushButton(icon_info["tooltip"])
+            button.setIcon(QIcon(icon_to_qpixmap(icon_info["hIcon"])))
+
+            # Fixing lambda to capture correct values
+            button.clicked.connect(
+                lambda _, hwnd=icon_info["hwnd"], uCallbackMessage=icon_info["uCallbackMessage"], uID=icon_info["uID"]:
+                self.trigger_tray_icon_right_click(hwnd, uCallbackMessage, uID)
+            )
+            self.layout.addWidget(button)
+
+        self.setLayout(self.layout)
+
+    def trigger_tray_icon_right_click(self, hwnd, uCallbackMessage, uID):
+        """Trigger the right-click interaction sequence for the tray icon."""
+        print(f"Triggering right-click for hwnd: {hwnd} and uID: {uID}")
+        trigger_context_menu(hwnd, uCallbackMessage, uID)
+
+
+def trigger_context_menu(hwnd, uCallbackMessage, uID):
+    """Send the right-click (down/up) or context menu messages and focus the context menu."""
+
+    # Send the messages to open the context menu
+    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_RBUTTONDOWN)
+    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_RBUTTONUP)
+    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_CONTEXTMENU)
+
+    # Focus the context menu window explicitly
+    user32.SetForegroundWindow(hwnd)
+
+
+def main():
+    app = QApplication(sys.argv)
+
+    tray_window = find_tray_window()
+    if tray_window:
+        tray_icons = get_tray_icons(tray_window)
+        if tray_icons:
+            for icon in tray_icons:
+                print(icon["tooltip"])
+                print(icon["uCallbackMessage"])
+            window = TrayIconButtonsWindow(tray_icons)
+            window.show()
+            sys.exit(app.exec())
+        else:
+            print("No tray icons found.")
     else:
-        print("No tray icons found.")
-else:
-    print("System Tray Toolbar Not Found.")
+        print("System Tray Toolbar Not Found.")
+
+
+if __name__ == "__main__":
+    main()
