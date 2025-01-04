@@ -1,6 +1,6 @@
 import ctypes
 import sys
-from ctypes import byref, Structure, wintypes
+from ctypes import wintypes
 
 from PIL import Image
 from PIL.ImageQt import ImageQt
@@ -230,7 +230,7 @@ def trigger_tray_icon_right_click(hwnd, uCallbackMessage, uID):
 
 
 def icon_to_qpixmap(hIcon):
-    """Convert HICON to QPixmap with color fix."""
+    """Convert HICON to QPixmap with alpha channel support."""
     icon_info = ICONINFO()
     user32.GetIconInfo(hIcon, ctypes.byref(icon_info))
 
@@ -248,10 +248,10 @@ def icon_to_qpixmap(hIcon):
     bitmap_header = BITMAPINFOHEADER()
     bitmap_header.biSize = ctypes.sizeof(BITMAPINFOHEADER)
     bitmap_header.biWidth = width
-    bitmap_header.biHeight = height
+    bitmap_header.biHeight = -height  # Negative height for top-down DIB
     bitmap_header.biPlanes = 1
     bitmap_header.biBitCount = 32
-    bitmap_header.biCompression = 0
+    bitmap_header.biCompression = 0  # BI_RGB
     bitmap_header.biSizeImage = width * height * 4
     bitmap_header.biClrImportant = 0
 
@@ -261,30 +261,32 @@ def icon_to_qpixmap(hIcon):
     # Get bitmap pixels
     gdi32.GetDIBits(hdc, hBitmap, 0, height, buffer, ctypes.byref(bitmap_header), 0)
 
-    # Convert raw bytes to PIL Image
+    # Convert raw bytes to a PIL Image
     image_data = buffer.raw
     pil_image = Image.frombytes('RGBA', (width, height), image_data)
 
-    # Fix color channels (BGR -> RGBA)
-    pixels = pil_image.load()  # Access pixels
+    # Handle 0-size images by creating a blank 16x16 image
+    if pil_image.size == (0, 0):
+        print("Warning: Encountered an image with size (0, 0). Creating a blank image.")
+        pil_image = Image.new("RGBA", (16, 16), (128, 128, 128, 128))  # Transparent blank image
+
+    # Swap R and B channels
+    pixels = pil_image.load()
     for y in range(pil_image.height):
         for x in range(pil_image.width):
             r, g, b, a = pixels[x, y]
-            # Swap R and B to correct the color shift
             pixels[x, y] = (b, g, r, a)
 
-    # Flip the image vertically (this is the fix for the upside-down issue)
-    pil_image = pil_image.transpose(Image.FLIP_TOP_BOTTOM)
+    # Convert PIL Image to QPixmap
+    qimage = ImageQt(pil_image)  # Directly convert RGBA to QImage
+    qpixmap = QPixmap.fromImage(qimage)
 
-    # Convert PIL image directly to QPixmap
-    qimage = ImageQt(pil_image)  # Convert PIL image to QImage
-    qpixmap = QPixmap.fromImage(qimage)  # Convert QImage to QPixmap
-
-    # Clean up
+    # Clean up GDI objects
     gdi32.DeleteObject(hBitmap)
     gdi32.DeleteDC(hdc)
 
     return qpixmap
+
 
 
 class TrayIconButtonsWindow(QWidget):
@@ -301,28 +303,33 @@ class TrayIconButtonsWindow(QWidget):
             # Fixing lambda to capture correct values
             button.clicked.connect(
                 lambda _, hwnd=icon_info["hwnd"], uCallbackMessage=icon_info["uCallbackMessage"], uID=icon_info["uID"]:
-                self.trigger_tray_icon_right_click(hwnd, uCallbackMessage, uID)
+                self.trigger_tray_icon(hwnd, uCallbackMessage, uID)
             )
             self.layout.addWidget(button)
 
         self.setLayout(self.layout)
 
-    def trigger_tray_icon_right_click(self, hwnd, uCallbackMessage, uID):
+    def trigger_tray_icon_context(self, hwnd, uCallbackMessage, uID):
         """Trigger the right-click interaction sequence for the tray icon."""
         print(f"Triggering right-click for hwnd: {hwnd} and uID: {uID}")
-        trigger_context_menu(hwnd, uCallbackMessage, uID)
+        # Send the messages to open the context menu
+        user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_RBUTTONDOWN)
+        user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_RBUTTONUP)
+        user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_CONTEXTMENU)
 
+        # Focus the context menu window explicitly
+        user32.SetForegroundWindow(hwnd)
 
-def trigger_context_menu(hwnd, uCallbackMessage, uID):
-    """Send the right-click (down/up) or context menu messages and focus the context menu."""
+    def trigger_tray_icon(self, hwnd, uCallbackMessage, uID):
+        """Trigger the double-click interaction sequence for the tray icon."""
+        print(f"Triggering double-click for hwnd: {hwnd} and uID: {uID}")
+        # Send the messages to open the context menu
+        user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONDOWN)
+        user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONUP)
+        user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONDBLCLK)
 
-    # Send the messages to open the context menu
-    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_RBUTTONDOWN)
-    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_RBUTTONUP)
-    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_CONTEXTMENU)
-
-    # Focus the context menu window explicitly
-    user32.SetForegroundWindow(hwnd)
+        # Focus the context menu window explicitly
+        user32.SetForegroundWindow(hwnd)
 
 
 def main():
