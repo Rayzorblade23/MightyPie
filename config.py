@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -23,7 +23,7 @@ class TaskPieSwitcherConfig:
     PIE_TEXT_LABEL_SCROLL_INTERVAL: int = 25
     ACCENT_COLOR: str = "#5a14b7"
     BG_COLOR: str = "#3b3b3b"
-
+    FIXED_PIE_SLOTS: dict[str, int] = field(default_factory=lambda: {"Spotify": 4, "Vivaldi": 0})
 
 
 CONFIG = TaskPieSwitcherConfig()

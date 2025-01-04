@@ -170,21 +170,29 @@ class PieWindow(QMainWindow):
 
                 # Check if the main_window is already assigned a button
                 button_index = self.windowHandles_To_buttonIndexes_map.get(window_handle)
-
-                free_button_indexes = []
-                for j in range(CONFIG.MAX_BUTTONS * self.num_pie_menus):
-                    if temp_pie_button_texts[j] == "Empty":
-                        free_button_indexes.append(j)
-
-                # If Button Index not assigned, find a free button
-                if len(free_button_indexes) < 1:
-                    # No free button for you :(
-                    continue
+                # Set Slots for specified Programs
+                if app_name in CONFIG.FIXED_PIE_SLOTS:
+                    button_index = CONFIG.FIXED_PIE_SLOTS[app_name]
+                    self.windowHandles_To_buttonIndexes_map[window_handle] = button_index
+                # Handle the rest of the Programs
                 else:
-                    if button_index is None or (button_index > 7 and button_index > min(free_button_indexes)):
-                        button_index = free_button_indexes[0]
-                        # Assign Button Index to the main_window handle
-                        self.windowHandles_To_buttonIndexes_map[window_handle] = button_index
+                    free_button_indexes = []
+                    for j in range(CONFIG.MAX_BUTTONS * self.num_pie_menus):
+                        # Make sure the reserved slots are skipped
+                        if j in CONFIG.FIXED_PIE_SLOTS.values():
+                            continue
+                        if temp_pie_button_texts[j] == "Empty":
+                            free_button_indexes.append(j)
+
+                    # If Button Index not assigned, find a free button
+                    if len(free_button_indexes) < 1:
+                        # No free button for you :(
+                        continue
+                    else:
+                        if button_index is None or (button_index > 7 and button_index > min(free_button_indexes)):
+                            button_index = free_button_indexes[0]
+                            # Assign Button Index to the main_window handle
+                            self.windowHandles_To_buttonIndexes_map[window_handle] = button_index
 
                 temp_pie_button_texts[button_index] = button_text_1  # Update button name
 
