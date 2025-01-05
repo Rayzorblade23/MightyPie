@@ -22,44 +22,31 @@ class ExpandedButton(QPushButton):
         x, y = pos
         self.move(x, y)
 
-        # Initialize the "hovered" property to false
-        self.setProperty("hovered", False)
-        self.setProperty("pressed", False)  # Initialize pressed state
+    def mousePressEvent(self, event):
+        """Handle mouse press events (left, right, middle)."""
+        # Ensure that the button is marked as "pressed" (i.e., visually pressed)
+        self.setDown(True)
+        super().mousePressEvent(event)  # Ensure default QPushButton press behavior is called
 
-    def enterEvent(self, event) -> None:
-        """Handle mouse entering the button area (hover state)."""
-        self.setProperty("hovered", True)  # Set the hovered property to true
-        self.style().unpolish(self)  # Unpolish to force a re-evaluation of the style
-        self.style().polish(self)  # Polish to apply the new style
-
-    def leaveEvent(self, event) -> None:
-        """Handle mouse leaving the button area (reset to normal state)."""
-        self.setProperty("hovered", False)  # Set the hovered property to false
-        self.style().unpolish(self)  # Unpolish to force a re-evaluation of the style
-        self.style().polish(self)  # Polish to apply the new style
-
-    def mousePressEvent(self, event) -> None:
-        """Handle mouse press event to show pressed state."""
-        # Set the "pressed" property to true (which is needed in the QSS for styling)
-        self.setProperty("pressed", True)
-        self.style().unpolish(self)  # Unpolish to force a re-evaluation of the style
-        self.style().polish(self)  # Polish to apply the new style
+    def mouseReleaseEvent(self, event):
+        """Handle mouse release event."""
         if event.button() == Qt.MouseButton.LeftButton:
-            # Emit the left-click signal
             self.left_clicked.emit()
-
         elif event.button() == Qt.MouseButton.RightButton:
-            # Emit the right-click signal
             self.right_clicked.emit()
-
         elif event.button() == Qt.MouseButton.MiddleButton:
-            # Emit the middle-click signal
             self.middle_clicked.emit()
+        # Ensure the default behavior is maintained (like styling updates)
+        super().mouseReleaseEvent(event)  # This calls the default QPushButton release behavior
 
+        # After releasing the mouse button, reset the "pressed" state
+        self.setDown(False)  # This removes the "pressed" visual state
 
-    def mouseReleaseEvent(self, event) -> None:
-        """Handle mouse release event to reset to normal or hover state."""
-        # Reset the "pressed" property to false when the button is released
-        self.setProperty("pressed", False)
-        self.style().unpolish(self)  # Unpolish to force a re-evaluation of the style
-        self.style().polish(self)  # Polish to apply the new style
+    def enterEvent(self, event):
+        """Handle mouse enter event."""
+        super().enterEvent(event)  # Default hover behavior (handled by Qt automatically)
+
+    def leaveEvent(self, event):
+        """Handle mouse leave event."""
+        super().leaveEvent(event)  # Default leave behavior (handled by Qt automatically)
+
