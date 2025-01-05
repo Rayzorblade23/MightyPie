@@ -10,14 +10,12 @@ def create_window_controls(main_window):
     minimize_button = ExpandedButton(
         "_",
         "minimizeButton",
-        left_click_action= main_window.showMinimized,
         fixed_size=True,
         size=(CONFIG.CONTROL_BUTTON_SIZE, CONFIG.CONTROL_BUTTON_SIZE),
     )
     close_button = ExpandedButton(
         "X",
         "closeButton",
-        left_click_action=QApplication.quit,
         fixed_size=True,
         size=(CONFIG.CONTROL_BUTTON_SIZE, CONFIG.CONTROL_BUTTON_SIZE),
     )

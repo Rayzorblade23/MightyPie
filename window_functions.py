@@ -145,7 +145,6 @@ def assign_instance_numbers(temp_window_hwnds_mapping: Dict[int, Tuple[str, str,
             old_title, _, instance = existing_mapping[hwnd]  # Preserve the existing instance number
             new_title, _, _ = temp_window_hwnds_mapping[hwnd]  # Get the updated title and exe
             if new_title != old_title:
-                print("itle changed!")
                 instance = 0
             else:
                 result_mapping[hwnd] = (new_title, exe, instance)

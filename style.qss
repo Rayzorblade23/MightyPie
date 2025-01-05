@@ -49,7 +49,13 @@ QPushButton[hovered="true"] {
     background-color: {{accent_muted}};
 }
 
+
+
 QPushButton:pressed {
+    background-color: {{accent_color}}; /* Even darker blue when pressed */
+}
+
+QPushButton[pressed="true"] {
     background-color: {{accent_color}}; /* Even darker blue when pressed */
 }
 
@@ -89,10 +95,18 @@ QLabel {
 }
 
 #middleButton:hover {
+    background-color: rgba(59, 59, 59, 0.5);
+}
+
+#middleButton[hovered="true"] {
     background-color: rgba(27, 27, 27, 0.5);
 }
 
 #middleButton:pressed {
+    background-color: {{accent_muted}};
+}
+
+#middleButton[pressed="true"] {
     background-color: {{accent_muted}};
 }
 
