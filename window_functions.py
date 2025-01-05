@@ -14,6 +14,8 @@ from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget
 
+from Test_Files.flashing_test import PieWindow
+from pie_menu_task_switcher import PieMenuTaskSwitcher
 from window_manager import WindowManager
 
 
@@ -330,7 +332,7 @@ def _get_window_title(hwnd):
         return "Unknown Window Title"
 
 
-def show_pie_window(pie_window: QWidget, pie_menu: QWidget):
+def show_pie_window(pie_window: PieWindow, pie_menu: PieMenuTaskSwitcher):
     """Display the main main_window and bring it to the foreground."""
     try:
         # Get the main_window handle
@@ -338,9 +340,13 @@ def show_pie_window(pie_window: QWidget, pie_menu: QWidget):
 
         # Get the current mouse position
         cursor_pos = QCursor.pos()
+        print(f"Cursor Pos: {cursor_pos}")
+
+        screen = QGuiApplication.screenAt(cursor_pos)  # Detect screen at cursor position
+        screen_geometry = screen.availableGeometry()  # Get the screen geometry
+        print(f"Screen Geo: {screen_geometry}")
 
         # Get screen dimensions
-        screen_geometry = QGuiApplication.primaryScreen().availableGeometry()
         screen_left = screen_geometry.left()
         screen_top = screen_geometry.top()
         screen_right = screen_geometry.right()
@@ -350,12 +356,27 @@ def show_pie_window(pie_window: QWidget, pie_menu: QWidget):
         new_x = cursor_pos.x() - (pie_menu.width() // 2)
         new_y = cursor_pos.y() - (pie_menu.height() // 2)
 
+        print(f"Actual Cursor Pos: x: {new_x} and y: {new_y}")
+
         # Ensure main_window position stays within screen bounds
         corrected_x = max(screen_left, min(new_x, screen_right - pie_menu.width()))
         corrected_y = max(screen_top, min(new_y, screen_bottom - pie_menu.height()))
 
+        print(f"Corrected Edge Cursor Pos: x: {corrected_x} and y: {corrected_y}")
+
+        # Normalize top left for other monitors
+        corrected_x -= screen_left
+        corrected_y -= screen_top
+
+        print(f"Corrected Edge Cursor Pos: x: {corrected_x} and y: {corrected_y}")
         if pie_menu is not None:
             pie_menu.move(corrected_x, corrected_y)
+
+        # Set geometry for pie_window on the current screen
+        pie_window.move(screen_geometry.topLeft())  # Move to the top-left of the screen
+        pie_window.setFixedSize(screen_geometry.width(), screen_geometry.height())  # Ensure the window size matches screen size
+        pie_window.view.setFixedSize(screen_geometry.width(), screen_geometry.height())  # Ensure view size matches screen size
+        pie_window.scene.setSceneRect(0, 0, screen_geometry.width(), screen_geometry.height())
 
         # Prevents flashing a frame of the last window position when calling show()
         pie_window.setWindowOpacity(0)  # Make the window fully transparent
