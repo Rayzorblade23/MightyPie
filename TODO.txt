@@ -11,6 +11,4 @@ BUGS:
 
 - Spotify text is cut off when title changes (maybe fixed?!)
 
-- changing titles don't refresh when Switcher is open
-
-letzte zahl im tuple ist ein index für das wievielte instanz ... oder lieber wie viele instanzen es gibt... ?
+- window gets an instance increase when a number is included in the title the same way...? as in " (i)"

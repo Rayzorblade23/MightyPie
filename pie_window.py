@@ -146,85 +146,70 @@ class PieWindow(QMainWindow):
 
         def background_task():
             window_mapping = get_filtered_list_of_windows(self)
-
-            # Update data for 2x8 buttons
+            temp_button_texts = self.pie_button_texts.copy()
+            app_name_cache = load_cache()
             final_button_updates = []
 
-            # Button Texts for 2x8 buttons
-            temp_pie_button_texts = (
-                self.pie_button_texts
-            )  # because the names need to be evaluated here
+            def get_free_button_indexes():
+                """Returns available button indexes, excluding fixed slots."""
+                return [
+                    j for j in range(CONFIG.MAX_BUTTONS * self.num_pie_menus)
+                    if j not in CONFIG.FIXED_PIE_SLOTS.values()
+                       and temp_button_texts[j] == "Empty"
+                ]
 
-            app_name_cache = load_cache()
-
+            # Process each window
             for window_handle, (window_title, exe_name, instance_number) in window_mapping.items():
-                # Use .get() to safely access the dictionary, defaulting to None if not found
-                app_name = app_name_cache.get(exe_name, {}).get("app_name", None)
-                app_icon_path = app_name_cache.get(exe_name, {}).get("icon_path", None)
+                # Get app information from cache
+                cache_entry = app_name_cache.get(exe_name, {})
+                app_name = cache_entry.get("app_name")
+                app_icon_path = cache_entry.get("icon_path")
 
-                if instance_number != 0:
-                    button_text_1 = f"{window_title} ({instance_number})"
-                else:
-                    button_text_1 = f"{window_title}"
-                button_text_2 = app_name
+                # Format button text
+                button_text = (f"{window_title} ({instance_number})"
+                               if instance_number != 0 else window_title)
 
-                # Check if the main_window is already assigned a button
+                # Get or assign button index
                 button_index = self.windowHandles_To_buttonIndexes_map.get(window_handle)
-                # Set Slots for specified Programs
+
+                # Handle fixed slots
                 if app_name in CONFIG.FIXED_PIE_SLOTS:
                     button_index = CONFIG.FIXED_PIE_SLOTS[app_name]
                     self.windowHandles_To_buttonIndexes_map[window_handle] = button_index
-                # Handle the rest of the Programs
                 else:
-                    free_button_indexes = []
-                    for j in range(CONFIG.MAX_BUTTONS * self.num_pie_menus):
-                        # Make sure the reserved slots are skipped
-                        if j in CONFIG.FIXED_PIE_SLOTS.values():
-                            continue
-                        if temp_pie_button_texts[j] == "Empty":
-                            free_button_indexes.append(j)
-
-                    # If Button Index not assigned, find a free button
-                    if len(free_button_indexes) < 1:
-                        # No free button for you :(
+                    # Find free button if needed
+                    free_indexes = get_free_button_indexes()
+                    if not free_indexes:
                         continue
-                    else:
-                        if button_index is None or (button_index > 7 and button_index > min(free_button_indexes)):
-                            button_index = free_button_indexes[0]
-                            # Assign Button Index to the main_window handle
-                            self.windowHandles_To_buttonIndexes_map[window_handle] = button_index
 
-                temp_pie_button_texts[button_index] = button_text_1  # Update button name
+                    if button_index is None or (button_index > 7
+                                                and button_index > min(free_indexes)):
+                        button_index = free_indexes[0]
+                        self.windowHandles_To_buttonIndexes_map[window_handle] = button_index
 
-                final_button_updates.append(
-                    {
-                        "index": button_index,
-                        "text_1": button_text_1,
-                        "text_2": button_text_2,
-                        "window_handle": window_handle,
-                        "app_icon_path": app_icon_path
-                    }
-                )
+                # Update button text and collect updates
+                temp_button_texts[button_index] = button_text
+                final_button_updates.append({
+                    "index": button_index,
+                    "text_1": button_text,
+                    "text_2": app_name,
+                    "window_handle": window_handle,
+                    "app_icon_path": app_icon_path
+                })
 
-            # print(self.windowHandles_To_buttonIndexes_map)
-            # print("###############")
-
-            # Clean windowHandles_To_buttonIndexes_map dict of old windows
+            # Clean up stale window mappings
             if len(self.windowHandles_To_buttonIndexes_map) > 20:
-                # Step 1: Extract valid window_titles_To_hwnds_map from button_updates
-                valid_window_handles = {
-                    update["window_handle"] for update in final_button_updates
-                }
-
-                # Step 2: Filter windowHandles_To_buttonIndexes_map to only keep pairs where the window_handle is in valid_window_handles
+                valid_handles = {update["window_handle"] for update in final_button_updates}
                 self.windowHandles_To_buttonIndexes_map = {
                     handle: button_id
                     for handle, button_id in self.windowHandles_To_buttonIndexes_map.items()
-                    if handle in valid_window_handles
+                    if handle in valid_handles
                 }
-            # Emit the signal instead of using invokeMethod
+
+            # Emit updates
             self.update_buttons_signal.emit(final_button_updates)
 
+        # Start the background task
         threading.Thread(target=background_task, daemon=True).start()
 
     @pyqtSlot(list)
