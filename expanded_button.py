@@ -4,6 +4,7 @@ from typing import Optional, Callable, Tuple
 
 from config import CONFIG
 
+
 class ExpandedButton(QPushButton):
     """Class for creating a QPushButton with customizable properties."""
 
@@ -47,21 +48,21 @@ class ExpandedButton(QPushButton):
         if event.button() == Qt.MouseButton.LeftButton:
             # Handle left-click
             if self.left_click_action:
-                self.left_click_action()
+                self.left_click_action(event)
             else:
                 print("Left-click detected! No action provided.")
 
         elif event.button() == Qt.MouseButton.RightButton:
             # Handle right-click
             if self.right_click_action:
-                self.right_click_action()
+                self.right_click_action(event)
             else:
                 print("Right-click detected! No action provided.")
 
         elif event.button() == Qt.MouseButton.MiddleButton:
             # Handle middle-click
             if self.middle_click_action:
-                self.middle_click_action()
+                self.middle_click_action(event)
             else:
                 print("Middle-click detected! No action provided.")
 

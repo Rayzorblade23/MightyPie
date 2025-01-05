@@ -5,7 +5,9 @@ from ctypes import wintypes
 from PIL import Image
 from PIL.ImageQt import ImageQt
 from PyQt6.QtGui import QIcon, QPixmap
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout
+
+from expanded_button import ExpandedButton
 
 # Load necessary Windows API libraries
 user32 = ctypes.windll.user32
@@ -288,7 +290,6 @@ def icon_to_qpixmap(hIcon):
     return qpixmap
 
 
-
 class TrayIconButtonsWindow(QWidget):
     def __init__(self, tray_icons, parent=None):
         super().__init__(parent)
@@ -297,39 +298,48 @@ class TrayIconButtonsWindow(QWidget):
 
         # Create buttons for each tray icon
         for icon_info in tray_icons:
-            button = QPushButton(icon_info["tooltip"])
-            button.setIcon(QIcon(icon_to_qpixmap(icon_info["hIcon"])))
-
-            # Fixing lambda to capture correct values
-            button.clicked.connect(
-                lambda _, hwnd=icon_info["hwnd"], uCallbackMessage=icon_info["uCallbackMessage"], uID=icon_info["uID"]:
-                self.trigger_tray_icon(hwnd, uCallbackMessage, uID)
+            button = ExpandedButton(
+                text="",
+                object_name="TrayButton",
+                left_click_action=self.create_tray_action(icon_info, 'left'),
+                right_click_action=self.create_tray_action(icon_info, 'right')
             )
+
+            button.setIcon(QIcon(icon_to_qpixmap(icon_info["hIcon"])))
             self.layout.addWidget(button)
 
         self.setLayout(self.layout)
 
-    def trigger_tray_icon_context(self, hwnd, uCallbackMessage, uID):
+    def create_tray_action(self, icon_info, click_type):
+        """Creates tray action handlers based on the click type."""
+        def tray_action(event):
+            hwnd = icon_info["hwnd"]
+            uCallbackMessage = icon_info["uCallbackMessage"]
+            uID = icon_info["uID"]
+
+            if click_type == 'left':
+                self.trigger_tray_icon(event, hwnd, uCallbackMessage, uID)
+            elif click_type == 'right':
+                self.trigger_tray_icon_context(event, hwnd, uCallbackMessage, uID)
+
+        return tray_action
+
+    def trigger_tray_icon_context(self, event, hwnd, uCallbackMessage, uID):
         """Trigger the right-click interaction sequence for the tray icon."""
         print(f"Triggering right-click for hwnd: {hwnd} and uID: {uID}")
-        # Send the messages to open the context menu
         user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_RBUTTONDOWN)
         user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_RBUTTONUP)
         user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_CONTEXTMENU)
-
-        # Focus the context menu window explicitly
         user32.SetForegroundWindow(hwnd)
 
-    def trigger_tray_icon(self, hwnd, uCallbackMessage, uID):
+    def trigger_tray_icon(self, event, hwnd, uCallbackMessage, uID):
         """Trigger the double-click interaction sequence for the tray icon."""
         print(f"Triggering double-click for hwnd: {hwnd} and uID: {uID}")
-        # Send the messages to open the context menu
         user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONDOWN)
         user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONUP)
         user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONDBLCLK)
-
-        # Focus the context menu window explicitly
         user32.SetForegroundWindow(hwnd)
+
 
 
 def main():
