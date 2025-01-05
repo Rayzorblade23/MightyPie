@@ -22,6 +22,10 @@ def create_window_controls(main_window):
         size=(CONFIG.CONTROL_BUTTON_SIZE, CONFIG.CONTROL_BUTTON_SIZE),
     )
 
+    minimize_button.left_clicked.connect(main_window.showMinimized)
+    close_button.left_clicked.connect(QApplication.quit)
+
+
     # Set up button layout
     button_layout = QHBoxLayout()
     button_layout.addWidget(minimize_button)
