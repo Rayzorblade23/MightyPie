@@ -2,7 +2,7 @@ import sys
 import threading
 
 import keyboard
-from PyQt6.QtGui import QCursor, QGuiApplication
+from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget, )

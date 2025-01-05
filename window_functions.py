@@ -182,12 +182,38 @@ def _get_pid_from_window_handle(hwnd):
 def focus_window_by_handle(hwnd):
     """Bring a main_window to the foreground and restore/maximize as needed."""
     try:
+        # Get the current window placement
+        placement = win32gui.GetWindowPlacement(hwnd)
+        was_maximized = placement[1] == win32con.SW_MAXIMIZE  # Check if it was maximized
 
-        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        # Maximize the window if it was maximized previously, otherwise restore it
+        if was_maximized:
+            win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+        else:
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+
+        # Bring the window to the front
         win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
         win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
         win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
                               win32con.SWP_SHOWWINDOW + win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
+
+        # Bring the window to the front
+        win32gui.SetForegroundWindow(hwnd)
+
+        # Get the window's position and size
+        rect = win32gui.GetWindowRect(hwnd)
+        window_width = rect[2] - rect[0]
+
+        # Simulate a click at the center of the window, 1 pixel down from the top
+        center_x = rect[0] + window_width // 2
+        click_y = rect[1] + 1  # 1 pixel down from the top
+
+        # Simulate the click using PostMessage
+        win32gui.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, 0, (click_y << 16) | center_x)
+        win32gui.PostMessage(hwnd, win32con.WM_LBUTTONUP, 0, (click_y << 16) | center_x)
+
+
     except Exception as e:
         print(f"Could not focus main_window with handle '{_get_window_title(hwnd)}': {e}")
 
@@ -340,11 +366,9 @@ def show_pie_window(pie_window: PieWindow, pie_menu: PieMenuTaskSwitcher):
 
         # Get the current mouse position
         cursor_pos = QCursor.pos()
-        print(f"Cursor Pos: {cursor_pos}")
 
         screen = QGuiApplication.screenAt(cursor_pos)  # Detect screen at cursor position
         screen_geometry = screen.availableGeometry()  # Get the screen geometry
-        print(f"Screen Geo: {screen_geometry}")
 
         # Get screen dimensions
         screen_left = screen_geometry.left()
@@ -356,19 +380,14 @@ def show_pie_window(pie_window: PieWindow, pie_menu: PieMenuTaskSwitcher):
         new_x = cursor_pos.x() - (pie_menu.width() // 2)
         new_y = cursor_pos.y() - (pie_menu.height() // 2)
 
-        print(f"Actual Cursor Pos: x: {new_x} and y: {new_y}")
-
         # Ensure main_window position stays within screen bounds
         corrected_x = max(screen_left, min(new_x, screen_right - pie_menu.width()))
         corrected_y = max(screen_top, min(new_y, screen_bottom - pie_menu.height()))
-
-        print(f"Corrected Edge Cursor Pos: x: {corrected_x} and y: {corrected_y}")
 
         # Normalize top left for other monitors
         corrected_x -= screen_left
         corrected_y -= screen_top
 
-        print(f"Corrected Edge Cursor Pos: x: {corrected_x} and y: {corrected_y}")
         if pie_menu is not None:
             pie_menu.move(corrected_x, corrected_y)
 
@@ -388,7 +407,6 @@ def show_pie_window(pie_window: PieWindow, pie_menu: PieMenuTaskSwitcher):
         win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
         win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
                               win32con.SWP_SHOWWINDOW + win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
-
 
 
     except Exception as e:
