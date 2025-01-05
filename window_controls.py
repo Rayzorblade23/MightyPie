@@ -1,23 +1,23 @@
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QApplication
 from config import CONFIG
 
-from exp_button import ExpButton
+from expanded_button import ExpandedButton
 
 
 def create_window_controls(main_window):
     """Create minimize, maximize, and close buttons."""
     # Create main_window control buttons with fixed sizes and actions
-    minimize_button = ExpButton(
+    minimize_button = ExpandedButton(
         "_",
         "minimizeButton",
-        action= main_window.showMinimized,
+        left_click_action= main_window.showMinimized,
         fixed_size=True,
         size=(CONFIG.CONTROL_BUTTON_SIZE, CONFIG.CONTROL_BUTTON_SIZE),
     )
-    close_button = ExpButton(
+    close_button = ExpandedButton(
         "X",
         "closeButton",
-        action=QApplication.quit,
+        left_click_action=QApplication.quit,
         fixed_size=True,
         size=(CONFIG.CONTROL_BUTTON_SIZE, CONFIG.CONTROL_BUTTON_SIZE),
     )

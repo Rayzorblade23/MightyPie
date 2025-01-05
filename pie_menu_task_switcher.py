@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QPushButton,
 from area_button import AreaButton
 from config import CONFIG
 from donut_slice_button import DonutSliceButton
-from exp_button import ExpButton
+from expanded_button import ExpandedButton
 from pie_button import PieButton
 from rings import SmoothCircle
 
@@ -113,10 +113,10 @@ class PieMenuTaskSwitcher(QWidget):
         # self.outer_ring.lower()
 
         # Create and configure the refresh button
-        self.middle_button = ExpButton(
+        self.middle_button = ExpandedButton(
             text="",
             object_name="middleButton",
-            action=lambda: self.parent().hide(),
+            left_click_action=lambda: self.parent().hide(),
             fixed_size=True,
             # Using size instead of geometry
             size=(CONFIG.INNER_RADIUS * 2, CONFIG.INNER_RADIUS * 2),
