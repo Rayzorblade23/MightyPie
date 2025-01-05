@@ -116,12 +116,12 @@ class PieMenuTaskSwitcher(QWidget):
         self.middle_button = ExpandedButton(
             text="",
             object_name="middleButton",
-            left_click_action=lambda: self.parent().hide(),
             fixed_size=True,
             # Using size instead of geometry
             size=(CONFIG.INNER_RADIUS * 2, CONFIG.INNER_RADIUS * 2),
             pos=(self.width() // 2 - CONFIG.INNER_RADIUS, self.height() // 2 - CONFIG.INNER_RADIUS)  # Using position for x and y
         )
+        self.middle_button.left_clicked.connect(lambda: self.parent().hide())
         self.middle_button.setParent(self)
         self.middle_button.lower()
         self.view.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
