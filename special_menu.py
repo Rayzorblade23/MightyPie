@@ -1,11 +1,8 @@
 import sys
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPainter, QKeyEvent
-from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QGraphicsView, QGraphicsScene,
-    QWidget, QVBoxLayout
-)
+from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtGui import QPainter, QKeyEvent, QCursor
+from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout
 
 from config import CONFIG
 from toggle_switch import ToggleSwitch
@@ -16,7 +13,6 @@ class SpecialMenu(QWidget):
     def __init__(self, obj_name: str = "", parent=None):
         super().__init__(parent)
         self.obj_name = obj_name
-
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -49,29 +45,44 @@ class SpecialMenu(QWidget):
         self.view.setGeometry(0, 0, self.width(), self.height())
         self.scene.setSceneRect(0, 0, self.width(), self.height())
 
+        # Set the widget to accept focus
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        # Install the event filter
+        QApplication.instance().installEventFilter(self)
+
     def setup_window(self):
-        """Set up the main main_window properties."""
+        """Set up the main window properties."""
         self.setWindowTitle("Special Menu")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
     def closeEvent(self, event):
-        """Hide the main_window instead of closing it."""
-        print("Closing Time")
+        """Hide the window instead of closing it."""
         self.hide()
         event.ignore()  # Prevent the default close behavior
 
     def focusOutEvent(self, event):
-        """Close the window when it loses focus."""
-        self.hide()  # This triggers the closeEvent
-        super().focusOutEvent(event)  # Ensure the base class implementation is called
+        """Hide the window when it loses focus, but not if the focus is from clicking inside the menu."""
+        # Check if the mouse is still inside the window when the event occurs
+        if not self.rect().contains(self.mapFromGlobal(QCursor.pos())):
+            self.hide()
+        else:
+            event.ignore()  # Ignore the event so the menu doesn't hide
 
     def keyPressEvent(self, event: QKeyEvent):
-        """Close the main_window on pressing the Escape key."""
+        """Hide the window when pressing the Escape key."""
         if event.key() == Qt.Key.Key_Escape:
             self.hide()
         else:
             super().keyPressEvent(event)  # Pass other key events to the parent
+
+    def eventFilter(self, obj, event):
+        """Event filter to track mouse clicks outside the window."""
+        if event.type() == QEvent.Type.MouseButtonPress:
+            if self.isVisible() and not self.rect().contains(event.pos()):
+                self.hide()  # Hide the window if clicked outside
+        return super().eventFilter(obj, event)
 
 
 if __name__ == "__main__":
@@ -92,4 +103,3 @@ if __name__ == "__main__":
     special_menu.show()  # Show SpecialMenu as a standalone window
 
     sys.exit(app.exec())
-

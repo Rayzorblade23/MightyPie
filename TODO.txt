@@ -1,3 +1,5 @@
+- implement the sound settings from tabame in Special Menu
+
 
 - save previous condition of minimized windows (i. e.: maximized or normal)
 

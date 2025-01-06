@@ -4,6 +4,7 @@ import os
 from typing import Dict, Tuple
 
 import psutil
+import pyautogui
 import win32api
 import win32con
 import win32gui
@@ -12,10 +13,11 @@ import win32ui
 from PIL import Image
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor, QGuiApplication
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget, QApplication
 
 from Test_Files.flashing_test import PieWindow
 from pie_menu_task_switcher import PieMenuTaskSwitcher
+from special_menu import SpecialMenu
 from window_manager import WindowManager
 
 
@@ -355,6 +357,40 @@ def _get_window_title(hwnd):
     except Exception as e:
         print(f"Error retrieving main_window title for handle {hwnd}: {e}")
         return "Unknown Window Title"
+
+
+def show_special_menu(menu: SpecialMenu):
+    # Get the current mouse position
+    cursor_pos = QCursor.pos()
+
+    screen = QGuiApplication.screenAt(cursor_pos)  # Detect screen at cursor position
+    screen_geometry = screen.availableGeometry()  # Get the screen geometry
+
+    # Get screen dimensions
+    screen_left = screen_geometry.left()
+    screen_top = screen_geometry.top()
+    screen_right = screen_geometry.right()
+    screen_bottom = screen_geometry.bottom()
+
+    # Calculate initial new_x and new_y
+    new_x = cursor_pos.x() - (menu.width() // 2)
+    new_y = cursor_pos.y() - (menu.height() // 2)
+
+    # Ensure main_window position stays within screen bounds
+    corrected_x = max(screen_left, min(new_x, screen_right - menu.width()))
+    corrected_y = max(screen_top, min(new_y, screen_bottom - menu.height()))
+
+    # Normalize top left for other monitors
+    corrected_x -= screen_left
+    corrected_y -= screen_top
+
+    if menu is not None:
+        menu.move(corrected_x, corrected_y)
+
+    # Make sure the window is on top and active
+    menu.show()
+    menu.setFocus()  # This should focus the menu
+
 
 
 def show_pie_window(pie_window: PieWindow, pie_menu: PieMenuTaskSwitcher):

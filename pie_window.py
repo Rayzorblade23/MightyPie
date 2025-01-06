@@ -12,7 +12,7 @@ from pie_button import PieButton
 from pie_menu_task_switcher import PieMenuTaskSwitcher
 from special_menu import SpecialMenu
 from window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
-    close_window_by_handle, load_cache
+    close_window_by_handle, load_cache, show_special_menu
 from window_manager import WindowManager
 
 manager = WindowManager.get_instance()
@@ -94,6 +94,13 @@ class PieWindow(QMainWindow):
         self.setWindowTitle("Main Window with Graphics View and Task Switcher Pie")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+
+    def open_special_menu(self):
+        if hasattr(self, "special_menu"):
+            self.hide()
+            show_special_menu(self.special_menu)
+        else:
+            print("No SpecialMenu here...")
 
     def event(self, event):
         """Handle the custom filtered_event to show the main_window."""
