@@ -6,8 +6,9 @@ from functools import partial
 from PIL import Image
 from PIL.ImageQt import ImageQt
 from PyQt6.QtGui import QIcon, QPixmap
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout
 
+from config import CONFIG
 from expanded_button import ExpandedButton
 
 # Load necessary Windows API libraries
@@ -291,16 +292,30 @@ def icon_to_qpixmap(hIcon):
     return qpixmap
 
 class TrayIconButtonsWindow(QWidget):
-    def __init__(self, tray_icons, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Tray Icon Buttons")
-        self.layout = QVBoxLayout()
+        self.layout = QHBoxLayout()
 
-        # Create buttons for each tray icon
+        tray_window = find_tray_window()
+        if tray_window:
+            tray_icons = get_tray_icons(tray_window)
+            if tray_icons:
+                self.create_buttons(tray_icons)
+            else:
+                print("No tray icons found.")
+        else:
+            print("System Tray Toolbar Not Found.")
+
+        self.setLayout(self.layout)
+
+    def create_buttons(self, tray_icons):
+        """Create buttons for tray icons."""
         for icon_info in tray_icons:
             button = ExpandedButton(
                 text="",
-                object_name="TrayButton"
+                object_name="TrayButton",
+                size=(CONFIG.BUTTON_HEIGHT,CONFIG.BUTTON_HEIGHT)
             )
 
             # Connect the specific signals to their respective actions
@@ -309,8 +324,6 @@ class TrayIconButtonsWindow(QWidget):
 
             button.setIcon(QIcon(icon_to_qpixmap(icon_info["hIcon"])))
             self.layout.addWidget(button)
-
-        self.setLayout(self.layout)
 
     def trigger_tray_icon(self, icon_info):
         """Trigger the double-click interaction sequence for the tray icon."""
@@ -331,24 +344,12 @@ class TrayIconButtonsWindow(QWidget):
         user32.SetForegroundWindow(hwnd)
 
 
-
 def main():
     app = QApplication(sys.argv)
+    window = TrayIconButtonsWindow()
+    window.show()
+    sys.exit(app.exec())
 
-    tray_window = find_tray_window()
-    if tray_window:
-        tray_icons = get_tray_icons(tray_window)
-        if tray_icons:
-            for icon in tray_icons:
-                print(icon["tooltip"])
-                print(icon["uCallbackMessage"])
-            window = TrayIconButtonsWindow(tray_icons)
-            window.show()
-            sys.exit(app.exec())
-        else:
-            print("No tray icons found.")
-    else:
-        print("System Tray Toolbar Not Found.")
 
 
 if __name__ == "__main__":

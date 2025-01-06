@@ -10,6 +10,7 @@ from donut_slice_button import DonutSliceButton
 from expanded_button import ExpandedButton
 from pie_button import PieButton
 from rings import SmoothCircle
+from special_menu import SpecialMenu
 
 
 class PieMenuTaskSwitcher(QWidget):
@@ -193,10 +194,9 @@ class PieMenuTaskSwitcher(QWidget):
             self.pie_buttons.append(self.btn)
 
     def open_special_menu(self):
+        special_menu: SpecialMenu = self.parent().special_menu  # Type hint for special_menu
         self.parent().hide()
-        print(hasattr(self.parent(), 'special_menu'))  # Should print True
-        print(self.parent().special_menu)  # Check if it correctly references the object
-        self.parent().special_menu.show()  # Then show it
+        special_menu.show()
 
     def update_child_button_hover_state(self, button, hovered):
         button.setProperty("hovered", hovered)

@@ -43,6 +43,10 @@ class GlobalMouseFilter(QObject):
         # Dynamically update the task switcher on each event
         self._update_task_switcher()
 
+        # Skip processing if the main window or task switcher is hidden or disabled
+        if not self.main_window.isVisible() or not self.main_window.isEnabled():
+            return super().eventFilter(obj, filtered_event)
+
         # Check for mouse events
         if isinstance(filtered_event, QMouseEvent):
             global_pos = filtered_event.globalPosition().toPoint()

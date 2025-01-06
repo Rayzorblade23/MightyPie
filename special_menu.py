@@ -4,11 +4,12 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QGraphicsView, QGraphicsScene,
-    QPushButton, QWidget, QVBoxLayout
+    QWidget, QVBoxLayout
 )
 
 from config import CONFIG
 from toggle_switch import ToggleSwitch
+from tray_menu import TrayIconButtonsWindow
 
 
 class SpecialMenu(QWidget):
@@ -32,11 +33,10 @@ class SpecialMenu(QWidget):
                                            off_action=lambda: print("Taskbar re-appears."),
                                            parent=self)
 
-        buttons = ["Short", "Medium Button", "Long Button Text"]
-        for i, text in enumerate(buttons):
-            button = QPushButton(text)
-            layout.addWidget(button)
+        self.tray_icon_menu = TrayIconButtonsWindow(parent=self)
+
         layout.addWidget(self.taskbar_toggle)
+        layout.addWidget(self.tray_icon_menu)
 
         self.setLayout(layout)
 

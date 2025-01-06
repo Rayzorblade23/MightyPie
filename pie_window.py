@@ -75,6 +75,7 @@ class PieWindow(QMainWindow):
     def closeEvent(self, event):
         """Hide the main_window instead of closing it."""
         self.hide()
+        self.scene.setEnabled(False)
         event.ignore()  # Prevent the default close behavior
 
     def mousePressEvent(self, event: QMouseEvent):
