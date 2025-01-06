@@ -25,6 +25,13 @@ QWidget {
     border-radius: 15px;
 }
 
+
+#SpecialMenu {
+    background-color: rgba(20, 20, 20, 255);
+    border-radius: 10px;
+    border: 1px solid {{accent_muted}};              /* No border */
+}
+
 /* Style the button */
 QPushButton {
     background-color: {{bg_color}};

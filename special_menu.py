@@ -1,7 +1,7 @@
 import sys
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPainter
+from PyQt6.QtGui import QPainter, QKeyEvent
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QGraphicsView, QGraphicsScene,
     QWidget, QVBoxLayout
@@ -17,15 +17,19 @@ class SpecialMenu(QWidget):
         super().__init__(parent)
         self.obj_name = obj_name
 
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.scene = QGraphicsScene(self)
-        self.view = QGraphicsView(self.scene)
+        self.view = QGraphicsView(self.scene, self)
         self.view.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
         self.view.setObjectName(self.obj_name)
+        self.setObjectName(self.obj_name)
+        self.setup_window()
 
         self.taskbar_toggle = ToggleSwitch("TaskbarToggle",
                                            label_text="Hide the Taskbar",
@@ -42,6 +46,32 @@ class SpecialMenu(QWidget):
 
         # Set a minimum size or use resize() to adjust window size
         self.resize(self.sizeHint())  # Resize based on the sizeHint of the widget
+        self.view.setGeometry(0, 0, self.width(), self.height())
+        self.scene.setSceneRect(0, 0, self.width(), self.height())
+
+    def setup_window(self):
+        """Set up the main main_window properties."""
+        self.setWindowTitle("Special Menu")
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+
+    def closeEvent(self, event):
+        """Hide the main_window instead of closing it."""
+        print("Closing Time")
+        self.hide()
+        event.ignore()  # Prevent the default close behavior
+
+    def focusOutEvent(self, event):
+        """Close the window when it loses focus."""
+        self.hide()  # This triggers the closeEvent
+        super().focusOutEvent(event)  # Ensure the base class implementation is called
+
+    def keyPressEvent(self, event: QKeyEvent):
+        """Close the main_window on pressing the Escape key."""
+        if event.key() == Qt.Key.Key_Escape:
+            self.hide()
+        else:
+            super().keyPressEvent(event)  # Pass other key events to the parent
 
 
 if __name__ == "__main__":
@@ -51,21 +81,15 @@ if __name__ == "__main__":
     with open("style.qss", "r") as file:
         qss_template = file.read()
 
-    # inserting style attributes from the config.py file
     qss = (qss_template
            .replace("{{accent_color}}", CONFIG.ACCENT_COLOR)
            .replace("{{accent_muted}}", CONFIG.ACCENT_COLOR_MUTED)
            .replace("{{bg_color}}", CONFIG.BG_COLOR))
 
-    # Apply the QSS to the application or widgets
     app.setStyleSheet(qss)
 
-    window = QMainWindow()
-    special_menu = SpecialMenu("special_menu")
-    window.setCentralWidget(special_menu)
-
-    # Resize window based on content
-    window.resize(special_menu.sizeHint())
-    window.show()
+    special_menu = SpecialMenu("SpecialMenu")
+    special_menu.show()  # Show SpecialMenu as a standalone window
 
     sys.exit(app.exec())
+

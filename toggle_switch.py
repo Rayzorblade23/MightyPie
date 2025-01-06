@@ -101,14 +101,14 @@ class Toggle(QPushButton):
 
     def update_background_color(self):
         if self.isChecked():
-            self.background_color = QColor(CONFIG.ACCENT_COLOR)  # Green
+            self.background_color = QColor(CONFIG.ACCENT_COLOR_MUTED)  # Green
         else:
             self.background_color = QColor(CONFIG.BG_COLOR)  # Gray
         self.update()
 
 
 class ToggleSwitch(QWidget):
-    def __init__(self, object_name="", size=(46, 28), on_action=None, off_action=None, label_text="", parent=None):
+    def __init__(self, object_name="", size=(CONFIG.BUTTON_HEIGHT, int(CONFIG.BUTTON_HEIGHT * 4 / 7)), on_action=None, off_action=None, label_text="", parent=None):
         super().__init__(parent)
 
         # Set the object name
@@ -116,7 +116,10 @@ class ToggleSwitch(QWidget):
 
         # Create the container widget to hold both the taskbar_toggle and the label
         self.container = QWidget(self)
-        self.container.setLayout(QHBoxLayout())  # Horizontal layout for the container
+        container_layout = QHBoxLayout()  # Horizontal layout for the container
+
+        # Set the layout to the container
+        self.container.setLayout(container_layout)
 
         # Create the taskbar_toggle button (QPushButton)
         self.toggle = Toggle(size=size, on_action=on_action, off_action=off_action, parent=self.container)
@@ -130,6 +133,9 @@ class ToggleSwitch(QWidget):
 
         # Add the taskbar_toggle button and label (if any) to the container's layout
         self.container.layout().addWidget(self.toggle)
+
+        container_layout.addSpacing(10)  # Adds space between the toggle and label
+
         if self.label:
             self.container.layout().addWidget(self.label)
 
