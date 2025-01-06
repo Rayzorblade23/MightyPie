@@ -10,6 +10,7 @@ from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
 from pie_button import PieButton
 from pie_menu_task_switcher import PieMenuTaskSwitcher
+from special_menu import SpecialMenu
 from window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
     close_window_by_handle, load_cache
 from window_manager import WindowManager
@@ -62,6 +63,9 @@ class PieWindow(QMainWindow):
         self.pm_task_switcher = PieMenuTaskSwitcher(obj_name="PieMenuTaskSwitcher", parent=self)
         self.pm_task_switcher_2 = PieMenuTaskSwitcher(obj_name="PieMenuTaskSwitcher_2", parent=self)
         self.pm_task_switcher_2.hide()
+
+        self.special_menu = SpecialMenu(obj_name="SpecialMenu",parent=None)
+        self.special_menu.hide()
 
         # Start auto-refreshing every REFRESH_INTERVAL milliseconds
         self.auto_refresh_timer = QTimer(self)

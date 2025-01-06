@@ -123,6 +123,7 @@ class PieMenuTaskSwitcher(QWidget):
         )
         self.middle_button.left_clicked.connect(lambda: self.parent().hide())
         self.middle_button.right_clicked.connect(lambda: print("righty.o"))
+        self.middle_button.middle_clicked.connect(lambda:self.open_special_menu())
         self.middle_button.setParent(self)
         self.middle_button.lower()
         self.view.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
@@ -190,6 +191,12 @@ class PieMenuTaskSwitcher(QWidget):
                 parent=self)
 
             self.pie_buttons.append(self.btn)
+
+    def open_special_menu(self):
+        self.parent().hide()
+        print(hasattr(self.parent(), 'special_menu'))  # Should print True
+        print(self.parent().special_menu)  # Check if it correctly references the object
+        self.parent().special_menu.show()  # Then show it
 
     def update_child_button_hover_state(self, button, hovered):
         button.setProperty("hovered", hovered)
