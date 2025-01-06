@@ -1,6 +1,8 @@
 import os
 from dataclasses import dataclass, field
 
+from color_functions import adjust_saturation
+
 
 @dataclass
 class TaskPieSwitcherConfig:
@@ -22,6 +24,7 @@ class TaskPieSwitcherConfig:
     PIE_TEXT_LABEL_SCROLL_SPEED: int = 1
     PIE_TEXT_LABEL_SCROLL_INTERVAL: int = 25
     ACCENT_COLOR: str = "#5a14b7"
+    ACCENT_COLOR_MUTED: str = adjust_saturation(ACCENT_COLOR, 0.5)
     BG_COLOR: str = "#3b3b3b"
     FIXED_PIE_SLOTS: dict[str, int] = field(default_factory=lambda: {"Spotify": 4, "Vivaldi": 0})
 

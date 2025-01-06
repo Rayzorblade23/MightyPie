@@ -65,9 +65,6 @@ def listen_for_hotkeys(main_window: QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    # creating hues
-    accent_color_muted = adjust_saturation(CONFIG.ACCENT_COLOR, 0.5)
-
     # Load the QSS template
     with open("style.qss", "r") as file:
         qss_template = file.read()
@@ -75,7 +72,7 @@ if __name__ == "__main__":
     # inserting style attributes from the config.py file
     qss = (qss_template
            .replace("{{accent_color}}", CONFIG.ACCENT_COLOR)
-           .replace("{{accent_muted}}", accent_color_muted)
+           .replace("{{accent_muted}}", CONFIG.ACCENT_COLOR_MUTED)
            .replace("{{bg_color}}", CONFIG.BG_COLOR))
 
     # Apply the QSS to the application or widgets

@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QPropertyAnimation, QPoint, QEasingCurve, pyqtProperty
+from PyQt6.QtCore import Qt, QPropertyAnimation, QPoint, QEasingCurve, pyqtProperty, QTimer
 from PyQt6.QtGui import QPainter, QColor, QBrush, QPen, QFont
 from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QHBoxLayout, QPushButton, QVBoxLayout
 
@@ -6,7 +6,7 @@ from config import CONFIG
 
 
 class Toggle(QPushButton):
-    def __init__(self, size=(46, 28), on_action=None, off_action=None, parent=None):
+    def __init__(self, size=(46, 28), on_action=None, off_action=None, parent=None, cooldown_ms=2000):
         super().__init__(parent)
         self.setObjectName("Toggle")
 
@@ -14,9 +14,13 @@ class Toggle(QPushButton):
         self.on_action = on_action
         self.off_action = off_action
 
-        # Set size of the toggle button
+        # Set cooldown time in milliseconds (default 500ms)
+        self.cooldown_ms = cooldown_ms
+        self._is_clickable = True  # Flag to track if the button can be clicked
+
+        # Set size of the taskbar_toggle button
         self.setFixedSize(*size)
-        self.setCheckable(True)  # Make it a toggle button
+        self.setCheckable(True)  # Make it a taskbar_toggle button
 
         # Circle settings
         self.circle_size_offset = 4
@@ -26,12 +30,12 @@ class Toggle(QPushButton):
         self.center_y = self.height() // 2
         self._circle_pos = QPoint(self.center_y, self.center_y)
 
-        # Create the animation for the toggle
+        # Create the animation for the taskbar_toggle
         self.animation = QPropertyAnimation(self, b"circle_pos")
         self.animation.setDuration(300)
         self.animation.setEasingCurve(QEasingCurve.Type.OutQuad)
 
-        # Connect the button's checked state to toggle action
+        # Connect the button's checked state to taskbar_toggle action
         self.clicked.connect(self.toggle_switch)
 
         # Set initial background color
@@ -50,18 +54,26 @@ class Toggle(QPushButton):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # Draw the background of the toggle (rounded rectangle)
+        # Draw the background of the taskbar_toggle (rounded rectangle)
         toggle_rect = self.rect()
         painter.setBrush(QBrush(self.background_color))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawRoundedRect(toggle_rect, self.height() / 2, self.height() / 2)
 
-        # Draw the circle inside the toggle switch
+        # Draw the circle inside the taskbar_toggle switch
         painter.setBrush(QBrush(QColor(255, 255, 255)))  # White color for the circle
         painter.setPen(QPen(QColor(128, 128, 128), self.circle_stroke_width))  # Border color of the circle
         painter.drawEllipse(self._circle_pos, self.circle_radius, self.circle_radius)
 
     def toggle_switch(self):
+        if not self._is_clickable:
+            return  # Ignore click if button is in cooldown state
+
+        # Set the button to non-clickable (cooldown state)
+        self._is_clickable = False
+        self.setDisabled(True)  # Optionally disable the button to prevent further clicks
+
+        # Start the taskbar_toggle animation
         if self.isChecked():
             # Move the circle to the right
             self.animation.setStartValue(self._circle_pos)
@@ -79,6 +91,14 @@ class Toggle(QPushButton):
         self.animation.start()
         self.update_background_color()
 
+        # Set up a timer to reset the cooldown after the specified time
+        QTimer.singleShot(self.cooldown_ms, self.reset_cooldown)  # Reset after cooldown period
+
+    def reset_cooldown(self):
+        # Re-enable the button and make it clickable again
+        self._is_clickable = True
+        self.setEnabled(True)
+
     def update_background_color(self):
         if self.isChecked():
             self.background_color = QColor(CONFIG.ACCENT_COLOR)  # Green
@@ -94,11 +114,11 @@ class ToggleSwitch(QWidget):
         # Set the object name
         self.setObjectName(object_name)
 
-        # Create the container widget to hold both the toggle and the label
+        # Create the container widget to hold both the taskbar_toggle and the label
         self.container = QWidget(self)
         self.container.setLayout(QHBoxLayout())  # Horizontal layout for the container
 
-        # Create the toggle button (QPushButton)
+        # Create the taskbar_toggle button (QPushButton)
         self.toggle = Toggle(size=size, on_action=on_action, off_action=off_action, parent=self.container)
 
         # Create label if provided
@@ -108,7 +128,7 @@ class ToggleSwitch(QWidget):
             self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.label.setFont(QFont('Arial', 10))
 
-        # Add the toggle button and label (if any) to the container's layout
+        # Add the taskbar_toggle button and label (if any) to the container's layout
         self.container.layout().addWidget(self.toggle)
         if self.label:
             self.container.layout().addWidget(self.label)
@@ -142,10 +162,10 @@ class MainWindow(QWidget):
         self.show()
 
     def on_toggle(self):
-        print("The toggle is ON!")
+        print("The taskbar_toggle is ON!")
 
     def off_toggle(self):
-        print("The toggle is OFF!")
+        print("The taskbar_toggle is OFF!")
 
 
 if __name__ == '__main__':
