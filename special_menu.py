@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt, QEvent
 from PyQt6.QtGui import QPainter, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout
 
+from windows_settings_menu import WindowsSettingsMenu
 from config import CONFIG
 from taskbar_hide_utils import toggle_taskbar_autohide, hide_taskbar, show_taskbar
 from toggle_switch import ToggleSwitch
@@ -36,7 +37,10 @@ class SpecialMenu(QWidget):
 
         self.tray_icon_menu = TrayIconButtonsWindow(parent=self)
 
+        self.windows_settings_shortcuts = WindowsSettingsMenu()
+
         layout.addWidget(self.taskbar_toggle)
+        layout.addWidget(self.windows_settings_shortcuts)
         layout.addWidget(self.tray_icon_menu)
 
         self.setLayout(layout)

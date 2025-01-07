@@ -4,7 +4,6 @@ import os
 from typing import Dict, Tuple
 
 import psutil
-import pyautogui
 import win32api
 import win32con
 import win32gui
@@ -13,9 +12,8 @@ import win32ui
 from PIL import Image
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor, QGuiApplication
-from PyQt6.QtWidgets import QWidget, QApplication
+from PyQt6.QtWidgets import QWidget, QMainWindow
 
-from Test_Files.flashing_test import PieWindow
 from pie_menu_task_switcher import PieMenuTaskSwitcher
 from special_menu import SpecialMenu
 from window_manager import WindowManager
@@ -392,8 +390,7 @@ def show_special_menu(menu: SpecialMenu):
     menu.setFocus()  # This should focus the menu
 
 
-
-def show_pie_window(pie_window: PieWindow, pie_menu: PieMenuTaskSwitcher):
+def show_pie_window(pie_window: QMainWindow, pie_menu: PieMenuTaskSwitcher):
     """Display the main main_window and bring it to the foreground."""
     try:
         # Get the main_window handle

@@ -310,12 +310,21 @@ class TrayIconButtonsWindow(QWidget):
         self.setLayout(self.layout)
 
     def create_buttons(self, tray_icons):
-        """Create buttons for tray icons."""
+        """Create buttons for tray icons and print their attributes."""
         for icon_info in tray_icons:
+            # Print the icon attributes
+            print(f"Icon Tooltip: {icon_info['tooltip']}")
+            print(f"Process ID: {icon_info['process_id']}")
+            print(f"Is Visible: {icon_info['is_visible']}")
+            print(f"Window Handle (hwnd): {icon_info['hwnd']}")
+            print(f"Callback Message (uCallbackMessage): {icon_info['uCallbackMessage']}")
+            print(f"Icon Handle (hIcon): {icon_info['hIcon']}")
+            print(f"Icon ID (uID): {icon_info['uID']}")
+
             button = ExpandedButton(
                 text="",
                 object_name="TrayButton",
-                size=(CONFIG.BUTTON_HEIGHT,CONFIG.BUTTON_HEIGHT)
+                size=(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)
             )
 
             # Connect the specific signals to their respective actions
