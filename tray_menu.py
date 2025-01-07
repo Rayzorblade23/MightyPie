@@ -3,10 +3,11 @@ import sys
 from ctypes import wintypes
 from functools import partial
 
+import psutil
 from PIL import Image
 from PIL.ImageQt import ImageQt
 from PyQt6.QtGui import QIcon, QPixmap
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout
+from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout
 
 from config import CONFIG
 from expanded_button import ExpandedButton
@@ -102,52 +103,60 @@ def get_tray_icons(tray_wnd):
         return []
 
     button_size = ctypes.sizeof(TBBUTTON)
+
+    # Allocate memory for the button structure in the target process
     remote_button = kernel32.VirtualAllocEx(h_process, None, button_size, 0x3000, 0x04)
     if not remote_button:
         print("Failed to allocate memory in target process.")
+        kernel32.CloseHandle(h_process)
         return []
 
     tray_icons = []
-    for i in range(button_count):
-        user32.SendMessageW(tray_wnd, TB_GETBUTTON, i, remote_button)
+    try:
+        # Process each button in the tray
+        for i in range(button_count):
+            user32.SendMessageW(tray_wnd, TB_GETBUTTON, i, remote_button)
 
-        local_button = TBBUTTON()
-        kernel32.ReadProcessMemory(h_process, remote_button, ctypes.byref(local_button), button_size, None)
+            local_button = TBBUTTON()
+            kernel32.ReadProcessMemory(h_process, remote_button, ctypes.byref(local_button), button_size, None)
 
-        if local_button.fsState & TBSTATE_HIDDEN:
-            continue
+            if local_button.fsState & TBSTATE_HIDDEN:
+                continue
 
-        traydata = TRAYDATA()
-        kernel32.ReadProcessMemory(h_process, local_button.dwData, ctypes.byref(traydata), ctypes.sizeof(TRAYDATA), None)
+            traydata = TRAYDATA()
+            kernel32.ReadProcessMemory(h_process, local_button.dwData, ctypes.byref(traydata), ctypes.sizeof(TRAYDATA), None)
 
-        # Dynamically allocate a buffer for the tooltip based on length
-        tooltip_buffer = ctypes.create_unicode_buffer(512)  # Increased buffer size
-        read_size = kernel32.ReadProcessMemory(
-            h_process, local_button.iString, tooltip_buffer, 512 * ctypes.sizeof(wintypes.WCHAR), None
-        )
+            # Dynamically allocate a buffer for the tooltip based on length
+            tooltip_buffer = ctypes.create_unicode_buffer(512)  # Increased buffer size
+            read_size = kernel32.ReadProcessMemory(
+                h_process, local_button.iString, tooltip_buffer, 512 * ctypes.sizeof(wintypes.WCHAR), None
+            )
 
-        # Handle error if the reading fails
-        if read_size == 0:
-            print(f"Failed to read tooltip for icon {i}.")
-            continue
+            # Handle error if the reading fails
+            if read_size == 0:
+                print(f"Failed to read tooltip for icon {tooltip_buffer.value}.")
+                # continue
 
-        process_id = wintypes.DWORD()
-        user32.GetWindowThreadProcessId(traydata.hwnd, ctypes.byref(process_id))
+            process_id = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(traydata.hwnd, ctypes.byref(process_id))
 
-        tray_icons.append({
-            "tooltip": tooltip_buffer.value,
-            "process_id": process_id.value,
-            "is_visible": not (local_button.fsState & TBSTATE_HIDDEN),
-            "hIcon": traydata.hIcon,  # Save the icon handle
-            "hwnd": traydata.hwnd,  # Save the window handle of the tray icon
-            "uCallbackMessage": traydata.uCallbackMessage,  # Save the callback message
-            "uID": traydata.uID,  # Save the ID for use in callback
-        })
+            tray_icons.append({
+                "tooltip": tooltip_buffer.value,
+                "process_id": process_id.value,
+                "is_visible": not (local_button.fsState & TBSTATE_HIDDEN),
+                "hIcon": traydata.hIcon,  # Save the icon handle
+                "hwnd": traydata.hwnd,  # Save the window handle of the tray icon
+                "uCallbackMessage": traydata.uCallbackMessage,  # Save the callback message
+                "uID": traydata.uID,  # Save the ID for use in callback
+            })
 
-    kernel32.VirtualFreeEx(h_process, remote_button, 0, 0x8000)
-    kernel32.CloseHandle(h_process)
+    finally:
+        # Ensure that the allocated memory is freed even if an error occurs
+        kernel32.VirtualFreeEx(h_process, remote_button, 0, 0x8000)
+        kernel32.CloseHandle(h_process)
 
     return tray_icons
+
 
 
 # Step 1: Find the tray window
@@ -291,35 +300,47 @@ def icon_to_qpixmap(hIcon):
 
     return qpixmap
 
+from PyQt6.QtCore import QTimer
+
 class TrayIconButtonsWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Tray Icon Buttons")
         self.layout = QHBoxLayout()
 
-        tray_window = find_tray_window()
-        if tray_window:
-            tray_icons = get_tray_icons(tray_window)
-            if tray_icons:
-                self.create_buttons(tray_icons)
-            else:
-                print("No tray icons found.")
-        else:
-            print("System Tray Toolbar Not Found.")
+        # Set up a timer to update tray icons every 5 seconds (5000 milliseconds)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_tray_icons)  # Trigger update_tray_icons function
+        self.timer.start(5000)  # 5000 ms = 5 seconds
+
+        # Initialize tray icon buttons
+        self.tray_icons = []
+        self.update_tray_icons()  # Initial load of tray icons
 
         self.setLayout(self.layout)
 
+    def update_tray_icons(self):
+        """Update tray icon buttons in the window."""
+        tray_window = find_tray_window()
+        if tray_window:
+            tray_icons = get_tray_icons(tray_window)
+            self.create_buttons(tray_icons)
+        else:
+            print("System Tray Toolbar Not Found.")
+
     def create_buttons(self, tray_icons):
-        """Create buttons for tray icons and print their attributes."""
+        """Create buttons for tray icons, excluding system icons."""
+        # Clear existing buttons first
+        for i in range(self.layout.count()):
+            widget = self.layout.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
         for icon_info in tray_icons:
-            # Print the icon attributes
-            print(f"Icon Tooltip: {icon_info['tooltip']}")
-            print(f"Process ID: {icon_info['process_id']}")
-            print(f"Is Visible: {icon_info['is_visible']}")
-            print(f"Window Handle (hwnd): {icon_info['hwnd']}")
-            print(f"Callback Message (uCallbackMessage): {icon_info['uCallbackMessage']}")
-            print(f"Icon Handle (hIcon): {icon_info['hIcon']}")
-            print(f"Icon ID (uID): {icon_info['uID']}")
+            # Check if the icon belongs to a system process (e.g., explorer.exe)
+            if is_system_process(icon_info["process_id"]):
+                print(f"Skipping system icon with process ID: {icon_info['process_id']}")
+                continue
 
             button = ExpandedButton(
                 text="",
@@ -331,7 +352,7 @@ class TrayIconButtonsWindow(QWidget):
             button.left_clicked.connect(partial(self.trigger_tray_icon, icon_info))
             button.right_clicked.connect(partial(self.trigger_tray_icon_context, icon_info))
 
-            button.setIcon(QIcon(icon_to_qpixmap(icon_info["hIcon"])))
+            button.setIcon(QIcon(icon_to_qpixmap(icon_info["hIcon"])) )
             self.layout.addWidget(button)
 
     def trigger_tray_icon(self, icon_info):
@@ -353,12 +374,22 @@ class TrayIconButtonsWindow(QWidget):
         user32.SetForegroundWindow(hwnd)
 
 
+def is_system_process(process_id):
+    """Check if the process is a system process like explorer.exe."""
+    try:
+        proc = psutil.Process(process_id)
+        if proc.name().lower() == 'explorer.exe':  # Checking for explorer.exe
+            return True
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        pass
+    return False
+
+
 def main():
     app = QApplication(sys.argv)
     window = TrayIconButtonsWindow()
     window.show()
     sys.exit(app.exec())
-
 
 
 if __name__ == "__main__":
