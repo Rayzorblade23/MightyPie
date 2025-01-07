@@ -134,7 +134,7 @@ class ToggleSwitch(QWidget):
         # Add the taskbar_toggle button and label (if any) to the container's layout
         self.container.layout().addWidget(self.toggle)
 
-        container_layout.addSpacing(10)  # Adds space between the toggle and label
+        container_layout.addSpacing(2)  # Adds space between the toggle and label
 
         if self.label:
             self.container.layout().addWidget(self.label)

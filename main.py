@@ -1,3 +1,4 @@
+import signal
 import sys
 import threading
 
@@ -7,11 +8,11 @@ from PyQt6.QtWidgets import (
     QApplication,
     QWidget, )
 
-from color_functions import adjust_saturation
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
 from global_mouse_filter import GlobalMouseFilter
 from pie_window import PieWindow
+from taskbar_hide_utils import show_taskbar, toggle_taskbar_autohide
 from window_manager import WindowManager
 
 
@@ -61,8 +62,17 @@ def listen_for_hotkeys(main_window: QWidget):
     keyboard.on_release_key(CONFIG.HOTKEY_OPEN, lambda _: on_release())
     keyboard.wait()
 
+def signal_handler(signal, frame):
+    # Ensure taskbar is shown before exiting
+    show_taskbar()
+    # toggle_taskbar_autohide(False)
+    sys.exit(0)
 
 if __name__ == "__main__":
+    # Register signal handler for SIGINT (Ctrl+C) and SIGTERM (termination signals)
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
     app = QApplication(sys.argv)
 
     # Load the QSS template

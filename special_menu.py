@@ -5,6 +5,7 @@ from PyQt6.QtGui import QPainter, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout
 
 from config import CONFIG
+from taskbar_hide_utils import toggle_taskbar_autohide, hide_taskbar, show_taskbar
 from toggle_switch import ToggleSwitch
 from tray_menu import TrayIconButtonsWindow
 
@@ -28,9 +29,9 @@ class SpecialMenu(QWidget):
         self.setup_window()
 
         self.taskbar_toggle = ToggleSwitch("TaskbarToggle",
-                                           label_text="Hide the Taskbar",
-                                           on_action=lambda: print("Taskbar disappears."),
-                                           off_action=lambda: print("Taskbar re-appears."),
+                                           label_text="Hide the Taskbar (takes 5 secs)",
+                                           on_action=lambda: self.toggle_taskbar(True),
+                                           off_action=lambda: self.toggle_taskbar(False),
                                            parent=self)
 
         self.tray_icon_menu = TrayIconButtonsWindow(parent=self)
@@ -50,6 +51,14 @@ class SpecialMenu(QWidget):
 
         # Install the event filter
         QApplication.instance().installEventFilter(self)
+
+    def toggle_taskbar(self, hide: bool):
+        if hide:
+            toggle_taskbar_autohide(True)
+            hide_taskbar()
+        else:
+            show_taskbar()
+            toggle_taskbar_autohide(False)
 
     def setup_window(self):
         """Set up the main window properties."""

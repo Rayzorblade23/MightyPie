@@ -11,6 +11,7 @@ from events import ShowWindowEvent, HotkeyReleaseEvent
 from pie_button import PieButton
 from pie_menu_task_switcher import PieMenuTaskSwitcher
 from special_menu import SpecialMenu
+from taskbar_hide_utils import show_taskbar
 from window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
     close_window_by_handle, load_cache, show_special_menu
 from window_manager import WindowManager
