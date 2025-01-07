@@ -199,7 +199,6 @@ class PieMenuTaskSwitcher(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)  # Call the parent class's method
-        print("SHOWING")
         for button in self.pie_buttons:
             self.animate_button(button, button.geometry())
 

@@ -133,8 +133,8 @@ def get_tray_icons(tray_wnd):
             )
 
             # Handle error if the reading fails
-            if read_size == 0:
-                print(f"Failed to read tooltip for icon {tooltip_buffer.value}.")
+            # if read_size == 0:
+                # print(f"Failed to read tooltip for icon {tooltip_buffer.value}.")
                 # continue
 
             process_id = wintypes.DWORD()
@@ -339,7 +339,7 @@ class TrayIconButtonsWindow(QWidget):
         for icon_info in tray_icons:
             # Check if the icon belongs to a system process (e.g., explorer.exe)
             if is_system_process(icon_info["process_id"]):
-                print(f"Skipping system icon with process ID: {icon_info['process_id']}")
+                # print(f"Skipping system icon with process ID: {icon_info['process_id']}")
                 continue
 
             button = ExpandedButton(
