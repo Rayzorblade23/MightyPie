@@ -32,6 +32,18 @@ QWidget {
     border: 1px solid {{accent_muted}};              /* No border */
 }
 
+#Clock{
+    background-color: rgba(20, 20, 20, 0);
+    border: None;
+}
+
+#ClockLabel {
+    color: #FFD580;  /* Lighter pastel orange color */
+    font-family: "Bahnschrift";  /* Font family set to Bahnschrift */
+    font-size: 12px;  /* Font size set to 12px */
+    font-weight: normal;  /* Ensures the font weight is normal */
+}
+
 /* Style the button */
 QPushButton {
     background-color: {{bg_color}};
