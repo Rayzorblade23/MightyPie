@@ -73,10 +73,22 @@ def open_action_center(self, hide_parent=False):
 
 
 def open_explorer_window(self, hide_parent=False):
-    """Simulate pressing Ctrl + Esc to open the Start menu"""
+    """Simulate pressing Windows + E to open an Explorer Window"""
     try:
         pyautogui.hotkey('win', 'e')  # Simulate pressing Win + E
         if hide_parent and self.parent():
             self.parent().hide()  # Hide the parent window after the button is pressed
     except Exception as e:
         print(f"Error pressing Win + e: {e}")
+
+def open_task_manager(self, hide_parent=False):
+    """Simulate pressing Ctrl + Shift + Esc to open the Start menu"""
+    try:
+        pyautogui.FAILSAFE = False  # Disable fail-safe temporarily
+        pyautogui.hotkey('ctrl', 'shift', 'esc')  # Simulate pressing Ctrl + Shift + Esc
+        if hide_parent and self.parent():
+            self.parent().hide()  # Hide the parent window after the button is pressed
+    except Exception as e:
+        print(f"Error pressing Ctrl + Shift + Esc: {e}")
+    finally:
+        pyautogui.FAILSAFE = True  # Re-enable fail-safe

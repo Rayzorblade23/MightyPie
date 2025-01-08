@@ -7,6 +7,8 @@
 
 - save previous condition of minimized windows (i. e.: maximized or normal)
 
+- disable for fullscreen applications?
+
 
 IDEA:
 Remove Windows button but open when clicking bottom left of screen

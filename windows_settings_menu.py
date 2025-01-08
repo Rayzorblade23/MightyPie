@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QSp
 
 from config import CONFIG
 from shortcut_utils import open_audio_settings, open_network_settings, open_action_center, open_projection_settings, \
-    open_onscreen_keyboard, open_start_menu, open_explorer_window
+    open_onscreen_keyboard, open_start_menu, open_explorer_window, open_task_manager
 
 
 class WindowsSettingsMenu(QWidget):
@@ -30,7 +30,8 @@ class WindowsSettingsMenu(QWidget):
             "action_center": os.path.join("external_icons", "layout-sidebar-right-inactive.png"),
             "projection": os.path.join("external_icons", "device-desktop.png"),
             "touch_keyboard": os.path.join("external_icons", "keyboard.png"),
-            "folder": os.path.join("external_icons", "folder.png")
+            "folder": os.path.join("external_icons", "folder.png"),
+            "taskman": os.path.join("external_icons", "subtask.png")
         }
 
         # Load the icon based on the inverted_icons flag
@@ -88,13 +89,30 @@ class WindowsSettingsMenu(QWidget):
         self.explorer_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.explorer_button.clicked.connect(lambda: open_explorer_window(self, hide_parent=True))
 
+        self.task_man_button = QPushButton(self)
+        self.task_man_button.setIcon(get_icon("taskman"))
+        self.task_man_button.setIconSize(QSize(*self.icon_size))
+        self.task_man_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
+        self.task_man_button.clicked.connect(lambda: open_task_manager(self, hide_parent=True))
+
         default_spacing = 6
         spacer = QSpacerItem(CONFIG.BUTTON_HEIGHT + default_spacing, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        # Add tooltips for buttons
+        self.windows_key_button.setToolTip("Open Start Menu")
+        self.audio_button.setToolTip("Open Audio Settings")
+        self.network_button.setToolTip("Open Network Settings")
+        self.action_center_button.setToolTip("Open Action Center")
+        self.projection_button.setToolTip("Open Projection Settings")
+        self.touch_keyboard_button.setToolTip("Open On-Screen Keyboard")
+        self.explorer_button.setToolTip("Open File Explorer")
+        self.task_man_button.setToolTip("Open Task Manager")
 
         # Set up the horizontal layout
         layout = QHBoxLayout()
         layout.setSpacing(default_spacing)
 
+        layout.addWidget(self.task_man_button)
         layout.addWidget(self.audio_button)
         layout.addWidget(self.network_button)
         layout.addWidget(self.projection_button)
