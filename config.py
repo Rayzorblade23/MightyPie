@@ -10,7 +10,7 @@ class TaskPieSwitcherConfig:
         os.path.dirname(os.path.abspath(__file__)), "app_name_cache.json"
     )
     REFRESH_INTERVAL: int = 2000  # ms
-    HOTKEY_OPEN: str = "F13"
+    HOTKEY_OPEN: str = "F14"
     MAX_BUTTONS: int = 8
     BUTTON_WIDTH: int = 140
     BUTTON_HEIGHT: int = 34

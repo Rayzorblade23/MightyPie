@@ -3,6 +3,7 @@ import math
 from PyQt6.QtCore import QRectF, Qt, QPropertyAnimation, QRect, QEasingCurve, QSize
 from PyQt6.QtGui import QPainter, QBrush, QPen, QColor
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QPushButton, QGraphicsOpacityEffect
+from pynput.mouse import Controller, Button
 
 from area_button import AreaButton
 from config import CONFIG
@@ -121,8 +122,9 @@ class PieMenuTaskSwitcher(QWidget):
             size=(CONFIG.INNER_RADIUS * 2, CONFIG.INNER_RADIUS * 2),
             pos=(self.width() // 2 - CONFIG.INNER_RADIUS, self.height() // 2 - CONFIG.INNER_RADIUS)  # Using position for x and y
         )
-        self.middle_button.left_clicked.connect(lambda: self.parent().hide())
-        self.middle_button.right_clicked.connect(lambda: print("righty.o"))
+        self.middle_button.left_clicked.connect(
+            lambda: [self.parent().hide(), Controller().press(Button.x2), Controller().release(Button.x2)])
+        self.middle_button.right_clicked.connect(lambda: self.parent().hide())
         self.middle_button.middle_clicked.connect(lambda: self.parent().open_special_menu())
         self.middle_button.setParent(self)
         self.middle_button.lower()

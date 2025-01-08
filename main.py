@@ -14,6 +14,7 @@ from global_mouse_filter import GlobalMouseFilter
 from pie_window import PieWindow
 from taskbar_hide_utils import show_taskbar, toggle_taskbar_autohide
 from window_manager import WindowManager
+from pynput.mouse import Listener as MouseListener, Button as MouseButton
 
 
 def listen_for_hotkeys(main_window: QWidget):
@@ -57,6 +58,20 @@ def listen_for_hotkeys(main_window: QWidget):
             release_event = HotkeyReleaseEvent(main_window, child_window)
             QApplication.postEvent(main_window, release_event)
             can_open_window = True  # Reset the state
+
+    def handle_mouse_click(x, y, button, pressed):
+        """Handle mouse button events."""
+        if button == MouseButton.x2:  # Forward button
+            if pressed:
+                print("PRESSED")
+                on_press()
+            else:
+                print("RLEASED")
+                on_release()
+
+    # Start mouse listener in a separate thread
+    mouse_listener = MouseListener(on_click=handle_mouse_click)
+    # mouse_listener.start()
 
     keyboard.on_press_key(CONFIG.HOTKEY_OPEN, lambda _: on_press(), suppress=True)
     keyboard.on_release_key(CONFIG.HOTKEY_OPEN, lambda _: on_release())

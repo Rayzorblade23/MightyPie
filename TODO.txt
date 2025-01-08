@@ -1,5 +1,7 @@
 - implement the sound settings from tabame in Special Menu
 
+- make a window manager pie menu. up: max, down: min, restart window
+
 
 - save previous condition of minimized windows (i. e.: maximized or normal)
 
