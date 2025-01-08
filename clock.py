@@ -81,7 +81,7 @@ class Clock(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)  # Make the window click-through
         # Combine FramelessWindowHint and WindowStaysOnTopHint
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint)
 
     def move_to_top_right(self):
         """Move the clock to the upper right corner of the primary screen."""
