@@ -9,7 +9,7 @@ QWidget {
     border:none;              /* No border */
 }
 
-#PieMenuTaskSwitcher {
+#PieMenuTaskSwitcher_1 {
     background-color: transparent;
     border:none;              /* No border */
 }
@@ -18,6 +18,12 @@ QWidget {
     background-color: rgba(0, 255, 255, 0.0);
     border:none;              /* No border */
 }
+
+#PieMenuWindowControl {
+    background-color: rgba(0, 255, 255, 0.0);
+    border:none;              /* No border */
+}
+
 
 /* Style the Title Bar Button Widget */
 #controlButtonWidget {

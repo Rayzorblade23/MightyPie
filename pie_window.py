@@ -60,11 +60,12 @@ class PieWindow(QMainWindow):
         self.is_window_open = False
 
         # Create Pie Menus with this main_window as parent
-        self.pm_task_switcher = PieMenu(obj_name="PieMenuTaskSwitcher_1", parent=self)
+        self.pm_task_switcher_1 = PieMenu(obj_name="PieMenuTaskSwitcher_1", parent=self)
         self.pm_task_switcher_2 = PieMenu(obj_name="PieMenuTaskSwitcher_2", parent=self)
         self.pm_task_switcher_2.hide()
 
-        self.pm_win_control = PieMenu(obj_name="PieMenuWindowControl")
+        self.pm_win_control = PieMenu(obj_name="PieMenuWindowControl", parent=self)
+        self.pm_win_control.hide()
 
         self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None)
         self.special_menu.hide()
@@ -108,26 +109,28 @@ class PieWindow(QMainWindow):
         """Handle the custom filtered_event to show the main_window."""
 
         if isinstance(event, ShowWindowEvent):
-            task_switcher: PieMenu = event.child_window
-            if task_switcher is not None:
-                print(f"Showing switcher {task_switcher.view.objectName()}")
+            pie_menu: PieMenu = event.child_window
+            if pie_menu is not None:
+                print(f"Showing switcher {pie_menu.view.objectName()}")
                 # Hide siblings of class PieMenuTaskSwitcher
                 for sibling in self.children():
-                    if sibling is not task_switcher and isinstance(sibling, PieMenu):
+                    if sibling is not pie_menu and isinstance(sibling, PieMenu):
                         sibling.hide()
-                task_switcher.show()
-                self.refresh()
-                show_pie_window(event.window, task_switcher)  # Safely call show_pie_window when the filtered_event is posted
+                pie_menu.show()
+                if "Task" in pie_menu.view.objectName():
+                    print("YO TASKER!")
+                    self.refresh()
+                show_pie_window(event.window, pie_menu)  # Safely call show_pie_window when the filtered_event is posted
             return True
         elif isinstance(event, HotkeyReleaseEvent):
-            task_switcher = event.child_window
+            pie_menu = event.child_window
             pie_buttons: Dict[int, PieButton]  # Where 'SomeType' is the type of items in pie_buttons
 
             # If there's an active section, click that button
-            if hasattr(task_switcher.area_button, 'current_active_section'):
-                active_section = task_switcher.area_button.current_active_section
+            if hasattr(pie_menu.area_button, 'current_active_section'):
+                active_section = pie_menu.area_button.current_active_section
                 if active_section != -1:
-                    task_switcher.pie_buttons[active_section].trigger_left_click_action()
+                    pie_menu.pie_buttons[active_section].trigger_left_click_action()
             self.hide()
             return True
         return super().event(event)
@@ -239,7 +242,7 @@ class PieWindow(QMainWindow):
                 button_index = button_index % 8
                 task_switcher = self.pm_task_switcher_2
             else:
-                task_switcher = self.pm_task_switcher
+                task_switcher = self.pm_task_switcher_1
 
             self.pie_button_texts[button_index] = button_text_1
 
@@ -281,7 +284,7 @@ class PieWindow(QMainWindow):
                     index = i % 8
                     task_switcher = self.pm_task_switcher_2
                 else:
-                    task_switcher = self.pm_task_switcher
+                    task_switcher = self.pm_task_switcher_1
                 try:
                     task_switcher.pie_buttons[index].set_left_click_action(action=None)
                     task_switcher.pie_buttons[index].set_right_click_action(action=None)

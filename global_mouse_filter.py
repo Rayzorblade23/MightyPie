@@ -10,23 +10,24 @@ class GlobalMouseFilter(QObject):
         super().__init__()
         self.main_window = main_window  # Reference to the main pie_window or specific widgets
         self.area_button = None
-        self.task_switcher_pie: Any | None = getattr(self.main_window, 'pm_task_switcher', None)
+        self.task_switcher_pie: Any | None = getattr(self.main_window, 'pm_task_switcher_1', None)
 
         self.last_active_child = None  # Track the last active_child value
 
-    def _update_task_switcher(self):
+    def _update_pie_menu(self):
         """Update the task switcher dynamically based on active_child."""
         active_child = getattr(self.main_window, 'active_child', None)
 
         # Check if the active_child has changed
         if active_child != self.last_active_child:
-            task_switcher_map = {
-                1: 'pm_task_switcher',
-                2: 'pm_task_switcher_2'
+            pie_menu_map = {
+                1: 'pm_task_switcher_1',
+                2: 'pm_task_switcher_2',
+                3: 'pm_win_control'
             }
 
             # Get the attribute name based on active_child value
-            attribute_name = task_switcher_map.get(active_child)
+            attribute_name = pie_menu_map.get(active_child)
 
             # print(f"Mousey thinks it's {attribute_name}.")
 
@@ -41,7 +42,7 @@ class GlobalMouseFilter(QObject):
 
     def eventFilter(self, obj, filtered_event):
         # Dynamically update the task switcher on each event
-        self._update_task_switcher()
+        self._update_pie_menu()
 
         # Skip processing if the main window or task switcher is hidden or disabled
         if not self.main_window.isVisible() or not self.main_window.isEnabled():

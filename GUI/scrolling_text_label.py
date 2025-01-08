@@ -3,7 +3,7 @@ from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtWidgets import QLabel, QHBoxLayout, QSizePolicy, QWidget
 
 from config import CONFIG
-from font_styles import FontStyle
+from GUI.font_styles import FontStyle
 
 
 class ScrollingLabel(QWidget):

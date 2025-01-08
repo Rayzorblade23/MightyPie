@@ -5,9 +5,9 @@ from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QPixmap, QCursor
 from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
 
+from GUI.font_styles import FontStyle
+from GUI.scrolling_text_label import ScrollingLabel
 from config import CONFIG
-from font_styles import FontStyle
-from scrolling_text_label import ScrollingLabel
 
 
 class PieButton(QPushButton):
