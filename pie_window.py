@@ -148,7 +148,6 @@ class PieWindow(QMainWindow):
         # print(f"auto_refresh took {elapsed_time:.3f} seconds")
 
     def refresh(self):
-        print("Refreshing!")
         self.update_buttons()
 
     # Button Management
