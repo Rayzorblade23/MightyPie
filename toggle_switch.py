@@ -6,7 +6,7 @@ from config import CONFIG
 
 
 class Toggle(QPushButton):
-    def __init__(self, size=(46, 28), on_action=None, off_action=None, parent=None, cooldown_ms=2000):
+    def __init__(self, size=(46, 28), on_action=None, off_action=None, parent=None, cooldown_ms=300):
         super().__init__(parent)
         self.setObjectName("Toggle")
 

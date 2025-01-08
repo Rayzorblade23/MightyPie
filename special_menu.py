@@ -1,14 +1,15 @@
 import sys
 
-from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtCore import Qt, QEvent, QTimer
 from PyQt6.QtGui import QPainter, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout
 
-from windows_settings_menu import WindowsSettingsMenu
+from clock import Clock
 from config import CONFIG
 from taskbar_hide_utils import toggle_taskbar_autohide, hide_taskbar, show_taskbar
 from toggle_switch import ToggleSwitch
 from tray_menu import TrayIconButtonsWindow
+from windows_settings_menu import WindowsSettingsMenu
 
 
 class SpecialMenu(QWidget):
@@ -35,11 +36,29 @@ class SpecialMenu(QWidget):
                                            off_action=lambda: self.toggle_taskbar(False),
                                            parent=self)
 
+        self.clock = Clock()
+
+        self.clock_toggle = ToggleSwitch("ClockToggle",
+                                         label_text="Clock!",
+                                         on_action=lambda: self.clock.show(),
+                                         off_action=lambda: self.clock.hide(),
+                                         parent=self)
+
+        self.clock_bg_toggle = ToggleSwitch("ClockBgToggle",
+                                            label_text="Clock: Opaque Background",
+                                            on_action=lambda: self.clock.toggle_background(),
+                                            off_action=lambda: self.clock.toggle_background(),
+                                            parent=self)
+
+        QTimer.singleShot(0, self.trigger_toggle)
+
         self.tray_icon_menu = TrayIconButtonsWindow(parent=self)
 
         self.windows_settings_shortcuts = WindowsSettingsMenu()
 
         layout.addWidget(self.taskbar_toggle)
+        layout.addWidget(self.clock_toggle)
+        layout.addWidget(self.clock_bg_toggle)
         layout.addWidget(self.windows_settings_shortcuts)
         layout.addWidget(self.tray_icon_menu)
 
@@ -55,6 +74,10 @@ class SpecialMenu(QWidget):
 
         # Install the event filter
         QApplication.instance().installEventFilter(self)
+
+    def trigger_toggle(self):
+        self.clock_toggle.toggle.setChecked(True)  # or False
+        self.clock_toggle.toggle.toggle_switch()
 
     def toggle_taskbar(self, hide: bool):
         if hide:

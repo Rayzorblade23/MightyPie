@@ -1,20 +1,23 @@
 import sys
 
 from PyQt6.QtCore import Qt, QTimer, QTime, QDate
-from PyQt6.QtGui import QFont, QPainter
-from PyQt6.QtWidgets import QApplication, QLabel, QGraphicsScene, QGraphicsView, QFrame, QVBoxLayout, QHBoxLayout
+from PyQt6.QtGui import QPainter
+from PyQt6.QtWidgets import QApplication, QLabel, QGraphicsScene, QGraphicsView, QVBoxLayout, QHBoxLayout, QWidget
 
 from config import CONFIG
 
 
-class TransparentClock(QFrame):
+class Clock(QWidget):
     """A clock with no seconds and a 50% transparent background."""
 
-    def __init__(self, obj_name: str = "", parent=None):
+    def __init__(self, obj_name: str = "Clock", parent=None):
         super().__init__(parent)
         self.obj_name = obj_name
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)  # Add horizontal margins
+
+        self.is_opaque = True
 
         self.scene = QGraphicsScene(self)
         self.view = QGraphicsView(self.scene, self)
@@ -26,23 +29,35 @@ class TransparentClock(QFrame):
         self.setObjectName(self.obj_name)
         self.setup_window()
 
-        # Create a horizontal layout to hold both the date and time labels
-        date_time_layout = QHBoxLayout()
+        # Create a QWidget to hold the labels
+        container = QWidget(self)
+        date_time_layout = QHBoxLayout(container)
+        date_time_layout.setContentsMargins(0, 0, 0, 0)
+        date_time_layout.setSpacing(0)
 
-        # Date label (left aligned)
-        self.date_label = QLabel(self)
-        self.date_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        # # Add a spacer of 10px vertically between the widgets
+        # spacer = QSpacerItem(10, 10, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+        # date_time_layout.addItem(spacer)  # Add spacer to the layout
+
+        # Date label
+        self.date_label = QLabel()
+        self.date_label.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignCenter)
         date_time_layout.addWidget(self.date_label)
 
-        # Time label (left aligned)
-        self.time_label = QLabel(self)
-        self.time_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        # Time label
+        self.time_label = QLabel()
+        self.time_label.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignCenter)
         date_time_layout.addWidget(self.time_label)
 
-        layout.addLayout(date_time_layout)
         self.date_label.setObjectName("ClockLabel")
         self.time_label.setObjectName("ClockLabel")
 
+        # Set the width of the labels based on the text width
+        self.date_label.setFixedWidth(80)
+        self.time_label.setFixedWidth(34)
+
+        # Add container to main layout
+        layout.addWidget(container)
 
         self.setLayout(layout)
 
@@ -53,23 +68,25 @@ class TransparentClock(QFrame):
         self.update_time()
 
         # Set initial size and move to the upper right corner
-        self.resize(145, 30)
+        self.resize(130, 30)
 
         # Set a minimum size or use resize() to adjust window size
         self.view.setGeometry(0, 0, self.width(), self.height())
         self.scene.setSceneRect(0, 0, self.width(), self.height())
         self.move_to_top_right()
+        self.toggle_background()
 
     def setup_window(self):
         """Set up the main window properties."""
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)  # Make the window click-through
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        # Combine FramelessWindowHint and WindowStaysOnTopHint
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
 
     def move_to_top_right(self):
         """Move the clock to the upper right corner of the primary screen."""
         screen_geometry = QApplication.primaryScreen().availableGeometry()
-        x = screen_geometry.width() - self.width()
+        x = screen_geometry.width() - self.width() - 25
         y = 0
         self.move(x, y)
 
@@ -91,6 +108,31 @@ class TransparentClock(QFrame):
         self.date_label.setText(f"{weekday_abbr} {day_with_suffix} {month_abbr}")
         self.time_label.setText(current_time)
 
+    def toggle_background(self):
+        if self.is_opaque:  # If the background is currently opaque, set it to transparent.
+            self.set_transparent_background()
+        else:  # If the background is currently transparent, set it to opaque.
+            self.set_opaque_background()
+
+        # Toggle the background state for next time
+        self.is_opaque = not self.is_opaque
+
+    # To set the widget background to opaque (solid color)
+    def set_opaque_background(self):
+        self.setStyleSheet("""
+            QWidget#Clock {
+                background-color: #a181dd;  /* Opaque blue background */
+            }
+        """)
+
+    # To set the widget background to transparent
+    def set_transparent_background(self):
+        self.setStyleSheet("""
+            QWidget#Clock {
+                background-color: rgba(255, 255, 0, 0);  /* Fully transparent background */
+            }
+        """)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -106,7 +148,7 @@ if __name__ == "__main__":
 
     app.setStyleSheet(qss)
 
-    clock = TransparentClock("Clock")
+    clock = Clock("Clock")
     clock.show()  # Explicitly show the clock widget
 
     sys.exit(app.exec())
