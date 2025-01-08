@@ -91,7 +91,7 @@ class PieWindow(QMainWindow):
 
     def setup_window(self):
         """Set up the main main_window properties."""
-        self.setWindowTitle("Main Window with Graphics View and Task Switcher Pie")
+        self.setWindowTitle(f"{CONFIG.PROGRAM_NAME} - Main")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 

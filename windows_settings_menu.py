@@ -1,16 +1,17 @@
 import os
-import subprocess
 import sys
 
-import pyautogui
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon, QPixmap, QColor
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy
 
 from config import CONFIG
+from shortcut_utils import open_audio_settings, open_network_settings, open_action_center, open_projection_settings, \
+    open_onscreen_keyboard, open_start_menu, open_explorer_window
 
 
 class WindowsSettingsMenu(QWidget):
+    # noinspection PyUnresolvedReferences
     def __init__(self):
         super().__init__()
 
@@ -18,7 +19,7 @@ class WindowsSettingsMenu(QWidget):
         self.setWindowTitle('Settings Menu')
         self.setGeometry(100, 100, 600, 100)  # Increased width for HBoxLayout
 
-        self.icon_size = (20,20)
+        self.icon_size = (20, 20)
         self.inverted_icons = True
 
         # Define the icon file paths (use appropriate file paths)
@@ -28,7 +29,8 @@ class WindowsSettingsMenu(QWidget):
             "network": os.path.join("external_icons", "network.png"),
             "action_center": os.path.join("external_icons", "layout-sidebar-right-inactive.png"),
             "projection": os.path.join("external_icons", "device-desktop.png"),
-            "touch_keyboard": os.path.join("external_icons", "keyboard.png")
+            "touch_keyboard": os.path.join("external_icons", "keyboard.png"),
+            "folder": os.path.join("external_icons", "folder.png")
         }
 
         # Load the icon based on the inverted_icons flag
@@ -47,47 +49,62 @@ class WindowsSettingsMenu(QWidget):
         self.windows_key_button.setIcon(get_icon("windows_key"))
         self.windows_key_button.setIconSize(QSize(*self.icon_size))
         self.windows_key_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
-        self.windows_key_button.clicked.connect(self.press_windows_key)
+        self.windows_key_button.clicked.connect(lambda: open_start_menu(self, hide_parent=True))
 
         # Create other buttons with icons
         self.audio_button = QPushButton(self)
         self.audio_button.setIcon(get_icon("audio"))
         self.audio_button.setIconSize(QSize(*self.icon_size))
         self.audio_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
-        self.audio_button.clicked.connect(self.open_audio_settings)
+        self.audio_button.clicked.connect(lambda: open_audio_settings(self, hide_parent=True))
 
         self.network_button = QPushButton(self)
         self.network_button.setIcon(get_icon("network"))
         self.network_button.setIconSize(QSize(*self.icon_size))
         self.network_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
-        self.network_button.clicked.connect(self.open_network_settings)
+        self.network_button.clicked.connect(lambda: open_network_settings(self, hide_parent=True))
 
         self.action_center_button = QPushButton(self)
         self.action_center_button.setIcon(get_icon("action_center"))
         self.action_center_button.setIconSize(QSize(*self.icon_size))
         self.action_center_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
-        self.action_center_button.clicked.connect(self.open_action_center)
+        self.action_center_button.clicked.connect(lambda: open_action_center(self, hide_parent=True))
 
         self.projection_button = QPushButton(self)
         self.projection_button.setIcon(get_icon("projection"))
         self.projection_button.setIconSize(QSize(*self.icon_size))
         self.projection_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
-        self.projection_button.clicked.connect(self.open_projection_settings)
+        self.projection_button.clicked.connect(lambda: open_projection_settings(self, hide_parent=True))
 
         self.touch_keyboard_button = QPushButton(self)
         self.touch_keyboard_button.setIcon(get_icon("touch_keyboard"))
         self.touch_keyboard_button.setIconSize(QSize(*self.icon_size))
         self.touch_keyboard_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
-        self.touch_keyboard_button.clicked.connect(self.open_touch_keyboard)
+        self.touch_keyboard_button.clicked.connect(lambda: open_onscreen_keyboard(self, hide_parent=True))
+
+        self.explorer_button = QPushButton(self)
+        self.explorer_button.setIcon(get_icon("folder"))
+        self.explorer_button.setIconSize(QSize(*self.icon_size))
+        self.explorer_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
+        self.explorer_button.clicked.connect(lambda: open_explorer_window(self, hide_parent=True))
+
+        default_spacing = 6
+        spacer = QSpacerItem(CONFIG.BUTTON_HEIGHT + default_spacing, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         # Set up the horizontal layout
         layout = QHBoxLayout()
-        layout.addWidget(self.windows_key_button)  # Add the Windows key button first
+        layout.setSpacing(default_spacing)
+
         layout.addWidget(self.audio_button)
         layout.addWidget(self.network_button)
-        layout.addWidget(self.action_center_button)
         layout.addWidget(self.projection_button)
+
+        layout.addSpacerItem(spacer)
+
+        layout.addWidget(self.windows_key_button)  # Add the Windows key button first
         layout.addWidget(self.touch_keyboard_button)
+        layout.addWidget(self.explorer_button)
+        layout.addWidget(self.action_center_button)
 
         # Remove spacing between buttons and margins around layout
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Align buttons to the left
@@ -95,60 +112,7 @@ class WindowsSettingsMenu(QWidget):
         # Set the layout for the window
         self.setLayout(layout)
 
-    def press_windows_key(self):
-        """Simulate pressing Ctrl + Esc to open the Start menu"""
-        try:
-            # Simulate pressing Ctrl + Esc
-            pyautogui.hotkey('ctrl', 'esc')
-            self.parent().hide()  # Hide the parent window after the button is pressed
-        except Exception as e:
-            print(f"Error pressing Ctrl + Esc: {e}")
-
-    def open_audio_settings(self):
-        """Open the Windows 10 audio settings"""
-        try:
-            subprocess.run(["explorer", "ms-settings:sound"], check=False)
-            self.parent().hide()  # Hide the parent window after the button is pressed
-        except FileNotFoundError:
-            print("Error: Explorer or ms-settings:sound command not found.")
-        except subprocess.CalledProcessError as e:
-            print(f"Error opening audio settings: {e}")
-
-    def open_network_settings(self):
-        """Open the Windows 10 network settings"""
-        try:
-            subprocess.run(["explorer", "ms-settings:network-status"], check=False)
-            self.parent().hide()  # Hide the parent window after the button is pressed
-        except FileNotFoundError:
-            print("Error: Explorer or ms-settings:network-status command not found.")
-        except subprocess.CalledProcessError as e:
-            print(f"Error opening network settings: {e}")
-
-    def open_action_center(self):
-        """Open the Windows 10 Action Center"""
-        try:
-            pyautogui.hotkey('win', 'a')  # Simulate pressing Win + A
-            self.parent().hide()  # Hide the parent window after the button is pressed
-        except Exception as e:
-            print(f"Error opening Action Center: {e}")
-
-    def open_projection_settings(self):
-        """Open the Windows 10 projection settings (Win + P)"""
-        try:
-            pyautogui.hotkey('win', 'p')  # Simulate pressing Win + P
-            self.parent().hide()  # Hide the parent window after the button is pressed
-        except Exception as e:
-            print(f"Error opening projection settings: {e}")
-
-    def open_touch_keyboard(self):
-        """Open the Windows On-Screen Touch Keyboard"""
-        try:
-            subprocess.run("osk.exe")  # Launch the On-Screen Keyboard
-            self.parent().hide()  # Hide the parent window after the button is pressed
-        except Exception as e:
-            print(f"Error opening touch keyboard: {e}")
-
-    def invert_icon(self,icon_path):
+    def invert_icon(self, icon_path):
         """Invert the colors of the icon, preserving the alpha channel."""
         # Load the icon as QPixmap
         pixmap = QPixmap(icon_path)

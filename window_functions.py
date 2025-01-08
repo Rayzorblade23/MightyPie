@@ -14,6 +14,7 @@ from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget, QMainWindow
 
+from config import CONFIG
 from pie_menu_task_switcher import PieMenuTaskSwitcher
 from special_menu import SpecialMenu
 from window_manager import WindowManager
@@ -88,6 +89,8 @@ def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple
                     and class_name != "Progman"  # Exclude system windows like "Progman"
                     and class_name != "AutoHotkeyGUI"  # Exclude "AutoHotkey" windows
                     and hwnd != this_program_hwnd  # Exclude this program
+                    and CONFIG.PROGRAM_NAME not in raw_window_title  # exclude all windows of this program
+
             ):
                 # entry for temp_window_hwnds_mapping
                 entry, app_name = _get_window_info(hwnd)

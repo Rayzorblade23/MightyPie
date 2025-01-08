@@ -48,6 +48,20 @@ QWidget {
     font-weight: normal;  /* Ensures the font weight is normal */
 }
 
+#InvisibleUI {
+    background-color: rgba(20, 20, 255, 50);
+    border: None;
+}
+
+#InvisibleButton {
+    background-color: rgba(20, 20, 255, 2);
+    color: white;              /* White text */
+    font-size: 12px;           /* Font size */
+    border: 0px solid {{accent_color}};              /* No border */
+    border-radius: 0px;        /* Rounded corners */
+    opacity:1.0;
+}
+
 /* Style the button */
 QPushButton {
     background-color: {{bg_color}};

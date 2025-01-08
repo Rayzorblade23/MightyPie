@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget
 
 from clock import Clock
 from config import CONFIG
+from invisible_ui import InvisibleUI
 from taskbar_hide_utils import toggle_taskbar_autohide, hide_taskbar, show_taskbar
 from toggle_switch import ToggleSwitch
 from tray_menu import TrayIconButtonsWindow
@@ -30,6 +31,8 @@ class SpecialMenu(QWidget):
         self.setObjectName(self.obj_name)
         self.setup_window()
 
+        self.is_taskbar_hidden = False
+
         self.taskbar_toggle = ToggleSwitch("TaskbarToggle",
                                            label_text="Hide the Taskbar (takes 5 secs)",
                                            on_action=lambda: self.toggle_taskbar(True),
@@ -37,7 +40,6 @@ class SpecialMenu(QWidget):
                                            parent=self)
 
         self.clock = Clock()
-
         self.clock_toggle = ToggleSwitch("ClockToggle",
                                          label_text="Clock!",
                                          on_action=lambda: self.clock.show(),
@@ -49,8 +51,14 @@ class SpecialMenu(QWidget):
                                             on_action=lambda: self.clock.toggle_background(),
                                             off_action=lambda: self.clock.toggle_background(),
                                             parent=self)
-
         QTimer.singleShot(0, self.trigger_toggle)
+
+        self.invisible_UI = InvisibleUI()
+        self.invisible_UI_toggle = ToggleSwitch("InvisibleUIToggle",
+                                                label_text="Invisible UI",
+                                                on_action=lambda: self.invisible_UI.show(),
+                                                off_action=lambda: self.invisible_UI.hide(),
+                                                parent=self)
 
         self.tray_icon_menu = TrayIconButtonsWindow(parent=self)
 
@@ -59,6 +67,7 @@ class SpecialMenu(QWidget):
         layout.addWidget(self.taskbar_toggle)
         layout.addWidget(self.clock_toggle)
         layout.addWidget(self.clock_bg_toggle)
+        layout.addWidget(self.invisible_UI_toggle)
         layout.addWidget(self.windows_settings_shortcuts)
         layout.addWidget(self.tray_icon_menu)
 
@@ -75,17 +84,33 @@ class SpecialMenu(QWidget):
         # Install the event filter
         QApplication.instance().installEventFilter(self)
 
+        self.taskbar_timer = QTimer(self)
+        self.taskbar_timer.setInterval(20000)  # 10 seconds
+        self.taskbar_timer.timeout.connect(self.periodically_hide_taskbar)
+
+        # Start the timer when the taskbar is hidden
+        self.taskbar_timer.start()
+
+    def periodically_hide_taskbar(self):
+        """Periodically hide the taskbar if it's supposed to be hidden."""
+        if self.is_taskbar_hidden:
+            hide_taskbar()  # Hide the taskbar again every 10 seconds
+
     def trigger_toggle(self):
         self.clock_toggle.toggle.setChecked(True)  # or False
         self.clock_toggle.toggle.toggle_switch()
+        self.invisible_UI_toggle.toggle.setChecked(True)  # or False
+        self.invisible_UI_toggle.toggle.toggle_switch()
 
     def toggle_taskbar(self, hide: bool):
         if hide:
             toggle_taskbar_autohide(True)
             hide_taskbar()
+            self.is_taskbar_hidden = True
         else:
             show_taskbar()
             toggle_taskbar_autohide(False)
+            self.is_taskbar_hidden = False
 
     def setup_window(self):
         """Set up the main window properties."""

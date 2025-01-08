@@ -114,6 +114,7 @@ if __name__ == "__main__":
 
     # Show the main_window briefly and immediately hide it
     window.show()  # Make sure the main_window is part of the filtered_event loop
+    window.hide()
 
     event = ShowWindowEvent(window)
     # Post the filtered_event to the main thread

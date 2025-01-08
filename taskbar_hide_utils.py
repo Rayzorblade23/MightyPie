@@ -82,13 +82,7 @@ def get_taskbar_handle():
 def hide_taskbar():
     hwnd = get_taskbar_handle()
     if hwnd != 0:
-        print(f"Attempting to hide taskbar with handle {hwnd}...")
-        result = ctypes.windll.user32.ShowWindow(hwnd, win32con.SW_HIDE)
-        print(f"ShowWindow returned: {result}")
-        if result == 0:
-            print("ShowWindow failed to hide the taskbar.")
-        else:
-            print("Taskbar should now be hidden.")
+        ctypes.windll.user32.ShowWindow(hwnd, win32con.SW_HIDE)
     else:
         print("Failed to retrieve taskbar handle.")
 
@@ -97,6 +91,8 @@ def show_taskbar():
     hwnd = get_taskbar_handle()
     if hwnd != 0:
         ctypes.windll.user32.ShowWindow(hwnd, win32con.SW_SHOW)
+    else:
+        print("Failed to retrieve taskbar handle.")
 
     # def is_admin(self):
     #     try:
