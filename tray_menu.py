@@ -10,7 +10,7 @@ from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout
 
 from config import CONFIG
-from expanded_button import ExpandedButton
+from GUI.expanded_button import ExpandedButton
 
 # Load necessary Windows API libraries
 user32 = ctypes.windll.user32

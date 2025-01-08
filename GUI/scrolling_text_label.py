@@ -184,7 +184,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # Load the stylesheet
-    with open("style.qss", "r") as file:
+    with open("../style.qss", "r") as file:
         app.setStyleSheet(file.read())
 
     window = QWidget()

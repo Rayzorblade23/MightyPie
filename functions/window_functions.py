@@ -15,7 +15,7 @@ from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget, QMainWindow
 
 from config import CONFIG
-from pie_menu_task_switcher import PieMenuTaskSwitcher
+from pie_menu import PieMenu
 from special_menu import SpecialMenu
 from window_manager import WindowManager
 
@@ -393,7 +393,7 @@ def show_special_menu(menu: SpecialMenu):
     menu.setFocus()  # This should focus the menu
 
 
-def show_pie_window(pie_window: QMainWindow, pie_menu: PieMenuTaskSwitcher):
+def show_pie_window(pie_window: QMainWindow, pie_menu: PieMenu):
     """Display the main main_window and bring it to the foreground."""
     try:
         # Get the main_window handle

@@ -15,6 +15,9 @@ Remove Windows button but open when clicking bottom left of screen
 
 
 BUGS:
+
+- simulated click to focus window is too low. open groups settings in Telegram
+
 - positioning not exactly right
 
 - sometimes focus-on-window makes the taskbar flash / throws an error but it still works

@@ -7,8 +7,8 @@ from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget
 from clock import Clock
 from config import CONFIG
 from invisible_ui import InvisibleUI
-from taskbar_hide_utils import toggle_taskbar_autohide, hide_taskbar, show_taskbar
-from toggle_switch import ToggleSwitch
+from functions.taskbar_hide_utils import toggle_taskbar_autohide, hide_taskbar, show_taskbar
+from GUI.toggle_switch import ToggleSwitch
 from tray_menu import TrayIconButtonsWindow
 from windows_settings_menu import WindowsSettingsMenu
 

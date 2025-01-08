@@ -5,15 +5,15 @@ from PyQt6.QtGui import QPainter, QBrush, QPen, QColor
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QPushButton, QGraphicsOpacityEffect
 from pynput.mouse import Controller, Button
 
-from area_button import AreaButton
+from GUI.area_button import AreaButton
 from config import CONFIG
-from donut_slice_button import DonutSliceButton
-from expanded_button import ExpandedButton
-from pie_button import PieButton
-from rings import SmoothCircle
+from GUI.donut_slice_button import DonutSliceButton
+from GUI.expanded_button import ExpandedButton
+from GUI.pie_button import PieButton
+from GUI.rings import SmoothCircle
 
 
-class PieMenuTaskSwitcher(QWidget):
+class PieMenu(QWidget):
 
     def __init__(self, obj_name: str = "", parent=None):
         super().__init__(parent)
@@ -38,7 +38,6 @@ class PieMenuTaskSwitcher(QWidget):
 
     def setup_window(self):
         """Set up the main main_window properties."""
-        self.setWindowTitle("PieTaskSwitcher")
         # Non-resizable main_window
         self.setFixedSize(CONFIG.RADIUS * 2 + CONFIG.BUTTON_WIDTH * 2, CONFIG.RADIUS * 2 + CONFIG.BUTTON_HEIGHT * 2)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)

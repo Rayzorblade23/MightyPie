@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass, field
 
-from color_functions import adjust_saturation
+from functions.color_functions import adjust_saturation
 
 
 @dataclass

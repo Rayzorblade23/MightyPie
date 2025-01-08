@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QApplication
 from config import CONFIG
 
-from expanded_button import ExpandedButton
+from GUI.expanded_button import ExpandedButton
 
 
 def create_window_controls(main_window):

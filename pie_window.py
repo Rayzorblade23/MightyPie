@@ -8,10 +8,10 @@ from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplica
 
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
-from pie_button import PieButton
-from pie_menu_task_switcher import PieMenuTaskSwitcher
+from GUI.pie_button import PieButton
+from pie_menu import PieMenu
 from special_menu import SpecialMenu
-from window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
+from functions.window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
     close_window_by_handle, load_cache, show_special_menu
 from window_manager import WindowManager
 
@@ -59,10 +59,12 @@ class PieWindow(QMainWindow):
         self.active_child = 1
         self.is_window_open = False
 
-        # Create PieMenuTaskSwitcher with this main_window as parent
-        self.pm_task_switcher = PieMenuTaskSwitcher(obj_name="PieMenuTaskSwitcher", parent=self)
-        self.pm_task_switcher_2 = PieMenuTaskSwitcher(obj_name="PieMenuTaskSwitcher_2", parent=self)
+        # Create Pie Menus with this main_window as parent
+        self.pm_task_switcher = PieMenu(obj_name="PieMenuTaskSwitcher_1", parent=self)
+        self.pm_task_switcher_2 = PieMenu(obj_name="PieMenuTaskSwitcher_2", parent=self)
         self.pm_task_switcher_2.hide()
+
+        self.pm_win_control = PieMenu(obj_name="PieMenuWindowControl")
 
         self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None)
         self.special_menu.hide()
@@ -106,12 +108,12 @@ class PieWindow(QMainWindow):
         """Handle the custom filtered_event to show the main_window."""
 
         if isinstance(event, ShowWindowEvent):
-            task_switcher: PieMenuTaskSwitcher = event.child_window
+            task_switcher: PieMenu = event.child_window
             if task_switcher is not None:
                 print(f"Showing switcher {task_switcher.view.objectName()}")
                 # Hide siblings of class PieMenuTaskSwitcher
                 for sibling in self.children():
-                    if sibling is not task_switcher and isinstance(sibling, PieMenuTaskSwitcher):
+                    if sibling is not task_switcher and isinstance(sibling, PieMenu):
                         sibling.hide()
                 task_switcher.show()
                 self.refresh()

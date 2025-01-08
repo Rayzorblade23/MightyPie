@@ -6,7 +6,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPainter, QColor
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QHBoxLayout, QWidget, QSizePolicy
 
-from color_functions import adjust_saturation
+from functions.color_functions import adjust_saturation
 from config import CONFIG
 
 
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     accent_color_muted = adjust_saturation(CONFIG.ACCENT_COLOR, 0.5)
 
     # Load the QSS template
-    with open("style.qss", "r") as file:
+    with open("../style.qss", "r") as file:
         qss_template = file.read()
 
     # inserting style attributes from the config.py file

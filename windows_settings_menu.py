@@ -6,7 +6,7 @@ from PyQt6.QtGui import QIcon, QPixmap, QColor
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy
 
 from config import CONFIG
-from shortcut_utils import open_audio_settings, open_network_settings, open_action_center, open_projection_settings, \
+from functions.shortcut_utils import open_audio_settings, open_network_settings, open_action_center, open_projection_settings, \
     open_onscreen_keyboard, open_start_menu, open_explorer_window, open_task_manager
 
 

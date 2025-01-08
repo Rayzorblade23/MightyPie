@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QPushButton, QWidget
 
 from config import CONFIG
-from shortcut_utils import open_start_menu, open_action_center, open_explorer_window, open_onscreen_keyboard
+from functions.shortcut_utils import open_start_menu, open_action_center, open_explorer_window, open_onscreen_keyboard
 
 
 class InvisibleUI(QWidget):

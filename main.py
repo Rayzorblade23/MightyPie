@@ -12,7 +12,7 @@ from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
 from global_mouse_filter import GlobalMouseFilter
 from pie_window import PieWindow
-from taskbar_hide_utils import show_taskbar, toggle_taskbar_autohide
+from functions.taskbar_hide_utils import show_taskbar
 from window_manager import WindowManager
 from pynput.mouse import Listener as MouseListener, Button as MouseButton
 
