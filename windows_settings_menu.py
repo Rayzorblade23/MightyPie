@@ -5,6 +5,7 @@ from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon, QPixmap, QColor
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy
 
+from GUI.icon_paths import EXTERNAL_ICON_PATHS
 from config import CONFIG
 from functions.shortcut_utils import open_audio_settings, open_network_settings, open_action_center, open_projection_settings, \
     open_onscreen_keyboard, open_start_menu, open_explorer_window, open_task_manager
@@ -23,16 +24,7 @@ class WindowsSettingsMenu(QWidget):
         self.inverted_icons = True
 
         # Define the icon file paths (use appropriate file paths)
-        icon_paths = {
-            "windows_key": os.path.join("external_icons", "brand-windows.png"),
-            "audio": os.path.join("external_icons", "volume.png"),
-            "network": os.path.join("external_icons", "network.png"),
-            "action_center": os.path.join("external_icons", "layout-sidebar-right-inactive.png"),
-            "projection": os.path.join("external_icons", "device-desktop.png"),
-            "touch_keyboard": os.path.join("external_icons", "keyboard.png"),
-            "folder": os.path.join("external_icons", "folder.png"),
-            "taskman": os.path.join("external_icons", "subtask.png")
-        }
+        icon_paths = EXTERNAL_ICON_PATHS
 
         # Load the icon based on the inverted_icons flag
         def get_icon(icon_name):
