@@ -280,7 +280,7 @@ def icon_to_qpixmap(hIcon):
 
     # Handle 0-size images by creating a blank 16x16 image
     if pil_image.size == (0, 0):
-        print("Warning: Encountered an image with size (0, 0). Creating a blank image.")
+        # print("Warning: Encountered an image with size (0, 0). Creating a blank image.")
         pil_image = Image.new("RGBA", (16, 16), (128, 128, 128, 128))  # Transparent blank image
 
     # Swap R and B channels

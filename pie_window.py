@@ -123,7 +123,6 @@ class PieWindow(QMainWindow):
                 if "Task" in pie_menu.view.objectName():
                     self.refresh()
                 self.pie_menu_pos = show_pie_window(event.window, pie_menu)  # Safely call show_pie_window when the filtered_event is posted
-                print(self.pie_menu_pos)
             return True
         elif isinstance(event, HotkeyReleaseEvent):
             pie_menu = event.child_window

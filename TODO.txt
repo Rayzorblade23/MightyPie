@@ -6,8 +6,6 @@
 
 - window control pie menu: implement restart window
 
-- make the maximize button toggle between normal and maximized
-
 - context menu for programs?
 
 - make something special for explorer windows. maybe give them the second pie menu entirely

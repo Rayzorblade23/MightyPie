@@ -119,6 +119,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, signal_handler)
 
     app = QApplication(sys.argv)
+    app.setApplicationName("MightyPie")
 
     # Load the QSS template
     with open("style.qss", "r") as file:
