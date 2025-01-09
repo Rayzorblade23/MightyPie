@@ -458,7 +458,7 @@ import ctypes
 import time
 
 
-def maximize_window_at_cursor(pie_window: QWidget):
+def toggle_maximize_window_at_cursor(pie_window: QWidget):
     if not hasattr(pie_window, 'pie_menu_pos'):
         return
 
@@ -475,9 +475,16 @@ def maximize_window_at_cursor(pie_window: QWidget):
         window_title = win32gui.GetWindowText(root_handle)
         print(f"Window title: {window_title}")
 
-        # First, maximize the window
-        print("Attempting to maximize window...")
-        win32gui.ShowWindow(root_handle, win32con.SW_MAXIMIZE)
+        # Check the current state of the window
+        placement = win32gui.GetWindowPlacement(root_handle)
+        is_maximized = placement[1] == win32con.SW_SHOWMAXIMIZED
+
+        if is_maximized:
+            print("Window is maximized. Restoring to normal.")
+            win32gui.ShowWindow(root_handle, win32con.SW_RESTORE)
+        else:
+            print("Window is not maximized. Maximizing now.")
+            win32gui.ShowWindow(root_handle, win32con.SW_MAXIMIZE)
 
         # Get the current foreground window
         current_fore = win32gui.GetForegroundWindow()
