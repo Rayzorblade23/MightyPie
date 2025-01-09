@@ -1,6 +1,7 @@
 - implement the sound settings from tabame in Special Menu
 
 - make a window manager pie menu. up: max, down: min, restart window
+- make the maximize button toggle between normal and maximized
 
 - make something special for explorer windows. maybe give them the second pie menu entirely
 

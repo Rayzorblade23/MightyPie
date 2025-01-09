@@ -10,7 +10,7 @@ import win32gui
 import win32process
 import win32ui
 from PIL import Image
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import QTimer, QPoint
 from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget, QMainWindow
 
@@ -443,6 +443,107 @@ def show_pie_window(pie_window: QMainWindow, pie_menu: PieMenu):
         win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
                               win32con.SWP_SHOWWINDOW + win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
 
+        return cursor_pos
+
 
     except Exception as e:
         print(f"Error showing the main main_window: {e}")
+
+
+import win32gui
+import win32con
+import win32api
+import win32process
+import ctypes
+import time
+
+
+def maximize_window_at_cursor(pie_window: QWidget):
+    if not hasattr(pie_window, 'pie_menu_pos'):
+        return
+
+    cursor_pos = (pie_window.pie_menu_pos.x(), pie_window.pie_menu_pos.y())
+    print(f"Cursor position: {cursor_pos}")
+
+    window_handle = win32gui.WindowFromPoint(cursor_pos)
+
+    if window_handle and window_handle != win32gui.GetDesktopWindow():
+        print("Valid window found")
+        root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
+        print(f"Root window handle: {root_handle}")
+
+        window_title = win32gui.GetWindowText(root_handle)
+        print(f"Window title: {window_title}")
+
+        # First, maximize the window
+        print("Attempting to maximize window...")
+        win32gui.ShowWindow(root_handle, win32con.SW_MAXIMIZE)
+
+        # Get the current foreground window
+        current_fore = win32gui.GetForegroundWindow()
+
+        # Get thread IDs
+        current_thread = win32api.GetCurrentThreadId()
+        other_thread = win32process.GetWindowThreadProcessId(current_fore)[0]
+
+        # Attach threads if necessary
+        if current_thread != other_thread:
+            win32process.AttachThreadInput(current_thread, other_thread, True)
+            time.sleep(0.1)  # Small delay to let Windows process the attachment
+            try:
+                # Try multiple approaches to bring window to front
+                win32gui.BringWindowToTop(root_handle)
+                win32gui.SetForegroundWindow(root_handle)
+
+                # Alternative method using different flags
+                win32gui.SetWindowPos(root_handle,
+                                      win32con.HWND_TOPMOST,
+                                      0, 0, 0, 0,
+                                      win32con.SWP_NOMOVE |
+                                      win32con.SWP_NOSIZE |
+                                      win32con.SWP_SHOWWINDOW)
+
+                # Remove topmost flag
+                win32gui.SetWindowPos(root_handle,
+                                      win32con.HWND_NOTOPMOST,
+                                      0, 0, 0, 0,
+                                      win32con.SWP_NOMOVE |
+                                      win32con.SWP_NOSIZE)
+
+            except Exception as e:
+                print(f"Error during window manipulation: {e}")
+            finally:
+                # Always detach threads
+                win32process.AttachThreadInput(current_thread, other_thread, False)
+        else:
+            # If in same thread, try direct approach
+            try:
+                win32gui.SetForegroundWindow(root_handle)
+            except Exception as e:
+                print(f"Error bringing window to front: {e}")
+
+        print("Window maximized successfully")
+    else:
+        print("No valid window found under cursor")
+
+def minimize_window_at_cursor(pie_window: QWidget):
+    if not hasattr(pie_window, 'pie_menu_pos'):
+        return
+
+    cursor_pos = (pie_window.pie_menu_pos.x(), pie_window.pie_menu_pos.y())
+
+    window_handle = win32gui.WindowFromPoint(cursor_pos)
+
+    if window_handle and window_handle != win32gui.GetDesktopWindow():
+        print("Valid window found")
+        root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
+        print(f"Root window handle: {root_handle}")
+
+        window_title = win32gui.GetWindowText(root_handle)
+        print(f"Window title: {window_title}")
+
+        print("Attempting to minimize window...")
+        win32gui.ShowWindow(root_handle, win32con.SW_MINIMIZE)
+        print("Window minimized successfully")
+    else:
+        print("No valid window found under cursor")

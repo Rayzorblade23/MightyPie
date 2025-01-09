@@ -2,17 +2,17 @@ import threading
 from threading import Lock
 from typing import Dict, List
 
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer, QPoint
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication, QWidget
 
+from GUI.pie_button import PieButton
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
-from GUI.pie_button import PieButton
+from functions.window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
+    close_window_by_handle, load_cache, show_special_menu, maximize_window_at_cursor, minimize_window_at_cursor
 from pie_menu import PieMenu
 from special_menu import SpecialMenu
-from functions.window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
-    close_window_by_handle, load_cache, show_special_menu
 from window_manager import WindowManager
 
 manager = WindowManager.get_instance()
@@ -50,10 +50,11 @@ class PieWindow(QMainWindow):
 
         self.setup_window()
 
-        self.num_pie_menus = 2
+        self.pie_menu_pos = QPoint()
+        self.num_pm_task_switchers = 2
         self.button_mapping_lock = Lock()
         self.last_window_handles = []
-        self.pie_button_texts = ["Empty" for _ in range(CONFIG.MAX_BUTTONS * self.num_pie_menus)]
+        self.pie_button_texts = ["Empty" for _ in range(CONFIG.MAX_BUTTONS * self.num_pm_task_switchers)]
         self.windowHandles_To_buttonIndexes_map = {}
 
         self.active_child = 1
@@ -66,6 +67,7 @@ class PieWindow(QMainWindow):
 
         self.pm_win_control = PieMenu(obj_name="PieMenuWindowControl", parent=self)
         self.pm_win_control.hide()
+        self.setup_window_control_buttons()
 
         self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None)
         self.special_menu.hide()
@@ -118,9 +120,9 @@ class PieWindow(QMainWindow):
                         sibling.hide()
                 pie_menu.show()
                 if "Task" in pie_menu.view.objectName():
-                    print("YO TASKER!")
                     self.refresh()
-                show_pie_window(event.window, pie_menu)  # Safely call show_pie_window when the filtered_event is posted
+                self.pie_menu_pos = show_pie_window(event.window, pie_menu)  # Safely call show_pie_window when the filtered_event is posted
+                print(self.pie_menu_pos)
             return True
         elif isinstance(event, HotkeyReleaseEvent):
             pie_menu = event.child_window
@@ -153,10 +155,27 @@ class PieWindow(QMainWindow):
         # print(f"auto_refresh took {elapsed_time:.3f} seconds")
 
     def refresh(self):
-        self.update_buttons()
+        self.update_pm_task_buttons()
+
+    def setup_window_control_buttons(self):
+        actual_self = self
+        self.pm_win_control.pie_buttons: List[PieButton]
+
+        self.pm_win_control.pie_buttons[0].set_label_1_text("MAXIMIZE!!!")
+        self.pm_win_control.pie_buttons[0].set_left_click_action(lambda: (
+            self.hide(),
+            QTimer.singleShot(0, lambda: maximize_window_at_cursor(actual_self)),
+        ))
+
+        self.pm_win_control.pie_buttons[4].set_label_1_text("minimize.")
+        actual_self = self
+        self.pm_win_control.pie_buttons[4].set_left_click_action(lambda: (
+            self.hide(),
+            QTimer.singleShot(0, lambda: minimize_window_at_cursor(actual_self)),
+        ))
 
     # Button Management
-    def update_buttons(self):
+    def update_pm_task_buttons(self):
         """Update main_window buttons with current main_window information."""
 
         def background_task():
@@ -168,7 +187,7 @@ class PieWindow(QMainWindow):
             def get_free_button_indexes():
                 """Returns available button indexes, excluding fixed slots."""
                 return [
-                    j for j in range(CONFIG.MAX_BUTTONS * self.num_pie_menus)
+                    j for j in range(CONFIG.MAX_BUTTONS * self.num_pm_task_switchers)
                     if j not in CONFIG.FIXED_PIE_SLOTS.values()
                        and temp_button_texts[j] == "Empty"
                 ]
@@ -275,7 +294,7 @@ class PieWindow(QMainWindow):
             task_switcher.pie_buttons[button_index].setEnabled(True)
 
         # Clear button attributes when button index not among updates
-        for i in range(CONFIG.MAX_BUTTONS * self.num_pie_menus):
+        for i in range(CONFIG.MAX_BUTTONS * self.num_pm_task_switchers):
             if i not in [update["index"] for update in button_updates]:
                 index = i
                 self.pie_button_texts[i] = "Empty"
