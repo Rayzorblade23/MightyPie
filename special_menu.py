@@ -2,7 +2,7 @@ import sys
 
 from PyQt6.QtCore import Qt, QEvent, QTimer
 from PyQt6.QtGui import QPainter, QKeyEvent, QCursor
-from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout
+from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout
 
 from clock import Clock
 from config import CONFIG
@@ -60,14 +60,29 @@ class SpecialMenu(QWidget):
                                                 off_action=lambda: self.invisible_UI.hide(),
                                                 parent=self)
 
+        self.invisible_UI_visibility_toggle = ToggleSwitch("InvisibleUIVisibilityToggle",
+                                                label_text="Make visible",
+                                                on_action=lambda: self.invisible_UI.setStyleSheet("background-color: red;"),
+                                                off_action=lambda: self.invisible_UI.setStyleSheet("background-color: rgba(20, 20, 255, 2);"),
+                                                parent=self)
+
         self.tray_icon_menu = TrayIconButtonsWindow(parent=self)
 
         self.windows_settings_shortcuts = WindowsSettingsMenu()
 
         layout.addWidget(self.taskbar_toggle)
-        layout.addWidget(self.clock_toggle)
-        layout.addWidget(self.clock_bg_toggle)
-        layout.addWidget(self.invisible_UI_toggle)
+        # Create toggles for Clock
+        layout_clock = QHBoxLayout()
+        layout_clock.addWidget(self.clock_toggle)
+        layout_clock.addWidget(self.clock_bg_toggle)
+        layout.addLayout(layout_clock)
+
+        # Create toggles for Inivisble UI
+        layout_invisUI = QHBoxLayout()
+        layout_invisUI.addWidget(self.invisible_UI_toggle)
+        layout_invisUI.addWidget(self.invisible_UI_visibility_toggle)
+        layout.addLayout(layout_invisUI)
+
         layout.addWidget(self.windows_settings_shortcuts)
         layout.addWidget(self.tray_icon_menu)
 
