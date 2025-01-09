@@ -1,7 +1,8 @@
+import os
 import sys
 
-from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy
+from PyQt6.QtCore import QSize, Qt, QCoreApplication, QTimer
+from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
 
 from GUI.icon_functions_and_paths import get_icon
 from config import CONFIG
@@ -11,8 +12,8 @@ from functions.shortcut_utils import open_audio_settings, open_network_settings,
 
 class WindowsSettingsMenu(QWidget):
     # noinspection PyUnresolvedReferences
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         # Set up the window
         self.setWindowTitle('Settings Menu')
@@ -71,6 +72,18 @@ class WindowsSettingsMenu(QWidget):
         self.task_man_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.task_man_button.clicked.connect(lambda: open_task_manager(self, hide_parent=True))
 
+        self.restart_button = QPushButton(self)
+        self.restart_button.setIcon(get_icon("restart", is_inverted=True))
+        self.restart_button.setIconSize(QSize(*self.icon_size))
+        self.restart_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
+        self.restart_button.clicked.connect(lambda: self.restart_program())
+
+        self.quit_button = QPushButton(self)
+        self.quit_button.setIcon(get_icon("quit", is_inverted=True))
+        self.quit_button.setIconSize(QSize(*self.icon_size))
+        self.quit_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
+        self.quit_button.clicked.connect(lambda: self.quit_program())
+
         default_spacing = 6
         spacer = QSpacerItem(CONFIG.BUTTON_HEIGHT + default_spacing, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -93,12 +106,16 @@ class WindowsSettingsMenu(QWidget):
         layout.addWidget(self.network_button)
         layout.addWidget(self.projection_button)
 
-        layout.addSpacerItem(spacer)
-
         layout.addWidget(self.windows_key_button)  # Add the Windows key button first
         layout.addWidget(self.touch_keyboard_button)
+        layout.addSpacerItem(spacer)
         layout.addWidget(self.explorer_button)
         layout.addWidget(self.action_center_button)
+
+        layout.addSpacerItem(spacer)
+
+        layout.addWidget(self.restart_button)
+        layout.addWidget(self.quit_button)
 
         # Remove spacing between buttons and margins around layout
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Align buttons to the left
@@ -106,6 +123,19 @@ class WindowsSettingsMenu(QWidget):
         # Set the layout for the window
         self.setLayout(layout)
 
+    def restart_program(self):
+        """Restart the current program."""
+        print("Restarting program...")  # Debugging output
+        QCoreApplication.quit()  # Quit the application
+
+        # Re-launch the program
+        python = sys.executable
+        os.execl(python, python, *sys.argv)  # Restart the program with the same arguments
+
+    def quit_program(self):
+        # Process any remaining events
+        print("WHY")
+        QCoreApplication.exit()
 
 # Main entry point
 if __name__ == '__main__':

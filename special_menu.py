@@ -4,17 +4,18 @@ from PyQt6.QtCore import Qt, QEvent, QTimer
 from PyQt6.QtGui import QPainter, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout
 
+from GUI.toggle_switch import ToggleSwitch
 from clock import Clock
 from config import CONFIG
-from invisible_ui import InvisibleUI
 from functions.taskbar_hide_utils import toggle_taskbar_autohide, hide_taskbar, show_taskbar
-from GUI.toggle_switch import ToggleSwitch
+from invisible_ui import InvisibleUI
 from tray_menu import TrayIconButtonsWindow
 from windows_settings_menu import WindowsSettingsMenu
 
 
 class SpecialMenu(QWidget):
     def __init__(self, obj_name: str = "", parent=None):
+
         super().__init__(parent)
         self.obj_name = obj_name
 
@@ -61,14 +62,15 @@ class SpecialMenu(QWidget):
                                                 parent=self)
 
         self.invisible_UI_visibility_toggle = ToggleSwitch("InvisibleUIVisibilityToggle",
-                                                label_text="Make visible",
-                                                on_action=lambda: self.invisible_UI.setStyleSheet("background-color: red;"),
-                                                off_action=lambda: self.invisible_UI.setStyleSheet("background-color: rgba(20, 20, 255, 2);"),
-                                                parent=self)
+                                                           label_text="Make visible",
+                                                           on_action=lambda: self.invisible_UI.setStyleSheet("background-color: red;"),
+                                                           off_action=lambda: self.invisible_UI.setStyleSheet(
+                                                               "background-color: rgba(20, 20, 255, 2);"),
+                                                           parent=self)
 
         self.tray_icon_menu = TrayIconButtonsWindow(parent=self)
 
-        self.windows_settings_shortcuts = WindowsSettingsMenu()
+        self.windows_settings_shortcuts = WindowsSettingsMenu(parent=self)
 
         layout.addWidget(self.taskbar_toggle)
         # Create toggles for Clock
@@ -77,7 +79,7 @@ class SpecialMenu(QWidget):
         layout_clock.addWidget(self.clock_bg_toggle)
         layout.addLayout(layout_clock)
 
-        # Create toggles for Inivisble UI
+        # Create toggles for Invisible UI
         layout_invisUI = QHBoxLayout()
         layout_invisUI.addWidget(self.invisible_UI_toggle)
         layout_invisUI.addWidget(self.invisible_UI_visibility_toggle)

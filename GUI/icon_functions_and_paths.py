@@ -16,6 +16,8 @@ EXTERNAL_ICON_PATHS = {
     "square_x": os.path.join("external_icons", "square-x.png"),
     "window_maximize": os.path.join("external_icons", "window-maximize.png"),
     "window_minimize": os.path.join("external_icons", "window-minimize.png"),
+    "quit": os.path.join("external_icons", "playstation-x.png"),
+    "restart": os.path.join("external_icons", "restore.png"),
 }
 
 

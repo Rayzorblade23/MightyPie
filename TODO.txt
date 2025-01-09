@@ -1,7 +1,5 @@
 - restart Mighty Pie
 
-- show InvisibleUI
-
 - exclude from fullscreen applications?
 
 - only one instance?
