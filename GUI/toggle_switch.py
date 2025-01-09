@@ -60,9 +60,17 @@ class Toggle(QPushButton):
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawRoundedRect(toggle_rect, self.height() / 2, self.height() / 2)
 
-        # Draw the circle inside the taskbar_toggle switch
-        painter.setBrush(QBrush(QColor(255, 255, 255)))  # White color for the circle
-        painter.setPen(QPen(QColor(128, 128, 128), self.circle_stroke_width))  # Border color of the circle
+        # Set circle color based on the enabled state
+        if self.isEnabled():
+            circle_color = QColor(255, 255, 255)  # White color for the circle when enabled
+            border_color = QColor(128, 128, 128)  # Border color when enabled
+        else:
+            circle_color = QColor(150, 150, 150)  # Gray color for the circle when disabled
+            border_color = QColor(100, 100, 100)  # Border color when disabled
+
+        # Draw the circle inside the toggle switch
+        painter.setBrush(QBrush(circle_color))
+        painter.setPen(QPen(border_color, self.circle_stroke_width))
         painter.drawEllipse(self._circle_pos, self.circle_radius, self.circle_radius)
 
     def toggle_switch(self):

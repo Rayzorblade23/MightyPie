@@ -43,8 +43,11 @@ class SpecialMenu(QWidget):
         self.clock = Clock()
         self.clock_toggle = ToggleSwitch("ClockToggle",
                                          label_text="Clock!",
-                                         on_action=lambda: self.clock.show(),
-                                         off_action=lambda: self.clock.hide(),
+                                         on_action=lambda: (self.clock.show(),
+                                                            self.clock_bg_toggle.setDisabled(False)),
+
+                                         off_action=lambda: (self.clock.hide(),
+                                                             self.clock_bg_toggle.setDisabled(True)),
                                          parent=self)
 
         self.clock_bg_toggle = ToggleSwitch("ClockBgToggle",
@@ -57,8 +60,13 @@ class SpecialMenu(QWidget):
         self.invisible_UI = InvisibleUI()
         self.invisible_UI_toggle = ToggleSwitch("InvisibleUIToggle",
                                                 label_text="Invisible UI",
-                                                on_action=lambda: self.invisible_UI.show(),
-                                                off_action=lambda: self.invisible_UI.hide(),
+                                                on_action=lambda: (self.invisible_UI.show(),
+                                                                   self.invisible_UI_visibility_toggle.setDisabled(False),
+                                                                   self.invisible_UI_visibility_toggle.update()),
+
+                                                off_action=lambda: (self.invisible_UI.hide(),
+                                                                    self.invisible_UI_visibility_toggle.setDisabled(True),
+                                                                    self.invisible_UI_visibility_toggle.update()),
                                                 parent=self)
 
         self.invisible_UI_visibility_toggle = ToggleSwitch("InvisibleUIVisibilityToggle",
