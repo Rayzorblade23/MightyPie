@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer, QPoint
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication, QWidget
 
+from GUI.icon_functions_and_paths import EXTERNAL_ICON_PATHS, get_icon
 from GUI.pie_button import PieButton
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
@@ -161,18 +162,37 @@ class PieWindow(QMainWindow):
         actual_self = self
         self.pm_win_control.pie_buttons: List[PieButton]
 
-        self.pm_win_control.pie_buttons[0].set_label_1_text("MAXIMIZE!!!")
+        self.pm_win_control.pie_buttons[0].set_label_1_text("MAXIMIZE")
         self.pm_win_control.pie_buttons[0].set_left_click_action(lambda: (
             self.hide(),
             QTimer.singleShot(0, lambda: maximize_window_at_cursor(actual_self)),
         ))
+        self.pm_win_control.pie_buttons[0].update_icon(EXTERNAL_ICON_PATHS.get("window_maximize"), is_invert_icon=True)
 
-        self.pm_win_control.pie_buttons[4].set_label_1_text("minimize.")
-        actual_self = self
+        self.pm_win_control.pie_buttons[1].set_label_1_text("")
+        self.pm_win_control.pie_buttons[1].setEnabled(False)  # Disable the button
+
+        self.pm_win_control.pie_buttons[2].set_label_1_text("")
+        self.pm_win_control.pie_buttons[2].setEnabled(False)  # Disable the button
+
+        self.pm_win_control.pie_buttons[3].set_label_1_text("")
+        self.pm_win_control.pie_buttons[3].setEnabled(False)  # Disable the button
+
+        self.pm_win_control.pie_buttons[4].set_label_1_text("Minimize")
         self.pm_win_control.pie_buttons[4].set_left_click_action(lambda: (
             self.hide(),
             QTimer.singleShot(0, lambda: minimize_window_at_cursor(actual_self)),
         ))
+        self.pm_win_control.pie_buttons[4].update_icon(EXTERNAL_ICON_PATHS.get("window_minimize"), is_invert_icon=True)
+
+        self.pm_win_control.pie_buttons[5].set_label_1_text("")
+        self.pm_win_control.pie_buttons[5].setEnabled(False)  # Disable the button
+
+        self.pm_win_control.pie_buttons[6].set_label_1_text("")
+        self.pm_win_control.pie_buttons[6].setEnabled(False)  # Disable the button
+
+        self.pm_win_control.pie_buttons[7].set_label_1_text("")
+        self.pm_win_control.pie_buttons[7].setEnabled(False)  # Disable the button
 
     # Button Management
     def update_pm_task_buttons(self):

@@ -1,11 +1,9 @@
-import os
 import sys
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QIcon, QPixmap, QColor
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy
 
-from GUI.icon_paths import EXTERNAL_ICON_PATHS
+from GUI.icon_functions_and_paths import get_icon
 from config import CONFIG
 from functions.shortcut_utils import open_audio_settings, open_network_settings, open_action_center, open_projection_settings, \
     open_onscreen_keyboard, open_start_menu, open_explorer_window, open_task_manager
@@ -23,66 +21,52 @@ class WindowsSettingsMenu(QWidget):
         self.icon_size = (20, 20)
         self.inverted_icons = True
 
-        # Define the icon file paths (use appropriate file paths)
-        icon_paths = EXTERNAL_ICON_PATHS
-
-        # Load the icon based on the inverted_icons flag
-        def get_icon(icon_name):
-            icon_path = icon_paths.get(icon_name)
-
-            if icon_path:
-                if self.inverted_icons:
-                    return self.invert_icon(icon_path)  # Return inverted icon
-                else:
-                    return QIcon(icon_path)  # Return original icon
-            return None  # In case icon name doesn't match
-
         # Create a button to press the Windows key (using icon)
         self.windows_key_button = QPushButton(self)
-        self.windows_key_button.setIcon(get_icon("windows_key"))
+        self.windows_key_button.setIcon(get_icon("windows_key", is_inverted=True))
         self.windows_key_button.setIconSize(QSize(*self.icon_size))
         self.windows_key_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.windows_key_button.clicked.connect(lambda: open_start_menu(self, hide_parent=True))
 
         # Create other buttons with icons
         self.audio_button = QPushButton(self)
-        self.audio_button.setIcon(get_icon("audio"))
+        self.audio_button.setIcon(get_icon("audio", is_inverted=True))
         self.audio_button.setIconSize(QSize(*self.icon_size))
         self.audio_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.audio_button.clicked.connect(lambda: open_audio_settings(self, hide_parent=True))
 
         self.network_button = QPushButton(self)
-        self.network_button.setIcon(get_icon("network"))
+        self.network_button.setIcon(get_icon("network", is_inverted=True))
         self.network_button.setIconSize(QSize(*self.icon_size))
         self.network_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.network_button.clicked.connect(lambda: open_network_settings(self, hide_parent=True))
 
         self.action_center_button = QPushButton(self)
-        self.action_center_button.setIcon(get_icon("action_center"))
+        self.action_center_button.setIcon(get_icon("action_center", is_inverted=True))
         self.action_center_button.setIconSize(QSize(*self.icon_size))
         self.action_center_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.action_center_button.clicked.connect(lambda: open_action_center(self, hide_parent=True))
 
         self.projection_button = QPushButton(self)
-        self.projection_button.setIcon(get_icon("projection"))
+        self.projection_button.setIcon(get_icon("projection", is_inverted=True))
         self.projection_button.setIconSize(QSize(*self.icon_size))
         self.projection_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.projection_button.clicked.connect(lambda: open_projection_settings(self, hide_parent=True))
 
         self.touch_keyboard_button = QPushButton(self)
-        self.touch_keyboard_button.setIcon(get_icon("touch_keyboard"))
+        self.touch_keyboard_button.setIcon(get_icon("touch_keyboard", is_inverted=True))
         self.touch_keyboard_button.setIconSize(QSize(*self.icon_size))
         self.touch_keyboard_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.touch_keyboard_button.clicked.connect(lambda: open_onscreen_keyboard(self, hide_parent=True))
 
         self.explorer_button = QPushButton(self)
-        self.explorer_button.setIcon(get_icon("folder"))
+        self.explorer_button.setIcon(get_icon("folder", is_inverted=True))
         self.explorer_button.setIconSize(QSize(*self.icon_size))
         self.explorer_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.explorer_button.clicked.connect(lambda: open_explorer_window(self, hide_parent=True))
 
         self.task_man_button = QPushButton(self)
-        self.task_man_button.setIcon(get_icon("taskman"))
+        self.task_man_button.setIcon(get_icon("taskman", is_inverted=True))
         self.task_man_button.setIconSize(QSize(*self.icon_size))
         self.task_man_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.task_man_button.clicked.connect(lambda: open_task_manager(self, hide_parent=True))
@@ -121,31 +105,6 @@ class WindowsSettingsMenu(QWidget):
 
         # Set the layout for the window
         self.setLayout(layout)
-
-    def invert_icon(self, icon_path):
-        """Invert the colors of the icon, preserving the alpha channel."""
-        # Load the icon as QPixmap
-        pixmap = QPixmap(icon_path)
-
-        # Convert QPixmap to QImage for manipulation
-        image = pixmap.toImage()
-
-        # Loop through each pixel and invert its color (keep alpha intact)
-        for x in range(image.width()):
-            for y in range(image.height()):
-                color = image.pixelColor(x, y)
-
-                # Skip pixels with full transparency (alpha = 0)
-                if color.alpha() == 0:
-                    continue
-
-                # Invert RGB, but keep the alpha channel intact
-                inverted_color = QColor(255 - color.red(), 255 - color.green(), 255 - color.blue(), color.alpha())
-                image.setPixelColor(x, y, inverted_color)
-
-        # Convert the QImage back to QPixmap and return it as a QIcon
-        inverted_pixmap = QPixmap.fromImage(image)
-        return QIcon(inverted_pixmap)
 
 
 # Main entry point

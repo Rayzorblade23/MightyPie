@@ -1,11 +1,12 @@
 import sys
 from typing import *
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap, QCursor
 from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
 
 from GUI.font_styles import FontStyle
+from GUI.icon_functions_and_paths import invert_icon
 from GUI.scrolling_text_label import ScrollingLabel
 from config import CONFIG
 
@@ -98,7 +99,8 @@ class PieButton(QPushButton):
                 self.label_2.update_text(text)
             else:
                 # Create label_2 dynamically
-                self.label_2 = ScrollingLabel(text, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Italic, v_offset=1, font_size=10)
+                self.label_2 = ScrollingLabel(text, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Italic, v_offset=1,
+                                              font_size=10)
                 self.label_2.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
                 # Add label_2 to the layout
@@ -113,9 +115,7 @@ class PieButton(QPushButton):
                 self.label_2.deleteLater()  # Safely delete the widget
                 del self.label_2  # Delete the attribute to avoid future references
 
-
-
-    def update_icon(self, app_icon_path=None):
+    def update_icon(self, app_icon_path=None, is_invert_icon=False):
         """Add or remove an icon and spacer in the given layout based on the provided icon path."""
         # Remove existing icon and spacer if present
         existing_spacer = None
@@ -149,6 +149,10 @@ class PieButton(QPushButton):
 
             # Check if the icon is valid
             if not icon.isNull():
+                # Optionally invert the icon
+                if is_invert_icon:
+                    icon = invert_icon(icon, return_pixmap=True)
+
                 icon_label = QLabel()
                 icon_label.setPixmap(icon.scaled(16, 16, Qt.AspectRatioMode.KeepAspectRatio,
                                                  Qt.TransformationMode.SmoothTransformation))  # Adjust size as needed

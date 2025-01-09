@@ -4,6 +4,8 @@
 
 - exclude from fullscreen applications?
 
+- only one instance?
+
 - implement the sound settings from tabame in Special Menu
 
 - make a window manager pie menu. up: max, down: min, restart window
