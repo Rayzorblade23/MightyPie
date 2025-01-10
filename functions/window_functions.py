@@ -577,9 +577,10 @@ def launch_app(exe_path):
             print("Spotify launched using Start Menu simulation.")
 
         else:
-            # Launch the external executable directly
-            subprocess.Popen(exe_path, shell=True)
-            print(f"Launching application: {exe_path}")
-
+            # Redirect output to suppress terminal spam
+            with open(os.devnull, 'w') as devnull:
+                subprocess.Popen(exe_path, stdout=devnull, stderr=devnull)
+            print("Vivaldi launched successfully.")
     except Exception as e:
-        print(f"Failed to launch application: {e}")
+        print(f"An error occurred: {e}")
+
