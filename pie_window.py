@@ -257,21 +257,22 @@ class PieWindow(QMainWindow):
             # Check if the list is not empty and print each item
             if unused_fixed_slots:
                 for app in unused_fixed_slots:
-                    button_index, _ = CONFIG.FIXED_PIE_SLOTS[app]
-                    button_text = ""
-                    app_name = app
-                    window_handle = 0
                     _, exe_name = CONFIG.FIXED_PIE_SLOTS[app]
-                    app_icon_path = app_name_cache[exe_name]["icon_path"]
+                    if app_name_cache[exe_name]:
+                        button_index, _ = CONFIG.FIXED_PIE_SLOTS[app]
+                        button_text = ""
+                        app_name = app
+                        window_handle = 0
+                        app_icon_path = app_name_cache[exe_name]["icon_path"]
 
-                    final_button_updates.append({
-                        "index": button_index,
-                        "text_1": button_text,
-                        "text_2": app_name,
-                        "window_handle": window_handle,
-                        "app_icon_path": app_icon_path,
-                        "exe_name": exe_name
-                    })
+                        final_button_updates.append({
+                            "index": button_index,
+                            "text_1": button_text,
+                            "text_2": app_name,
+                            "window_handle": window_handle,
+                            "app_icon_path": app_icon_path,
+                            "exe_name": exe_name
+                        })
 
             # # Print each entry in final_button_updates in a readable way
             # for entry in final_button_updates:
