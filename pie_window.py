@@ -6,12 +6,12 @@ from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer, QPoint
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication, QWidget
 
-from GUI.icon_functions_and_paths import EXTERNAL_ICON_PATHS, get_icon
+from GUI.icon_functions_and_paths import EXTERNAL_ICON_PATHS
 from GUI.pie_button import PieButton
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
 from functions.window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
-    close_window_by_handle, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor
+    close_window_by_handle, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app
 from pie_menu import PieMenu
 from special_menu import SpecialMenu
 from window_manager import WindowManager
@@ -207,7 +207,7 @@ class PieWindow(QMainWindow):
                 """Returns available button indexes, excluding fixed slots."""
                 return [
                     j for j in range(CONFIG.MAX_BUTTONS * self.num_pm_task_switchers)
-                    if j not in CONFIG.FIXED_PIE_SLOTS.values()
+                    if j not in [slot for slot, _ in CONFIG.FIXED_PIE_SLOTS.values()]
                        and temp_button_texts[j] == "Empty"
                 ]
 
@@ -227,7 +227,7 @@ class PieWindow(QMainWindow):
 
                 # Handle fixed slots
                 if app_name in CONFIG.FIXED_PIE_SLOTS:
-                    button_index = CONFIG.FIXED_PIE_SLOTS[app_name]
+                    button_index, _ = CONFIG.FIXED_PIE_SLOTS[app_name]
                     self.windowHandles_To_buttonIndexes_map[window_handle] = button_index
                 else:
                     # Find free button if needed
@@ -247,8 +247,37 @@ class PieWindow(QMainWindow):
                     "text_1": button_text,
                     "text_2": app_name,
                     "window_handle": window_handle,
-                    "app_icon_path": app_icon_path
+                    "app_icon_path": app_icon_path,
+                    "exe_name": exe_name
                 })
+
+            # Get all the empty reserved slots
+            unused_fixed_slots = list(set(CONFIG.FIXED_PIE_SLOTS) - set(update["text_2"] for update in final_button_updates))
+
+            # Check if the list is not empty and print each item
+            if unused_fixed_slots:
+                for app in unused_fixed_slots:
+                    button_index, _ = CONFIG.FIXED_PIE_SLOTS[app]
+                    button_text = ""
+                    app_name = app
+                    window_handle = 0
+                    _, exe_name = CONFIG.FIXED_PIE_SLOTS[app]
+                    app_icon_path = app_name_cache[exe_name]["icon_path"]
+
+                    final_button_updates.append({
+                        "index": button_index,
+                        "text_1": button_text,
+                        "text_2": app_name,
+                        "window_handle": window_handle,
+                        "app_icon_path": app_icon_path,
+                        "exe_name": exe_name
+                    })
+
+            # # Print each entry in final_button_updates in a readable way
+            # for entry in final_button_updates:
+            #     for key, value in entry.items():
+            #         print(f"{key}: {value}")
+            #     print("-" * 40)  # Print a separator line between entries
 
             # Clean up stale window mappings
             if len(self.windowHandles_To_buttonIndexes_map) > 20:
@@ -268,6 +297,7 @@ class PieWindow(QMainWindow):
     @pyqtSlot(list)
     def update_button_ui(self, button_updates):
         """Update button UI in the main thread."""
+        app_name_cache = load_cache()
 
         for update in button_updates:
             button_index = update["index"]
@@ -275,6 +305,8 @@ class PieWindow(QMainWindow):
             button_text_2 = update["text_2"]
             window_handle = update["window_handle"]
             app_icon_path = update["app_icon_path"]
+            exe_name = update["exe_name"]
+
             # Above the size of one pie menu, go to the next
             if button_index > CONFIG.MAX_BUTTONS - 1:
                 button_index = button_index % 8
@@ -295,6 +327,18 @@ class PieWindow(QMainWindow):
                 task_switcher.pie_buttons[button_index].clicked.disconnect()
             except TypeError:
                 pass  # No connections to disconnect
+
+            # Set action for empty reserved buttons
+            if window_handle == 0:
+                # print(button_index)
+                exe_path = app_name_cache[exe_name]["exe_path"]
+                task_switcher.pie_buttons[button_index].set_left_click_action(
+                    lambda captured_exe_path=exe_path: (
+                        self.hide(),
+                        QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
+                    )
+                )
+                continue
 
             # Set the clicking actions
             task_switcher.pie_buttons[button_index].set_left_click_action(

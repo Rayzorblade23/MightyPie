@@ -1,18 +1,21 @@
 import ctypes
 import json
 import os
+import subprocess
+import time
 from typing import Dict, Tuple
 
 import psutil
+import pyautogui
 import win32api
 import win32con
 import win32gui
 import win32process
 import win32ui
 from PIL import Image
-from PyQt6.QtCore import QTimer, QPoint
+from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor, QGuiApplication
-from PyQt6.QtWidgets import QWidget, QMainWindow
+from PyQt6.QtWidgets import QMainWindow, QWidget
 
 from config import CONFIG
 from pie_menu import PieMenu
@@ -43,7 +46,7 @@ def save_cache(cache):
         print(f"Error saving cache file: {e}")
 
 
-CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_name_cache.json")
+CACHE_FILE = CONFIG.CACHE_FILE
 
 app_cache = load_cache()
 
@@ -253,12 +256,15 @@ def _get_window_info(window_handle):
 
             if os.path.exists(exe_path):
                 exe_name = os.path.basename(exe_path).lower()
+
                 if exe_name in app_cache:
                     app_name = app_cache[exe_name]["app_name"]
                 else:
                     app_name = _get_friendly_app_name(exe_path)
-                    app_cache[exe_name] = {"app_name": app_name, "icon_path": _get_window_icon(exe_path, window_handle)}
+                    app_cache[exe_name] = {"app_name": app_name, "icon_path": _get_window_icon(exe_path, window_handle),
+                                           "exe_path": exe_path}
                     save_cache(app_cache)
+
                 result[window_handle] = (window_title, exe_name, 0)
                 return result, app_name
             else:
@@ -450,14 +456,6 @@ def show_pie_window(pie_window: QMainWindow, pie_menu: PieMenu):
         print(f"Error showing the main main_window: {e}")
 
 
-import win32gui
-import win32con
-import win32api
-import win32process
-import ctypes
-import time
-
-
 def toggle_maximize_window_at_cursor(pie_window: QWidget):
     if not hasattr(pie_window, 'pie_menu_pos'):
         return
@@ -533,6 +531,7 @@ def toggle_maximize_window_at_cursor(pie_window: QWidget):
     else:
         print("No valid window found under cursor")
 
+
 def minimize_window_at_cursor(pie_window: QWidget):
     if not hasattr(pie_window, 'pie_menu_pos'):
         return
@@ -554,3 +553,33 @@ def minimize_window_at_cursor(pie_window: QWidget):
         print("Window minimized successfully")
     else:
         print("No valid window found under cursor")
+
+
+def launch_app(exe_path):
+    """
+    Launch an external application given its executable path.
+    If the exe_path contains the word "spotify", it will use the Start Menu simulation method.
+
+    :param exe_path: The path to the executable file.
+    """
+    try:
+        # Check if exe_path contains 'spotify' (case insensitive)
+        if "spotify" in exe_path.lower():
+            print("Detected Spotify. Using Start Menu simulation...")
+
+            # Simulate opening Spotify from Start Menu (with quick sleeps)
+            time.sleep(0.02)
+            pyautogui.hotkey('ctrl', 'esc')  # Open Start menu
+            time.sleep(0.02)
+            pyautogui.write('Spotify')  # Type 'Spotify'
+            time.sleep(0.02)
+            pyautogui.press('enter')  # Press Enter
+            print("Spotify launched using Start Menu simulation.")
+
+        else:
+            # Launch the external executable directly
+            subprocess.Popen(exe_path, shell=True)
+            print(f"Launching application: {exe_path}")
+
+    except Exception as e:
+        print(f"Failed to launch application: {e}")
