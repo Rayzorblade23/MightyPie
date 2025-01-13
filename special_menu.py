@@ -1,17 +1,21 @@
 import sys
 
-from PyQt6.QtCore import Qt, QEvent, QTimer
+from PyQt6.QtCore import Qt, QEvent, QTimer, pyqtSignal
 from PyQt6.QtGui import QPainter, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout
 
 from GUI.toggle_switch import ToggleSwitch
 from clock import Clock
 from config import CONFIG
+from events import taskbar_event
+from functions.taskbar_hide_utils import toggle_taskbar, is_taskbar_visible
 from invisible_ui import InvisibleUI
 from windows_shortcuts_menu import WindowsSettingsMenu
 
 
 class SpecialMenu(QWidget):
+    taskbar_visibility_changed = pyqtSignal(bool)  # Custom signal
+
     def __init__(self, obj_name: str = "", parent=None):
 
         super().__init__(parent)
@@ -30,14 +34,21 @@ class SpecialMenu(QWidget):
         self.setObjectName(self.obj_name)
         self.setup_window()
 
-        self.is_taskbar_hidden = False
+        # Taskbar toggle switch
+        self.taskbar_toggle = ToggleSwitch(
+            "TaskbarToggle",
+            label_text="Toggle Taskbar",
+            on_action=self.toggle_taskbar_action,
+            off_action=self.toggle_taskbar_action,
+            parent=self
+        )
+        layout.addWidget(self.taskbar_toggle)
 
-        # self.taskbar_toggle = ToggleSwitch("TaskbarToggle",
-        #                                    label_text="Hide the Taskbar (takes 5 secs)",
-        #                                    on_action=lambda: self.toggle_taskbar(True),
-        #                                    off_action=lambda: self.toggle_taskbar(False),
-        #                                    parent=self)
-        # layout.addWidget(self.taskbar_toggle)
+        # Initialize the taskbar visibility based on current state
+        self.initialize_taskbar_toggle()
+
+        # Subscribe to the taskbar visibility event
+        taskbar_event.visibility_changed.connect(self.update_taskbar_toggle)
 
         self.clock = Clock()
         self.clock_toggle = ToggleSwitch("ClockToggle",
@@ -107,21 +118,29 @@ class SpecialMenu(QWidget):
         # Install the event filter
         QApplication.instance().installEventFilter(self)
 
+    def initialize_taskbar_toggle(self):
+        """Initialize the taskbar toggle based on the current visibility state."""
+        if is_taskbar_visible():  # Check if the taskbar is visible
+            self.taskbar_toggle.toggle.setCheckedWithoutAction(True)  # Taskbar is visible, toggle should be on
+        else:
+            self.taskbar_toggle.toggle.setCheckedWithoutAction(False)  # Taskbar is hidden, toggle should be off
+
+    def toggle_taskbar_action(self):
+        """Action to toggle the taskbar visibility."""
+        toggle_taskbar()  # Call the function that toggles the taskbar visibility
+
+    def update_taskbar_toggle(self, is_visible):
+        """Update the taskbar toggle based on visibility."""
+        if is_visible:
+            self.taskbar_toggle.toggle.setCheckedWithoutAction(True)
+        else:
+            self.taskbar_toggle.toggle.setCheckedWithoutAction(False)
+
     def trigger_toggle(self):
         self.clock_toggle.toggle.setChecked(True)  # or False
         self.clock_toggle.toggle.toggle_switch()
         self.invisible_UI_toggle.toggle.setChecked(True)  # or False
         self.invisible_UI_toggle.toggle.toggle_switch()
-
-    # def toggle_taskbar(self, hide: bool):
-    #     if hide:
-    #         toggle_taskbar_autohide(True)
-    #         hide_taskbar()
-    #         self.is_taskbar_hidden = True
-    #     else:
-    #         show_taskbar()
-    #         toggle_taskbar_autohide(False)
-    #         self.is_taskbar_hidden = False
 
     def setup_window(self):
         """Set up the main window properties."""

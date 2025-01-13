@@ -11,7 +11,7 @@ class TaskPieSwitcherConfig:
     )
     PROGRAM_NAME: str = "MightyPie"
     REFRESH_INTERVAL: int = 3000  # ms
-    TASKBAR_OPACITY: int = 200
+    TASKBAR_OPACITY: int = 150
     HOTKEY_OPEN_TASKS: str = "F14"
     HOTKEY_OPEN_WINCON: str = "F13"
     MAX_BUTTONS: int = 8

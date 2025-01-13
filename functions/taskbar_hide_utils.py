@@ -7,6 +7,8 @@ import time
 import win32con
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
+from events import taskbar_event
+
 
 class TaskbarController(QMainWindow):
     def __init__(self):
@@ -76,6 +78,11 @@ def set_taskbar_opacity(alpha_value: int):
         print("Transparency applied successfully.")
 
 
+def is_taskbar_visible():
+    hwnd = get_taskbar_handle()
+    return ctypes.windll.user32.IsWindowVisible(hwnd) != 0
+
+
 # def toggle_taskbar_autohide(state):
 #     reg_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3"
 #     try:
@@ -117,6 +124,14 @@ def get_taskbar_rect():
     return rect
 
 
+def show_taskbar():
+    hwnd = get_taskbar_handle()
+    if hwnd != 0:
+        ctypes.windll.user32.ShowWindow(hwnd, win32con.SW_SHOW)
+    else:
+        print("Failed to retrieve taskbar handle.")
+
+
 def hide_taskbar():
     hwnd = get_taskbar_handle()
     if hwnd != 0:
@@ -125,24 +140,16 @@ def hide_taskbar():
         print("Failed to retrieve taskbar handle.")
 
 
-def show_taskbar():
-    hwnd = get_taskbar_handle()
-    if hwnd != 0:
-        ctypes.windll.user32.ShowWindow(hwnd, win32con.SW_SHOW)
-    else:
-        print("Failed to retrieve taskbar handle.")
+def toggle_taskbar():
+    """Toggle the taskbar visibility and emit event."""
 
-    # def is_admin(self):
-    #     try:
-    #         return ctypes.windll.shell32.IsUserAnAdmin() != 0
-    #     except:
-    #         return False
-    #
-    # def elevate_to_admin(self):
-    #     script = sys.argv[0]
-    #     params = ' '.join(sys.argv[1:])
-    #     ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, f'"{script}" {params}', None, 1)
-    #     sys.exit(0)
+    if not is_taskbar_visible():
+        show_taskbar()
+    else:
+        hide_taskbar()
+
+    # Emit the visibility change event
+    taskbar_event.visibility_changed.emit(is_taskbar_visible())
 
 
 # Ensure taskbar is shown when the program exits

@@ -1,3 +1,4 @@
+import signal
 import sys
 import threading
 
@@ -9,7 +10,7 @@ from PyQt6.QtWidgets import (
 
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
-from functions.taskbar_hide_utils import set_taskbar_opacity
+from functions.taskbar_hide_utils import set_taskbar_opacity, show_taskbar
 from global_mouse_filter import GlobalMouseFilter
 from pie_window import PieWindow
 from window_manager import WindowManager
@@ -105,17 +106,17 @@ def listen_for_hotkeys(main_window: QWidget):
     keyboard.wait()
 
 
-# def signal_handler(signal, frame):
-#     # Ensure taskbar is shown before exiting
-#     show_taskbar()
-#     # toggle_taskbar_autohide(False)
-#     sys.exit(0)
+def signal_handler(signal, frame):
+    # Ensure taskbar is shown before exiting
+    show_taskbar()
+    # toggle_taskbar_autohide(False)
+    sys.exit(0)
 
 
 if __name__ == "__main__":
     # Register signal handler for SIGINT (Ctrl+C) and SIGTERM (termination signals)
-    # signal.signal(signal.SIGINT, signal_handler)
-    # signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     app = QApplication(sys.argv)
     app.setApplicationName("MightyPie")

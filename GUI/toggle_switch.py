@@ -114,9 +114,27 @@ class Toggle(QPushButton):
             self.background_color = QColor(CONFIG.BG_COLOR)  # Gray
         self.update()
 
+    def setCheckedWithoutAction(self, checked: bool):
+        """Set the checked state of the toggle without triggering actions or animation."""
+        if self.isChecked() == checked:
+            return  # No need to update if the state is the same
+
+        self.setChecked(checked)
+
+        # Update circle position directly without animation
+        if self.isChecked():
+            self._circle_pos = QPoint(self.width() - self.circle_radius - self.circle_size_offset, self.center_y)
+        else:
+            self._circle_pos = QPoint(self.center_y, self.center_y)
+
+        # Update the visual appearance directly without triggering the animation
+        self.update_background_color()
+        self.update()  # Ensure the widget is redrawn immediately to reflect the new state
+
 
 class ToggleSwitch(QWidget):
-    def __init__(self, object_name="", size=(CONFIG.BUTTON_HEIGHT, int(CONFIG.BUTTON_HEIGHT * 4 / 7)), on_action=None, off_action=None, label_text="", parent=None):
+    def __init__(self, object_name="", size=(CONFIG.BUTTON_HEIGHT, int(CONFIG.BUTTON_HEIGHT * 4 / 7)), on_action=None, off_action=None,
+                 label_text="", parent=None):
         super().__init__(parent)
 
         # Set the object name

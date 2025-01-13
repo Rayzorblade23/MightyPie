@@ -461,17 +461,13 @@ def toggle_maximize_window_at_cursor(pie_window: QWidget):
         return
 
     cursor_pos = (pie_window.pie_menu_pos.x(), pie_window.pie_menu_pos.y())
-    print(f"Cursor position: {cursor_pos}")
 
     window_handle = win32gui.WindowFromPoint(cursor_pos)
 
     if window_handle and window_handle != win32gui.GetDesktopWindow():
-        print("Valid window found")
         root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
-        print(f"Root window handle: {root_handle}")
 
         window_title = win32gui.GetWindowText(root_handle)
-        print(f"Window title: {window_title}")
 
         # Check the current state of the window
         placement = win32gui.GetWindowPlacement(root_handle)
@@ -583,4 +579,3 @@ def launch_app(exe_path):
             print("Vivaldi launched successfully.")
     except Exception as e:
         print(f"An error occurred: {e}")
-
