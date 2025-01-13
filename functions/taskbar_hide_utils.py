@@ -3,7 +3,6 @@ import ctypes
 import subprocess
 import sys
 import time
-import winreg
 
 import win32con
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget
@@ -34,34 +33,62 @@ class TaskbarController(QMainWindow):
     def closeEvent(self, event):
         if self.is_hidden:
             show_taskbar()
-            toggle_taskbar_autohide(False)
         event.accept()
 
     def toggle_taskbar(self):
         if not self.is_hidden:
-            toggle_taskbar_autohide(True)
             hide_taskbar()
             self.toggle_button.setText("Show Taskbar")
         else:
             show_taskbar()
-            toggle_taskbar_autohide(False)
             self.toggle_button.setText("Hide Taskbar")
         self.is_hidden = not self.is_hidden
 
 
-def toggle_taskbar_autohide(state):
-    reg_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3"
-    try:
-        reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0,
-                                 winreg.KEY_SET_VALUE | winreg.KEY_READ)
-        settings_value, _ = winreg.QueryValueEx(reg_key, "Settings")
-        settings_value = bytearray(settings_value)
-        settings_value[8] = 0x03 if state else 0x02
-        winreg.SetValueEx(reg_key, "Settings", 0, winreg.REG_BINARY, bytes(settings_value))
-        restart_explorer()
-        time.sleep(5)
-    finally:
-        winreg.CloseKey(reg_key)
+def set_taskbar_opacity(alpha_value: int):
+    """Set the opacity of the taskbar with an integer value (0 to 255)."""
+    hwnd = get_taskbar_handle()
+
+    if hwnd == 0:
+        print("Failed to get taskbar handle!")
+        return
+
+    # Constants
+    GWL_EXSTYLE = -20  # Index for extended window styles
+    WS_EX_LAYERED = 0x00080000  # Layered window style
+    LWA_ALPHA = 0x00000002  # Layered Window Attribute for alpha transparency
+
+    # Clamp alpha_value to the range [0, 255]
+    alpha_value = max(0, min(255, alpha_value))
+
+    # Add the WS_EX_LAYERED style to the taskbar window
+    current_style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+    if not (current_style & WS_EX_LAYERED):
+        new_style = current_style | WS_EX_LAYERED
+        ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, new_style)
+
+    # Apply the alpha transparency
+    result = ctypes.windll.user32.SetLayeredWindowAttributes(hwnd, 0, alpha_value, LWA_ALPHA)
+
+    if result == 0:
+        print("Failed to apply transparency!")
+    else:
+        print("Transparency applied successfully.")
+
+
+# def toggle_taskbar_autohide(state):
+#     reg_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\StuckRects3"
+#     try:
+#         reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0,
+#                                  winreg.KEY_SET_VALUE | winreg.KEY_READ)
+#         settings_value, _ = winreg.QueryValueEx(reg_key, "Settings")
+#         settings_value = bytearray(settings_value)
+#         settings_value[8] = 0x03 if state else 0x02
+#         winreg.SetValueEx(reg_key, "Settings", 0, winreg.REG_BINARY, bytes(settings_value))
+#         restart_explorer()
+#         time.sleep(5)
+#     finally:
+#         winreg.CloseKey(reg_key)
 
 
 def restart_explorer():
@@ -77,6 +104,17 @@ def get_taskbar_handle():
         hwnd = ctypes.windll.user32.FindWindowW("Shell_TrayWnd", None)
         attempts -= 1
     return hwnd
+
+
+# Function to get the taskbar's rectangle (position and size)
+def get_taskbar_rect():
+    hwnd = get_taskbar_handle()
+    if hwnd == 0:
+        return None  # Taskbar not found
+
+    rect = ctypes.wintypes.RECT()
+    ctypes.windll.user32.GetWindowRect(hwnd, ctypes.byref(rect))
+    return rect
 
 
 def hide_taskbar():

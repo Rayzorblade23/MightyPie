@@ -22,12 +22,12 @@ class WindowsSettingsMenu(QWidget):
         self.icon_size = (20, 20)
         self.inverted_icons = True
 
-        # Create a button to press the Windows key (using icon)
-        self.windows_key_button = QPushButton(self)
-        self.windows_key_button.setIcon(get_icon("windows_key", is_inverted=True))
-        self.windows_key_button.setIconSize(QSize(*self.icon_size))
-        self.windows_key_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
-        self.windows_key_button.clicked.connect(lambda: open_start_menu(self, hide_parent=True))
+        # # Create a button to press the Windows key (using icon)
+        # self.windows_key_button = QPushButton(self)
+        # self.windows_key_button.setIcon(get_icon("windows_key", is_inverted=True))
+        # self.windows_key_button.setIconSize(QSize(*self.icon_size))
+        # self.windows_key_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
+        # self.windows_key_button.clicked.connect(lambda: open_start_menu(self, hide_parent=True))
 
         # Create other buttons with icons
         self.audio_button = QPushButton(self)
@@ -42,11 +42,11 @@ class WindowsSettingsMenu(QWidget):
         self.network_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.network_button.clicked.connect(lambda: open_network_settings(self, hide_parent=True))
 
-        self.action_center_button = QPushButton(self)
-        self.action_center_button.setIcon(get_icon("action_center", is_inverted=True))
-        self.action_center_button.setIconSize(QSize(*self.icon_size))
-        self.action_center_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
-        self.action_center_button.clicked.connect(lambda: open_action_center(self, hide_parent=True))
+        # self.action_center_button = QPushButton(self)
+        # self.action_center_button.setIcon(get_icon("action_center", is_inverted=True))
+        # self.action_center_button.setIconSize(QSize(*self.icon_size))
+        # self.action_center_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
+        # self.action_center_button.clicked.connect(lambda: open_action_center(self, hide_parent=True))
 
         self.projection_button = QPushButton(self)
         self.projection_button.setIcon(get_icon("projection", is_inverted=True))
@@ -54,11 +54,11 @@ class WindowsSettingsMenu(QWidget):
         self.projection_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.projection_button.clicked.connect(lambda: open_projection_settings(self, hide_parent=True))
 
-        self.touch_keyboard_button = QPushButton(self)
-        self.touch_keyboard_button.setIcon(get_icon("touch_keyboard", is_inverted=True))
-        self.touch_keyboard_button.setIconSize(QSize(*self.icon_size))
-        self.touch_keyboard_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
-        self.touch_keyboard_button.clicked.connect(lambda: open_onscreen_keyboard(self, hide_parent=True))
+        # self.touch_keyboard_button = QPushButton(self)
+        # self.touch_keyboard_button.setIcon(get_icon("touch_keyboard", is_inverted=True))
+        # self.touch_keyboard_button.setIconSize(QSize(*self.icon_size))
+        # self.touch_keyboard_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
+        # self.touch_keyboard_button.clicked.connect(lambda: open_onscreen_keyboard(self, hide_parent=True))
 
         self.explorer_button = QPushButton(self)
         self.explorer_button.setIcon(get_icon("folder", is_inverted=True))
@@ -88,14 +88,19 @@ class WindowsSettingsMenu(QWidget):
         spacer = QSpacerItem(CONFIG.BUTTON_HEIGHT + default_spacing, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         # Add tooltips for buttons
-        self.windows_key_button.setToolTip("Open Start Menu")
         self.audio_button.setToolTip("Open Audio Settings")
         self.network_button.setToolTip("Open Network Settings")
-        self.action_center_button.setToolTip("Open Action Center")
         self.projection_button.setToolTip("Open Projection Settings")
-        self.touch_keyboard_button.setToolTip("Open On-Screen Keyboard")
         self.explorer_button.setToolTip("Open File Explorer")
         self.task_man_button.setToolTip("Open Task Manager")
+
+        # self.windows_key_button.setToolTip("Open Start Menu")
+        # self.touch_keyboard_button.setToolTip("Open On-Screen Keyboard")
+        # self.action_center_button.setToolTip("Open Action Center")
+        # layout.addWidget(self.windows_key_button)  # Add the Windows key button first
+        # layout.addWidget(self.touch_keyboard_button)
+        # layout.addWidget(self.action_center_button)
+
 
         # Set up the horizontal layout
         layout = QHBoxLayout()
@@ -106,11 +111,9 @@ class WindowsSettingsMenu(QWidget):
         layout.addWidget(self.network_button)
         layout.addWidget(self.projection_button)
 
-        layout.addWidget(self.windows_key_button)  # Add the Windows key button first
-        layout.addWidget(self.touch_keyboard_button)
+
         layout.addSpacerItem(spacer)
         layout.addWidget(self.explorer_button)
-        layout.addWidget(self.action_center_button)
 
         layout.addSpacerItem(spacer)
 
