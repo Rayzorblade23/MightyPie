@@ -74,8 +74,19 @@ class Clock(QWidget):
         # Set a minimum size or use resize() to adjust window size
         self.view.setGeometry(0, 0, self.width(), self.height())
         self.scene.setSceneRect(0, 0, self.width(), self.height())
-        self.move_to_top_right()
+        self.position_clock()
         self.toggle_background()
+
+        screen = QApplication.primaryScreen()
+        screen.geometryChanged.connect(self.handle_geometry_change)
+
+    def handle_geometry_change(self):
+        screen = QApplication.primaryScreen()
+        geometry = screen.geometry()
+
+        x = geometry.width() - self.width() - 25
+        y = 0
+        self.move(x, y)
 
     def setup_window(self):
         """Set up the main window properties."""
@@ -84,9 +95,9 @@ class Clock(QWidget):
         # Combine FramelessWindowHint and WindowStaysOnTopHint
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint)
 
-    def move_to_top_right(self):
+    def position_clock(self):
         """Move the clock to the upper right corner of the primary screen."""
-        screen_geometry = QApplication.primaryScreen().availableGeometry()
+        screen_geometry = QApplication.primaryScreen().geometry()
         x = screen_geometry.width() - self.width() - 25
         y = 0
         self.move(x, y)

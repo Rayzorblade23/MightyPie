@@ -3,7 +3,7 @@ from threading import Lock
 from typing import Dict, List
 
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer, QPoint
-from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
+from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor, QScreen
 from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication, QWidget
 
 from GUI.icon_functions_and_paths import EXTERNAL_ICON_PATHS
@@ -77,6 +77,23 @@ class PieWindow(QMainWindow):
         self.auto_refresh_timer = QTimer(self)
         self.auto_refresh_timer.timeout.connect(self.auto_refresh)
         self.auto_refresh_timer.start(CONFIG.REFRESH_INTERVAL)  # Periodic refresh
+
+        screen = QApplication.primaryScreen()
+        screen.geometryChanged.connect(self.handle_geometry_change)
+
+    def handle_geometry_change(self):
+        screen = QApplication.primaryScreen()
+        geometry = screen.geometry()
+
+        # Update the main window size based on the screen geometry
+        self.setGeometry(0, 0, geometry.width(), geometry.height())
+
+        # Update the QGraphicsView size to match the new screen size
+        self.view.setGeometry(0, 0, geometry.width(), geometry.height())
+
+        # Update the QGraphicsScene size to match the new screen size
+        self.scene.setSceneRect(0, 0, geometry.width(), geometry.height())
+
 
     def closeEvent(self, event):
         """Hide the main_window instead of closing it."""

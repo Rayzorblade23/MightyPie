@@ -62,11 +62,22 @@ def listen_for_hotkeys(main_window: QWidget):
         current_mouse_pos = QCursor.pos()
         child_window = None
         # Check if the mouse has moved beyond a threshold (e.g., 10 pixels)
-        if initial_mouse_pos and (abs(current_mouse_pos.x() - initial_mouse_pos.x()) <= 10) and \
-                (abs(current_mouse_pos.y() - initial_mouse_pos.y()) <= 10):
+        if (initial_mouse_pos is not None and
+                (abs(current_mouse_pos.x() - initial_mouse_pos.x()) <= 10) and
+                (abs(current_mouse_pos.y() - initial_mouse_pos.y()) <= 10)):
+            print(f"Initial Mouse Position: {initial_mouse_pos}")
+            print(f"Current Mouse Position: {current_mouse_pos}")
+            print(f"X difference: {abs(current_mouse_pos.x() - initial_mouse_pos.x())}")
+            print(f"Y difference: {abs(current_mouse_pos.y() - initial_mouse_pos.y())}")
             print("Mouse released without movement.")
             can_open_window = True
+
         else:
+            print(f"Initial Mouse Position: {initial_mouse_pos}")
+            print(f"Current Mouse Position: {current_mouse_pos}")
+            print(f"X difference: {abs(current_mouse_pos.x() - initial_mouse_pos.x())}")
+            print(f"Y difference: {abs(current_mouse_pos.y() - initial_mouse_pos.y())}")
+            print("Mouse released WITH movement.")
             if hotkey_name == CONFIG.HOTKEY_OPEN_TASKS:
                 if main_window.active_child == 2:
                     child_window = pm_task_switcher_2
@@ -79,6 +90,7 @@ def listen_for_hotkeys(main_window: QWidget):
                 return
 
             if child_window:
+                print("HERE?")
                 release_event = HotkeyReleaseEvent(main_window, child_window)
                 QApplication.postEvent(main_window, release_event)
                 can_open_window = True  # Reset the state

@@ -1,8 +1,4 @@
-- if I keep the Autohide Trigger, windows should be restored afterwards if possible
-
 - only one instance?
-
-- implement the sound settings from tabame in Special Menu
 
 - window control pie menu: implement restart window
 
@@ -11,6 +7,8 @@
 - make something special for explorer windows. maybe give them the second pie menu entirely
 
 - disable for fullscreen applications?
+
+- invert the button assignment process: give the button a method like accept windows from this program, accept windows from any program
 
 
 IDEA:

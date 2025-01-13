@@ -45,6 +45,18 @@ class InvisibleUI(QWidget):
         # Initial position of buttons
         self.position_buttons()
 
+        screen = QApplication.primaryScreen()
+        screen.geometryChanged.connect(self.handle_geometry_change)
+
+    def handle_geometry_change(self):
+        screen = QApplication.primaryScreen()
+        geometry = screen.geometry()
+
+        # Update the main window size based on the screen geometry
+        self.setGeometry(0, 0, geometry.width(), geometry.height())
+
+        self.position_buttons()
+
     def setup_window(self):
         """Set up the main window properties."""
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)  # Keep window background transparent
