@@ -197,28 +197,51 @@ def focus_window_by_handle(hwnd):
         else:
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
 
-        # Bring the window to the front
-        win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
-        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
-        win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
-                              win32con.SWP_SHOWWINDOW + win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
+        try:
+            # Get the current foreground window
+            current_fore = win32gui.GetForegroundWindow()
 
-        # Bring the window to the front
-        win32gui.SetForegroundWindow(hwnd)
+            # Get thread IDs
+            current_thread = win32api.GetCurrentThreadId()
+            other_thread = win32process.GetWindowThreadProcessId(current_fore)[0]
 
-        # Get the window's position and size
-        rect = win32gui.GetWindowRect(hwnd)
-        window_width = rect[2] - rect[0]
+            # Attach threads if necessary
+            if current_thread != other_thread:
+                win32process.AttachThreadInput(current_thread, other_thread, True)
+                # time.sleep(0.1)  # Small delay to let Windows process the attachment
+                try:
+                    # Try multiple approaches to bring window to front
+                    win32gui.BringWindowToTop(hwnd)
+                    win32gui.SetForegroundWindow(hwnd)
 
-        # Simulate a click at the center of the window, 1 pixel down from the top
-        center_x = rect[0] + window_width // 2
-        click_y = rect[1] + 1  # 1 pixel down from the top
+                    # Alternative method using different flags
+                    win32gui.SetWindowPos(hwnd,
+                                          win32con.HWND_TOPMOST,
+                                          0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE |
+                                          win32con.SWP_NOSIZE |
+                                          win32con.SWP_SHOWWINDOW)
 
-        # Simulate the click using PostMessage
-        win32gui.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, 0, (click_y << 16) | center_x)
-        win32gui.PostMessage(hwnd, win32con.WM_LBUTTONUP, 0, (click_y << 16) | center_x)
+                    # Remove topmost flag
+                    win32gui.SetWindowPos(hwnd,
+                                          win32con.HWND_NOTOPMOST,
+                                          0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE |
+                                          win32con.SWP_NOSIZE)
 
-
+                except Exception as e:
+                    print(f"Error during window manipulation: {e}")
+                finally:
+                    # Always detach threads
+                    win32process.AttachThreadInput(current_thread, other_thread, False)
+            else:
+                # If in same thread, try direct approach
+                try:
+                    win32gui.SetForegroundWindow(hwnd)
+                except Exception as e:
+                    print(f"Error bringing window to front: {e}")
+        except Exception as e:
+            print(f"Error bringing window to front: {e}")
     except Exception as e:
         print(f"Could not focus main_window with handle '{_get_window_title(hwnd)}': {e}")
 
