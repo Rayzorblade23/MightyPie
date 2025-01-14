@@ -1,4 +1,4 @@
-import logging
+import os
 import os
 import sys
 
@@ -134,6 +134,7 @@ class WindowsSettingsMenu(QWidget):
         # Set the layout for the window
         self.setLayout(layout)
 
+
 def restart_program():
     """Restart the current program."""
     print("Restarting program...")  # Debugging output
@@ -146,8 +147,9 @@ def restart_program():
     os.spawnl(os.P_NOWAIT, python, python, *sys.argv)
     sys.exit()
 
+
 def quit_program():
-    QApplication.quit()
+    QCoreApplication.exit()
 
 
 # Main entry point
