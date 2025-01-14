@@ -1,13 +1,13 @@
 import os
 import sys
 
-from PyQt6.QtCore import QSize, Qt, QCoreApplication, QTimer
+from PyQt6.QtCore import QSize, Qt, QCoreApplication
 from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
 
 from GUI.icon_functions_and_paths import get_icon
 from config import CONFIG
-from functions.shortcut_utils import open_audio_settings, open_network_settings, open_action_center, open_projection_settings, \
-    open_onscreen_keyboard, open_start_menu, open_explorer_window, open_task_manager
+from functions.shortcut_utils import open_audio_settings, open_network_settings, open_projection_settings, \
+    open_explorer_window, open_task_manager
 
 
 class WindowsSettingsMenu(QWidget):
@@ -101,7 +101,6 @@ class WindowsSettingsMenu(QWidget):
         # layout.addWidget(self.touch_keyboard_button)
         # layout.addWidget(self.action_center_button)
 
-
         # Set up the horizontal layout
         layout = QHBoxLayout()
         layout.setSpacing(default_spacing)
@@ -110,7 +109,6 @@ class WindowsSettingsMenu(QWidget):
         layout.addWidget(self.audio_button)
         layout.addWidget(self.network_button)
         layout.addWidget(self.projection_button)
-
 
         layout.addSpacerItem(spacer)
         layout.addWidget(self.explorer_button)
@@ -129,16 +127,20 @@ class WindowsSettingsMenu(QWidget):
     def restart_program(self):
         """Restart the current program."""
         print("Restarting program...")  # Debugging output
-        QCoreApplication.quit()  # Quit the application
 
-        # Re-launch the program
+        # Quit the application
+        QCoreApplication.quit()
+
+        # Re-launch the program as an external process
         python = sys.executable
-        os.execl(python, python, *sys.argv)  # Restart the program with the same arguments
+        os.spawnl(os.P_NOWAIT, python, python, *sys.argv)
+        sys.exit()
 
     def quit_program(self):
         # Process any remaining events
         print("WHY")
         QCoreApplication.exit()
+
 
 # Main entry point
 if __name__ == '__main__':

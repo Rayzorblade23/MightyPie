@@ -1,7 +1,13 @@
+import os
 import signal
 import sys
 import threading
+import warnings
 
+from PyQt6.QtCore import QCoreApplication, Qt
+
+warnings.simplefilter("ignore", UserWarning)
+sys.coinit_flags = 2
 import keyboard
 from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import (
@@ -110,7 +116,6 @@ def listen_for_hotkeys(main_window: QWidget):
 
     keyboard.wait()
 
-
 def signal_handler(signal, frame):
     # Ensure taskbar is shown before exiting
     show_taskbar()
@@ -119,6 +124,8 @@ def signal_handler(signal, frame):
 
 
 if __name__ == "__main__":
+    os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
+
     # Register signal handler for SIGINT (Ctrl+C) and SIGTERM (termination signals)
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
