@@ -2,7 +2,10 @@ import ctypes
 import json
 import os
 import subprocess
+import sys
+import tempfile
 import time
+from pathlib import Path
 from typing import Dict, Tuple
 
 import psutil
@@ -23,30 +26,74 @@ from special_menu import SpecialMenu
 from window_manager import WindowManager
 
 
+def get_cache_dir():
+    """Get the appropriate cache directory depending on whether running as exe or script"""
+    if hasattr(sys, '_MEIPASS'):
+        if sys.platform == "win32":
+            return os.path.join(os.environ.get('APPDATA'), CONFIG.PROGRAM_NAME)
+        elif sys.platform == "darwin":
+            return os.path.join(str(Path.home()), "Library", "Application Support", CONFIG.PROGRAM_NAME)
+        else:  # Linux and other Unix
+            return os.path.join(str(Path.home()), ".cache", CONFIG.PROGRAM_NAME)
+    else:
+        return os.path.abspath(".")
+
+
+def get_cache_file():
+    """Get the full path to the cache file"""
+    cache_dir = get_cache_dir()
+    os.makedirs(cache_dir, exist_ok=True)
+    return os.path.join(cache_dir, CONFIG.CACHE_FILENAME)
+
+
 # Cache Management
 def load_cache():
     """Load application name cache from file."""
+    CACHE_FILE = get_cache_file()
     if os.path.exists(CACHE_FILE):
         try:
             with open(CACHE_FILE, "r") as f:
                 return json.load(f)
+        except FileNotFoundError:
+            print("Cache file not found.")
+            return {}
+        except json.JSONDecodeError:
+            print("Error decoding cache file.")
+            return {}
         except Exception as e:
             print(f"Error loading cache file: {e}")
             return {}
+
     return {}
 
 
 def save_cache(cache):
     """Save application name cache to file."""
+    CACHE_FILE = get_cache_file()
+
     try:
-        with open(CACHE_FILE, "w") as f:
-            json.dump(cache, f, indent=4)
+        # Create a temporary file for the cache
+        with tempfile.NamedTemporaryFile('w', delete=False, dir=os.path.dirname(CACHE_FILE)) as temp_file:
+            # Write the cache data to the temporary file
+            json.dump(cache, temp_file, indent=4)
+            temp_file_path = temp_file.name
+
+        # Check if the target cache file already exists, and if so, delete it
+        if os.path.exists(CACHE_FILE):
+            os.remove(CACHE_FILE)
+
+        # Rename the temporary file to the target cache file
+        os.rename(temp_file_path, CACHE_FILE)
         print("Cache saved successfully.")
+
     except Exception as e:
         print(f"Error saving cache file: {e}")
 
+    # Cleanup: Remove the temporary file if it was not successfully renamed
+    if os.path.exists(temp_file_path) and temp_file_path != CACHE_FILE:
+        os.remove(temp_file_path)
+        print(f"Temporary file {temp_file_path} removed.")
 
-CACHE_FILE = CONFIG.CACHE_FILE
 
 app_cache = load_cache()
 

@@ -162,6 +162,7 @@ cython_debug/
 
 # App Name Cache and Icons
 app_name_cache.json
+apps_info_cache.json
 
 app_icons/
 

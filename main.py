@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
 
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
+from functions.file_handling_functions import get_resource_path
 from functions.taskbar_hide_utils import set_taskbar_opacity, show_taskbar
 from global_mouse_filter import GlobalMouseFilter
 from pie_window import PieWindow
@@ -128,7 +129,7 @@ if __name__ == "__main__":
     set_taskbar_opacity(CONFIG.TASKBAR_OPACITY)
 
     # Load the QSS template
-    with open("style.qss", "r") as file:
+    with open(get_resource_path("style.qss"), "r") as file:
         qss_template = file.read()
 
     # inserting style attributes from the config.py file

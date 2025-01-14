@@ -1,4 +1,3 @@
-import os
 from dataclasses import dataclass, field
 
 from functions.color_functions import adjust_saturation
@@ -6,10 +5,8 @@ from functions.color_functions import adjust_saturation
 
 @dataclass
 class TaskPieSwitcherConfig:
-    CACHE_FILE: str = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "app_name_cache.json"
-    )
     PROGRAM_NAME: str = "MightyPie"
+    CACHE_FILENAME: str = "apps_info_cache.json"
     REFRESH_INTERVAL: int = 3000  # ms
     TASKBAR_OPACITY: int = 150
     HOTKEY_OPEN_TASKS: str = "F14"

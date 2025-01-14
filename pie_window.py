@@ -231,9 +231,14 @@ class PieWindow(QMainWindow):
             # Process each window
             for window_handle, (window_title, exe_name, instance_number) in window_mapping.items():
                 # Get app information from cache
-                cache_entry = app_name_cache.get(exe_name, {})
-                app_name = cache_entry.get("app_name")
-                app_icon_path = cache_entry.get("icon_path")
+                cache_entry = app_name_cache.get(exe_name)
+
+                if cache_entry:
+                    app_name = cache_entry.get("app_name")
+                    app_icon_path = cache_entry.get("icon_path")
+                else:
+                    # Handle missing cache entry for exe_name
+                    print(f"Cache entry for {exe_name} not found.")
 
                 # Format button text
                 button_text = (f"{window_title} ({instance_number})"
@@ -271,16 +276,17 @@ class PieWindow(QMainWindow):
             # Get all the empty reserved slots
             unused_fixed_slots = list(set(CONFIG.FIXED_PIE_SLOTS) - set(update["text_2"] for update in final_button_updates))
 
-            # Check if the list is not empty and print each item
+            # Handle the empty reserved slots
             if unused_fixed_slots:
                 for app in unused_fixed_slots:
                     _, exe_name = CONFIG.FIXED_PIE_SLOTS[app]
-                    if app_name_cache[exe_name]:
+                    cache_entry = app_name_cache.get(exe_name)
+                    if cache_entry:
                         button_index, _ = CONFIG.FIXED_PIE_SLOTS[app]
                         button_text = ""
                         app_name = app
                         window_handle = 0
-                        app_icon_path = app_name_cache[exe_name]["icon_path"]
+                        app_icon_path = cache_entry.get("icon_path")
 
                         final_button_updates.append({
                             "index": button_index,
