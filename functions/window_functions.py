@@ -22,8 +22,9 @@ from PyQt6.QtWidgets import QMainWindow, QWidget
 
 from config import CONFIG
 from pie_menu import PieMenu
-from special_menu import SpecialMenu
 from window_manager import WindowManager
+
+cache_being_cleared = False
 
 
 def get_cache_dir():
@@ -94,6 +95,25 @@ def save_cache(cache):
         os.remove(temp_file_path)
         print(f"Temporary file {temp_file_path} removed.")
 
+
+def clear_cache():
+    """Clear the cache by deleting the cache file."""
+    global cache_being_cleared
+    cache_being_cleared = True
+    CACHE_FILE = get_cache_file()
+
+    if os.path.exists(CACHE_FILE):
+        try:
+            os.remove(CACHE_FILE)
+            print("Cache file cleared successfully.")
+        except Exception as e:
+            print(f"Error clearing cache file: {e}")
+    else:
+        print("Cache file does not exist.")
+
+    global app_cache
+    app_cache = load_cache()
+    cache_being_cleared = False
 
 app_cache = load_cache()
 
@@ -331,7 +351,7 @@ def _get_window_info(window_handle):
                 if exe_name in app_cache:
                     app_name = app_cache[exe_name]["app_name"]
                 else:
-                    app_name = _get_friendly_app_name(exe_path)
+                    app_name = _get_friendly_app_name(exe_path, exe_name)
                     app_cache[exe_name] = {"app_name": app_name, "icon_path": _get_window_icon(exe_path, window_handle),
                                            "exe_path": exe_path}
                     save_cache(app_cache)
@@ -345,7 +365,7 @@ def _get_window_info(window_handle):
     return result
 
 
-def _get_friendly_app_name(exe_path: str):
+def _get_friendly_app_name(exe_path: str, exe_name: str):
     """Get the FileDescription (friendly app name) from the executable."""
     try:
         language, codepage = win32api.GetFileVersionInfo(
@@ -357,7 +377,10 @@ def _get_friendly_app_name(exe_path: str):
             "FileDescription",
         )
         friendly_name = win32api.GetFileVersionInfo(exe_path, string_file_info)
-        return friendly_name if friendly_name else "Unknown App"
+        if friendly_name:
+            return friendly_name
+        else:
+            return os.path.splitext(exe_name)[0].capitalize()  # Remove the ".exe" extension
     except Exception as e:
         print(f"Error retrieving file description for {exe_path}: {e}")
         return "Unknown App"
@@ -437,7 +460,7 @@ def _get_window_title(hwnd):
         return "Unknown Window Title"
 
 
-def show_special_menu(menu: SpecialMenu):
+def show_special_menu(menu: QWidget):
     # Get the current mouse position
     cursor_pos = QCursor.pos()
 

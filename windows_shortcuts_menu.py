@@ -8,6 +8,7 @@ from GUI.icon_functions_and_paths import get_icon
 from config import CONFIG
 from functions.shortcut_utils import open_audio_settings, open_network_settings, open_projection_settings, \
     open_explorer_window, open_task_manager
+from functions.window_functions import clear_cache
 
 
 class WindowsSettingsMenu(QWidget):
@@ -84,6 +85,12 @@ class WindowsSettingsMenu(QWidget):
         self.quit_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
         self.quit_button.clicked.connect(lambda: self.quit_program())
 
+        self.clear_cache_button = QPushButton(self)
+        self.clear_cache_button.setIcon(get_icon("shredder", is_inverted=True))
+        self.clear_cache_button.setIconSize(QSize(*self.icon_size))
+        self.clear_cache_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
+        self.clear_cache_button.clicked.connect(lambda: clear_cache())
+
         default_spacing = 6
         spacer = QSpacerItem(CONFIG.BUTTON_HEIGHT + default_spacing, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -93,6 +100,7 @@ class WindowsSettingsMenu(QWidget):
         self.projection_button.setToolTip("Open Projection Settings")
         self.explorer_button.setToolTip("Open File Explorer")
         self.task_man_button.setToolTip("Open Task Manager")
+        self.clear_cache_button.setToolTip("Clear App Info Cache")
 
         # self.windows_key_button.setToolTip("Open Start Menu")
         # self.touch_keyboard_button.setToolTip("Open On-Screen Keyboard")
@@ -112,6 +120,7 @@ class WindowsSettingsMenu(QWidget):
 
         layout.addSpacerItem(spacer)
         layout.addWidget(self.explorer_button)
+        layout.addWidget(self.clear_cache_button)
 
         layout.addSpacerItem(spacer)
 

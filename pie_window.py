@@ -3,7 +3,7 @@ from threading import Lock
 from typing import Dict, List
 
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer, QPoint
-from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor, QScreen
+from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication, QWidget
 
 from GUI.icon_functions_and_paths import EXTERNAL_ICON_PATHS
@@ -11,7 +11,8 @@ from GUI.pie_button import PieButton
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
 from functions.window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
-    close_window_by_handle, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app
+    close_window_by_handle, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app, \
+    cache_being_cleared
 from pie_menu import PieMenu
 from special_menu import SpecialMenu
 from window_manager import WindowManager
@@ -93,7 +94,6 @@ class PieWindow(QMainWindow):
 
         # Update the QGraphicsScene size to match the new screen size
         self.scene.setSceneRect(0, 0, geometry.width(), geometry.height())
-
 
     def closeEvent(self, event):
         """Hide the main_window instead of closing it."""
@@ -215,6 +215,10 @@ class PieWindow(QMainWindow):
         """Update main_window buttons with current main_window information."""
 
         def background_task():
+            print("THE THREAD BEGINS!\n")
+            if cache_being_cleared:
+                print("DANGER! Skip}")
+                return
             window_mapping = get_filtered_list_of_windows(self)
             temp_button_texts = self.pie_button_texts.copy()
             app_name_cache = load_cache()
@@ -248,7 +252,7 @@ class PieWindow(QMainWindow):
                 button_index = self.windowHandles_To_buttonIndexes_map.get(window_handle)
 
                 # Handle fixed slots
-                if app_name in CONFIG.FIXED_PIE_SLOTS:
+                if app_name and app_name in CONFIG.FIXED_PIE_SLOTS:
                     button_index, _ = CONFIG.FIXED_PIE_SLOTS[app_name]
                     self.windowHandles_To_buttonIndexes_map[window_handle] = button_index
                 else:
