@@ -27,3 +27,8 @@ BUGS:
 - Spotify text is cut off when title changes (maybe fixed?!)
 
 - window gets an instance increase when a number is included in the title the same way...? as in " (i)"
+
+
+BUGS in BUILD:
+
+- restart doesn't work right

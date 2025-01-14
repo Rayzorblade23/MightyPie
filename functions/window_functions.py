@@ -138,6 +138,7 @@ def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple
                     and raw_window_title.strip()  # Window must have a non-empty title
                     and class_name != "Progman"  # Exclude system windows like "Progman"
                     and class_name != "AutoHotkeyGUI"  # Exclude "AutoHotkey" windows
+                    and class_name != "TaskManagerWindow"  # Exclude Taskmanager
                     and hwnd != this_program_hwnd  # Exclude this program
                     and CONFIG.PROGRAM_NAME not in raw_window_title  # exclude all windows of this program
 
