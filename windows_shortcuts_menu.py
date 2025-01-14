@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -77,13 +78,13 @@ class WindowsSettingsMenu(QWidget):
         self.restart_button.setIcon(get_icon("restart", is_inverted=True))
         self.restart_button.setIconSize(QSize(*self.icon_size))
         self.restart_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
-        self.restart_button.clicked.connect(lambda: self.restart_program())
+        self.restart_button.clicked.connect(lambda: restart_program())
 
         self.quit_button = QPushButton(self)
         self.quit_button.setIcon(get_icon("quit", is_inverted=True))
         self.quit_button.setIconSize(QSize(*self.icon_size))
         self.quit_button.setFixedSize(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)  # Set button size
-        self.quit_button.clicked.connect(lambda: self.quit_program())
+        self.quit_button.clicked.connect(lambda: quit_program())
 
         self.clear_cache_button = QPushButton(self)
         self.clear_cache_button.setIcon(get_icon("shredder", is_inverted=True))
@@ -133,22 +134,20 @@ class WindowsSettingsMenu(QWidget):
         # Set the layout for the window
         self.setLayout(layout)
 
-    def restart_program(self):
-        """Restart the current program."""
-        print("Restarting program...")  # Debugging output
+def restart_program():
+    """Restart the current program."""
+    print("Restarting program...")  # Debugging output
 
-        # Quit the application
-        QCoreApplication.quit()
+    # Quit the application
+    QCoreApplication.quit()
 
-        # Re-launch the program as an external process
-        python = sys.executable
-        os.spawnl(os.P_NOWAIT, python, python, *sys.argv)
-        sys.exit()
+    # Re-launch the program as an external process
+    python = sys.executable
+    os.spawnl(os.P_NOWAIT, python, python, *sys.argv)
+    sys.exit()
 
-    def quit_program(self):
-        # Process any remaining events
-        print("WHY")
-        QCoreApplication.exit()
+def quit_program():
+    QApplication.quit()
 
 
 # Main entry point

@@ -33,6 +33,7 @@ class TaskbarController(QMainWindow):
         layout.addWidget(self.toggle_button)
 
     def closeEvent(self, event):
+        print("Taskbar Utils Close Event")
         if self.is_hidden:
             show_taskbar()
         event.accept()
@@ -105,11 +106,6 @@ def restart_explorer():
 
 def get_taskbar_handle():
     hwnd = ctypes.windll.user32.FindWindowW("Shell_TrayWnd", None)
-    attempts = 5
-    while hwnd == 0 and attempts > 0:
-        time.sleep(1)
-        hwnd = ctypes.windll.user32.FindWindowW("Shell_TrayWnd", None)
-        attempts -= 1
     return hwnd
 
 

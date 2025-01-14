@@ -16,6 +16,8 @@ Remove Windows button but open when clicking bottom left of screen
 
 
 BUGS:
+- Special Menu doesn't hide every time when losing focus
+
 - never getting a clean app quit in pycharm. might be irrelevant for external use
 
 - simulated click to focus window is too low. open groups settings in Telegram

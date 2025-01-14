@@ -550,17 +550,24 @@ def show_pie_window(pie_window: QMainWindow, pie_menu: PieMenu):
         print(f"Error showing the main main_window: {e}")
 
 
+from PyQt6.QtCore import QTimer
+import win32gui
+import win32con
+import win32api
+import win32process
+import win32gui
+import time
+
+
 def toggle_maximize_window_at_cursor(pie_window: QWidget):
     if not hasattr(pie_window, 'pie_menu_pos'):
         return
 
     cursor_pos = (pie_window.pie_menu_pos.x(), pie_window.pie_menu_pos.y())
-
     window_handle = win32gui.WindowFromPoint(cursor_pos)
 
     if window_handle and window_handle != win32gui.GetDesktopWindow():
         root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
-
         window_title = win32gui.GetWindowText(root_handle)
 
         # Check the current state of the window
@@ -581,45 +588,49 @@ def toggle_maximize_window_at_cursor(pie_window: QWidget):
         current_thread = win32api.GetCurrentThreadId()
         other_thread = win32process.GetWindowThreadProcessId(current_fore)[0]
 
-        # Attach threads if necessary
-        if current_thread != other_thread:
-            win32process.AttachThreadInput(current_thread, other_thread, True)
-            time.sleep(0.1)  # Small delay to let Windows process the attachment
-            try:
-                # Try multiple approaches to bring window to front
-                win32gui.BringWindowToTop(root_handle)
-                win32gui.SetForegroundWindow(root_handle)
+        def process_window_input():
+            if current_thread != other_thread:
+                win32process.AttachThreadInput(current_thread, other_thread, True)
+                # No sleep here, handled by QTimer
+                try:
+                    # Try multiple approaches to bring window to front
+                    win32gui.BringWindowToTop(root_handle)
+                    win32gui.SetForegroundWindow(root_handle)
 
-                # Alternative method using different flags
-                win32gui.SetWindowPos(root_handle,
-                                      win32con.HWND_TOPMOST,
-                                      0, 0, 0, 0,
-                                      win32con.SWP_NOMOVE |
-                                      win32con.SWP_NOSIZE |
-                                      win32con.SWP_SHOWWINDOW)
+                    # Alternative method using different flags
+                    win32gui.SetWindowPos(root_handle,
+                                          win32con.HWND_TOPMOST,
+                                          0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE |
+                                          win32con.SWP_NOSIZE |
+                                          win32con.SWP_SHOWWINDOW)
 
-                # Remove topmost flag
-                win32gui.SetWindowPos(root_handle,
-                                      win32con.HWND_NOTOPMOST,
-                                      0, 0, 0, 0,
-                                      win32con.SWP_NOMOVE |
-                                      win32con.SWP_NOSIZE)
+                    # Remove topmost flag
+                    win32gui.SetWindowPos(root_handle,
+                                          win32con.HWND_NOTOPMOST,
+                                          0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE |
+                                          win32con.SWP_NOSIZE)
+                except Exception as e:
+                    print(f"Error during window manipulation: {e}")
+                finally:
+                    # Always detach threads
+                    win32process.AttachThreadInput(current_thread, other_thread, False)
+            else:
+                # If in same thread, try direct approach
+                try:
+                    win32gui.SetForegroundWindow(root_handle)
+                except Exception as e:
+                    print(f"Error bringing window to front: {e}")
 
-            except Exception as e:
-                print(f"Error during window manipulation: {e}")
-            finally:
-                # Always detach threads
-                win32process.AttachThreadInput(current_thread, other_thread, False)
-        else:
-            # If in same thread, try direct approach
-            try:
-                win32gui.SetForegroundWindow(root_handle)
-            except Exception as e:
-                print(f"Error bringing window to front: {e}")
+            print("Window maximized successfully")
 
-        print("Window maximized successfully")
+        # Defer the execution of window manipulation to prevent blocking
+        QTimer.singleShot(100, process_window_input)
+
     else:
         print("No valid window found under cursor")
+
 
 
 def minimize_window_at_cursor(pie_window: QWidget):
@@ -657,14 +668,11 @@ def launch_app(exe_path):
         if "spotify" in exe_path.lower():
             print("Detected Spotify. Using Start Menu simulation...")
 
-            # Simulate opening Spotify from Start Menu (with quick sleeps)
-            time.sleep(0.02)
-            pyautogui.hotkey('ctrl', 'esc')  # Open Start menu
-            time.sleep(0.02)
-            pyautogui.write('Spotify')  # Type 'Spotify'
-            time.sleep(0.02)
-            pyautogui.press('enter')  # Press Enter
-            print("Spotify launched using Start Menu simulation.")
+            # Use QTimer to avoid blocking
+            QTimer.singleShot(20, lambda: pyautogui.hotkey('ctrl', 'esc'))  # Open Start menu
+            QTimer.singleShot(40, lambda: pyautogui.write('Spotify'))  # Type 'Spotify'
+            QTimer.singleShot(60, lambda: pyautogui.press('enter'))  # Press Enter
+            QTimer.singleShot(80, lambda: print("Spotify launched using Start Menu simulation."))
 
         else:
             # Redirect output to suppress terminal spam
@@ -673,3 +681,4 @@ def launch_app(exe_path):
             print("Vivaldi launched successfully.")
     except Exception as e:
         print(f"An error occurred: {e}")
+
