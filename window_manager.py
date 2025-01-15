@@ -52,6 +52,13 @@ class WindowManager:
         Return a copy of the current mapping.
         Ensures readers always get a consistent and stable view of the data.
 
+        This is the window info, where:
+        - The key is the HWND (int).
+        - The values are a tuple containing:
+            1. Window title (str): The title of the window.
+            2. Exe name (str): The human-friendly name of the executable.
+            3. Instance number (int): A unique instance number for this window.
+
         Returns:
             A copy of the HWND mapping dictionary.
         """
