@@ -82,6 +82,8 @@ class PieWindow(QMainWindow):
         screen = QApplication.primaryScreen()
         screen.geometryChanged.connect(self.handle_geometry_change)
 
+        self.auto_refresh()
+
     def handle_geometry_change(self):
         screen = QApplication.primaryScreen()
         geometry = screen.geometry()
@@ -157,7 +159,7 @@ class PieWindow(QMainWindow):
     def auto_refresh(self):
         """Automatically monitor and refresh windows periodically in a thread-safe way."""
         # start_time = time.time()
-
+        print("AUTO REFRESH")
         # Lock access to shared data to ensure thread safety
         with self.button_mapping_lock:
             current_window_handles = [
@@ -214,12 +216,13 @@ class PieWindow(QMainWindow):
     def update_pm_task_buttons(self):
         """Update main_window buttons with current main_window information."""
 
+
         def background_task():
             print("THE THREAD BEGINS!\n")
             if cache_being_cleared:
                 print("DANGER! Skip}")
                 return
-            window_mapping = get_filtered_list_of_windows(self)
+            window_mapping = manager.get_window_hwnd_mapping()
             temp_button_texts = self.pie_button_texts.copy()
             app_name_cache = load_cache()
             final_button_updates = []

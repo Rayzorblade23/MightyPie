@@ -4,8 +4,6 @@ import sys
 import threading
 import warnings
 
-from PyQt6.QtCore import QCoreApplication, Qt
-
 warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
 import keyboard
@@ -20,7 +18,6 @@ from functions.file_handling_functions import get_resource_path
 from functions.taskbar_hide_utils import set_taskbar_opacity, show_taskbar
 from global_mouse_filter import GlobalMouseFilter
 from pie_window import PieWindow
-from window_manager import WindowManager
 
 
 def listen_for_hotkeys(main_window: QWidget):
@@ -116,6 +113,7 @@ def listen_for_hotkeys(main_window: QWidget):
 
     keyboard.wait()
 
+
 def signal_handler(signal, frame):
     # Ensure taskbar is shown before exiting
     show_taskbar()
@@ -147,8 +145,6 @@ if __name__ == "__main__":
 
     # Apply the QSS to the application or widgets
     app.setStyleSheet(qss)
-
-    manager = WindowManager.get_instance()
 
     # Create and show the main main_window
     window = PieWindow()

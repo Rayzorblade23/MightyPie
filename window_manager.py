@@ -1,7 +1,9 @@
+from threading import Lock
 from typing import Dict, Tuple
 
 class WindowManager:
     _instance = None
+    _lock = Lock()
 
     def __init__(self):
         self.window_hwnd_mapping: Dict[int, Tuple[str, str, int]] = {}
@@ -30,18 +32,19 @@ class WindowManager:
         Raises:
             ValueError: If any value in the new_map is not a tuple of (str, str, int).
         """
-        # Remove keys that are not in new_map
-        keys_to_remove = [key for key in self.window_hwnd_mapping if key not in new_map]
-        for key in keys_to_remove:
-            del self.window_hwnd_mapping[key]
+        with self._lock:
+            # Safely update the dictionary
+            keys_to_remove = [key for key in self.window_hwnd_mapping if key not in new_map]
+            for key in keys_to_remove:
+                del self.window_hwnd_mapping[key]
 
-        # Update or add new keys from new_map
-        for key, value in new_map.items():
-            if isinstance(value, tuple) and len(value) == 3:
-                self.window_hwnd_mapping[key] = value
-            else:
-                raise ValueError("Each entry must be a tuple of (str, str, int)")
+            for key, value in new_map.items():
+                if isinstance(value, tuple) and len(value) == 3:
+                    self.window_hwnd_mapping[key] = value
+                else:
+                    raise ValueError("Each entry must be a tuple of (str, str, int)")
 
     def get_window_hwnd_mapping(self) -> Dict[int, Tuple[str, str, int]]:
         """Return the current map of HWND to window info."""
-        return self.window_hwnd_mapping
+        with self._lock:
+            return dict(self.window_hwnd_mapping)  # Return a copy for thread safety
