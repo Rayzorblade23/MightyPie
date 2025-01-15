@@ -6,19 +6,24 @@ class WindowManager:
     _lock = Lock()
 
     def __init__(self):
-        self.window_hwnd_mapping: Dict[int, Tuple[str, str, int]] = {}
+        if WindowManager._instance is not None:
+            raise RuntimeError("Use get_instance() to access the singleton instance.")
+        self._window_hwnd_mapping: Dict[int, Tuple[str, str, int]] = {}
 
     @staticmethod
     def get_instance() -> "WindowManager":
         """Get the singleton instance of WindowManager."""
         if WindowManager._instance is None:
-            WindowManager._instance = WindowManager()
+            with WindowManager._lock:
+                if WindowManager._instance is None:
+                    WindowManager._instance = WindowManager()
         return WindowManager._instance
 
     def update_window_hwnd_mapping(self, new_map: Dict[int, Tuple[str, str, int]]) -> None:
         """
-        Update the global map with a new mapping of HWND to window info.
-
+        Atomically update the mapping with the new data.
+        Replaces the current mapping to ensure consistency for readers.
+        
         This is the window info, where:
         - The key is the HWND (int).
         - The values are a tuple containing:
@@ -33,18 +38,21 @@ class WindowManager:
             ValueError: If any value in the new_map is not a tuple of (str, str, int).
         """
         with self._lock:
-            # Safely update the dictionary
-            keys_to_remove = [key for key in self.window_hwnd_mapping if key not in new_map]
-            for key in keys_to_remove:
-                del self.window_hwnd_mapping[key]
-
+            # Validate the input to ensure all values are tuples of the correct form
             for key, value in new_map.items():
-                if isinstance(value, tuple) and len(value) == 3:
-                    self.window_hwnd_mapping[key] = value
-                else:
-                    raise ValueError("Each entry must be a tuple of (str, str, int)")
+                if not (isinstance(value, tuple) and len(value) == 3 and
+                        isinstance(value[0], str) and isinstance(value[1], str) and isinstance(value[2], int)):
+                    raise ValueError("Each value in the dictionary must be a tuple of (str, str, int).")
+
+            # Atomically replace the entire dictionary
+            self._window_hwnd_mapping = new_map.copy()
 
     def get_window_hwnd_mapping(self) -> Dict[int, Tuple[str, str, int]]:
-        """Return the current map of HWND to window info."""
-        with self._lock:
-            return dict(self.window_hwnd_mapping)  # Return a copy for thread safety
+        """
+        Return a copy of the current mapping.
+        Ensures readers always get a consistent and stable view of the data.
+
+        Returns:
+            A copy of the HWND mapping dictionary.
+        """
+        return self._window_hwnd_mapping.copy()
