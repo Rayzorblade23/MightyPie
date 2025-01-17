@@ -228,62 +228,19 @@ class PieWindow(QMainWindow):
             app_name_cache = load_cache()
             final_button_updates = []
             processed_handles = set()
-            unprocessed_button_indexes = set(range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_MENUS))
 
-            # Filter for "program_window_fixed" buttons using the filter_buttons method
-            prog_win_fixed_buttons = button_info.filter_buttons("task_type", "program_window_fixed")
-
-            # Iterate directly through the filtered buttons
-            for button in prog_win_fixed_buttons:
-                button_index = next(
-                    (index for index, b in button_info.items() if b is button), None
-                )  # Find the corresponding index of the button
-                if button_index is None:
-                    print("Warning: Button not found in button_info")
-                    continue
-
-                app_name = button["properties"].get("app_name", "")
-                exe_name = button["properties"].get("exe_name", "")
-
-                # Get the app icon path from the cache
+            def create_button_update(button_index, hwnd, title, exe_name, instance):
                 cache_entry = app_name_cache.get(exe_name)
                 if not cache_entry:
-                    print(f"Cache entry for {exe_name} not found, skipping fixed slot")
-                    continue
+                    print(f"Cache entry for {exe_name} not found, skipping window")
+                    return None
 
+                app_name = cache_entry.get("app_name", "")
                 app_icon_path = cache_entry.get("icon_path")
+                button_text = f"{title} ({instance})" if instance != 0 else title
 
-                # Check if there's an existing window mapping for this task
-                existing_window = None
-                for hwnd, mapped_button_index in self.windowHandles_To_buttonIndexes_map.items():
-                    if mapped_button_index == button_index and hwnd in window_mapping:
-                        window_title, window_exe, instance = window_mapping[hwnd]
-                        if window_exe == exe_name:
-                            existing_window = (hwnd, (window_title, window_exe, instance))
-                            processed_handles.add(hwnd)
-                            break
-
-                if existing_window:
-                    # Use existing window mapping
-                    hwnd, (title, _, instance) = existing_window
-                    button_text = f"{title} ({instance})" if instance != 0 else title
-                    self.windowHandles_To_buttonIndexes_map[hwnd] = button_index
-                else:
-                    # Look for a new window of the correct type
-                    for hwnd, (title, window_exe, instance) in window_mapping.items():
-                        if window_exe == exe_name and hwnd not in processed_handles:
-                            button_text = f"{title} ({instance})" if instance != 0 else title
-                            self.windowHandles_To_buttonIndexes_map[hwnd] = button_index
-                            processed_handles.add(hwnd)
-                            break
-                    else:
-                        # No window found - create empty fixed slot
-                        hwnd = 0
-                        button_text = ""
-
-                # Add the button update
-                final_button_updates.append({
-                    "index": button_index,  # Directly use task_index
+                return {
+                    "index": button_index,
                     "task_type": "program_window_fixed",
                     "properties": {
                         "app_name": app_name,
@@ -293,141 +250,126 @@ class PieWindow(QMainWindow):
                         "app_icon_path": app_icon_path,
                         "exe_name": exe_name
                     }
-                })
+                }
 
-                # Remove the button index from unprocessed_button_indexes
-                unprocessed_button_indexes.discard(button_index)
+            def process_fixed_buttons():
+                """Process all buttons with task_type 'program_window_fixed'"""
+                fixed_buttons = button_info.filter_buttons("task_type", "program_window_fixed")
 
-            # Process remaining buttons for non-fixed windows
-            total_buttons = CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_MENUS
-            fixed_indexes = {slot for slot, _ in CONFIG.FIXED_PIE_SLOTS.values()}
-
-            # Process existing mappings for non-fixed buttons but only of Pie Menu 1
-            for button_index in range(total_buttons // 2):
-                if button_index in fixed_indexes:
-                    continue
-
-                # Look for existing mapping
-                existing_window = None
-                for hwnd, button_idx in self.windowHandles_To_buttonIndexes_map.items():
-                    if (button_idx == button_index and
-                            hwnd in window_mapping and
-                            hwnd not in processed_handles):
-                        window_info = window_mapping[hwnd]
-                        existing_window = (hwnd, window_info)
-                        processed_handles.add(hwnd)
-                        break
-
-                if existing_window:
-                    hwnd, (title, exe_name, instance) = existing_window
-                    cache_entry = app_name_cache.get(exe_name)
-                    if not cache_entry:
-                        print(f"Cache entry for {exe_name} not found, skipping window")
+                for button in fixed_buttons:
+                    button_index = next(
+                        (index for index, b in button_info.items() if b is button), None
+                    )
+                    if button_index is None:
                         continue
 
-                    app_name = cache_entry.get("app_name", "")
-                    app_icon_path = cache_entry.get("icon_path")
+                    app_name = button["properties"].get("app_name", "")
+                    exe_name = button["properties"].get("exe_name", "")
 
-                    button_text = f"{title} ({instance})" if instance != 0 else title
-                    self.windowHandles_To_buttonIndexes_map[hwnd] = button_index
-
-                    final_button_updates.append({
-                        "index": button_index,
-                        "task_type": "program_window_fixed",
-                        "properties": {
-                            "app_name": app_name,
-                            "text_1": button_text,
-                            "text_2": app_name,
-                            "window_handle": hwnd,
-                            "app_icon_path": app_icon_path,
-                            "exe_name": exe_name
-                        }
-                    })
-
-            # Do the same for Pie Menu 2
-            if set(range(8)).issubset({update["index"] for update in final_button_updates}):
-                # First process existing mappings for non-fixed buttons
-                for button_index in range(8, total_buttons):
-                    if button_index in fixed_indexes:
-                        continue
-
-                    # Look for existing mapping
+                    # Try to find existing window mapping
                     existing_window = None
-                    for hwnd, button_idx in self.windowHandles_To_buttonIndexes_map.items():
-                        if (button_idx == button_index and
+                    for hwnd, mapped_index in self.windowHandles_To_buttonIndexes_map.items():
+                        if (mapped_index == button_index and
                                 hwnd in window_mapping and
-                                hwnd not in processed_handles):
-                            window_info = window_mapping[hwnd]
-                            existing_window = (hwnd, window_info)
+                                window_mapping[hwnd][1] == exe_name):
+                            existing_window = (hwnd, window_mapping[hwnd])
                             processed_handles.add(hwnd)
                             break
 
                     if existing_window:
-                        hwnd, (title, exe_name, instance) = existing_window
-                        cache_entry = app_name_cache.get(exe_name)
-                        if not cache_entry:
-                            print(f"Cache entry for {exe_name} not found, skipping window")
-                            continue
+                        hwnd, (title, _, instance) = existing_window
+                    else:
+                        # Look for new window of correct type
+                        for hwnd, (title, window_exe, instance) in window_mapping.items():
+                            if window_exe == exe_name and hwnd not in processed_handles:
+                                processed_handles.add(hwnd)
+                                break
+                        else:
+                            # No window found - create empty fixed slot
+                            hwnd, title, instance = 0, "", 0
 
-                        app_name = cache_entry.get("app_name", "")
-                        app_icon_path = cache_entry.get("icon_path")
+                    update = create_button_update(button_index, hwnd, title, exe_name, instance)
+                    if update:
+                        final_button_updates.append(update)
+                        if hwnd != 0:
+                            self.windowHandles_To_buttonIndexes_map[hwnd] = button_index
 
-                        button_text = f"{title} ({instance})" if instance != 0 else title
-                        self.windowHandles_To_buttonIndexes_map[hwnd] = button_index
+            def get_valid_windows():
+                """Return dict of all currently valid window handles and their info"""
+                return {
+                    hwnd: window_mapping[hwnd]
+                    for hwnd in self.windowHandles_To_buttonIndexes_map
+                    if hwnd in window_mapping
+                }
 
-                        final_button_updates.append({
-                            "index": button_index,
-                            "task_type": "program_window_fixed",
-                            "properties": {
-                                "app_name": app_name,
-                                "text_1": button_text,
-                                "text_2": app_name,
-                                "window_handle": hwnd,
-                                "app_icon_path": app_icon_path,
-                                "exe_name": exe_name
-                            }
-                        })
+            def process_existing_mappings():
+                """Process existing window mappings, maintaining positions where possible"""
+                valid_windows = get_valid_windows()
+                menu1_slots = set(range(CONFIG.MAX_BUTTONS))
 
-            # Finally, assign any remaining windows to empty buttons
-            for button_index in range(total_buttons):
-                if button_index in fixed_indexes:
-                    continue
+                # First, maintain positions for Menu 1
+                for hwnd, mapped_index in list(self.windowHandles_To_buttonIndexes_map.items()):
+                    if (hwnd in valid_windows and
+                            hwnd not in processed_handles and
+                            mapped_index in menu1_slots):
 
-                # Skip if button already has an update
-                if any(update["index"] == button_index for update in final_button_updates):
-                    continue
+                        title, exe_name, instance = valid_windows[hwnd]
+                        update = create_button_update(mapped_index, hwnd, title, exe_name, instance)
+                        if update:
+                            final_button_updates.append(update)
+                            processed_handles.add(hwnd)
 
-                # Find an unprocessed window
-                for hwnd, (title, exe_name, instance) in window_mapping.items():
-                    if hwnd not in processed_handles:
-                        cache_entry = app_name_cache.get(exe_name)
-                        if not cache_entry:
-                            continue
+                # Then process Menu 2 windows
+                for hwnd, mapped_index in list(self.windowHandles_To_buttonIndexes_map.items()):
+                    if (hwnd in valid_windows and
+                            hwnd not in processed_handles and
+                            mapped_index >= CONFIG.MAX_BUTTONS):
 
-                        app_name = cache_entry.get("app_name", "")
-                        app_icon_path = cache_entry.get("icon_path")
+                        # Check if there's space in Menu 1
+                        used_indexes = {update["index"] for update in final_button_updates}
+                        empty_menu1_slots = menu1_slots - used_indexes
 
-                        button_text = f"{title} ({instance})" if instance != 0 else title
-                        self.windowHandles_To_buttonIndexes_map[hwnd] = button_index
-                        processed_handles.add(hwnd)
+                        if empty_menu1_slots:
+                            # Move to Menu 1
+                            new_index = min(empty_menu1_slots)
+                            title, exe_name, instance = valid_windows[hwnd]
+                            update = create_button_update(new_index, hwnd, title, exe_name, instance)
+                            if update:
+                                final_button_updates.append(update)
+                                processed_handles.add(hwnd)
+                                self.windowHandles_To_buttonIndexes_map[hwnd] = new_index
+                        else:
+                            # Keep in Menu 2
+                            title, exe_name, instance = valid_windows[hwnd]
+                            update = create_button_update(mapped_index, hwnd, title, exe_name, instance)
+                            if update:
+                                final_button_updates.append(update)
+                                processed_handles.add(hwnd)
 
-                        final_button_updates.append({
-                            "index": button_index,
-                            "task_type": "program_window_fixed",
-                            "properties": {
-                                "app_name": app_name,
-                                "text_1": button_text,
-                                "text_2": app_name,
-                                "window_handle": hwnd,
-                                "app_icon_path": app_icon_path,
-                                "exe_name": exe_name
-                            }
-                        })
-                        break
+            def fill_empty_buttons():
+                """Fill any remaining empty buttons with unprocessed windows"""
+                used_indexes = {update["index"] for update in final_button_updates}
+                all_empty_indexes = set(range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_MENUS)) - used_indexes
+
+                # Fill remaining empty slots with new windows
+                for button_index in sorted(all_empty_indexes):
+                    for hwnd, (title, exe_name, instance) in window_mapping.items():
+                        if hwnd not in processed_handles:
+                            update = create_button_update(button_index, hwnd, title, exe_name, instance)
+                            if update:
+                                final_button_updates.append(update)
+                                processed_handles.add(hwnd)
+                                self.windowHandles_To_buttonIndexes_map[hwnd] = button_index
+                                break
+
+            # Execute the process
+            process_fixed_buttons()
+            process_existing_mappings()
+            fill_empty_buttons()
 
             # Clean up stale window mappings
             if len(self.windowHandles_To_buttonIndexes_map) > 20:
-                valid_handles = {update["window_handle"] for update in final_button_updates}
+                valid_handles = {update["properties"]["window_handle"] for update in final_button_updates}
                 self.windowHandles_To_buttonIndexes_map = {
                     handle: button_id
                     for handle, button_id in self.windowHandles_To_buttonIndexes_map.items()
@@ -439,6 +381,7 @@ class PieWindow(QMainWindow):
 
         # Start the background task
         threading.Thread(target=background_task, daemon=True).start()
+
 
     @pyqtSlot(list)
     def update_button_ui(self, button_updates):
