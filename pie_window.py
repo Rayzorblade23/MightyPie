@@ -309,7 +309,7 @@ class PieWindow(QMainWindow):
             fixed_indexes = {slot for slot, _ in CONFIG.FIXED_PIE_SLOTS.values()}
 
             # First process existing mappings for non-fixed buttons
-            for button_index in range(total_buttons):
+            for button_index in range(total_buttons //2):
                 if button_index in fixed_indexes:
                     continue
 
@@ -349,6 +349,50 @@ class PieWindow(QMainWindow):
                             "exe_name": exe_name
                         }
                     })
+
+            if set(range(8)).issubset({update["index"] for update in final_button_updates}):
+                # Do the same for Pie Menu 2
+                # First process existing mappings for non-fixed buttons
+                for button_index in range(8, total_buttons):
+                    if button_index in fixed_indexes:
+                        continue
+
+                    # Look for existing mapping
+                    existing_window = None
+                    for hwnd, button_idx in self.windowHandles_To_buttonIndexes_map.items():
+                        if (button_idx == button_index and
+                                hwnd in window_mapping and
+                                hwnd not in processed_handles):
+                            window_info = window_mapping[hwnd]
+                            existing_window = (hwnd, window_info)
+                            processed_handles.add(hwnd)
+                            break
+
+                    if existing_window:
+                        hwnd, (title, exe_name, instance) = existing_window
+                        cache_entry = app_name_cache.get(exe_name)
+                        if not cache_entry:
+                            print(f"Cache entry for {exe_name} not found, skipping window")
+                            continue
+
+                        app_name = cache_entry.get("app_name", "")
+                        app_icon_path = cache_entry.get("icon_path")
+
+                        button_text = f"{title} ({instance})" if instance != 0 else title
+                        self.windowHandles_To_buttonIndexes_map[hwnd] = button_index
+
+                        final_button_updates.append({
+                            "index": button_index,
+                            "task_type": "program_window_fixed",
+                            "properties": {
+                                "app_name": app_name,
+                                "text_1": button_text,
+                                "text_2": app_name,
+                                "window_handle": hwnd,
+                                "app_icon_path": app_icon_path,
+                                "exe_name": exe_name
+                            }
+                        })
 
             # Finally, assign any remaining windows to empty buttons
             for button_index in range(total_buttons):
