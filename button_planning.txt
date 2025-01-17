@@ -1,0 +1,15 @@
+Have two lists:
+
+temp_button_texts: index -> window_title
+updates
+
+All fixed buttons go first
+
+
+
+
+
+LAYER 1 - RULES:
+
+- if Button has Window: just pass it along
+- if Button

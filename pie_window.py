@@ -1,3 +1,4 @@
+import json
 import threading
 from threading import Lock
 from typing import Dict, List
@@ -8,6 +9,7 @@ from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplica
 
 from GUI.icon_functions_and_paths import EXTERNAL_ICON_PATHS
 from GUI.pie_button import PieButton
+from button_info import ButtonInfo
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
 from functions.window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
@@ -18,6 +20,8 @@ from special_menu import SpecialMenu
 from window_manager import WindowManager
 
 manager = WindowManager.get_instance()
+
+button_info = ButtonInfo()
 
 
 class PieWindow(QMainWindow):
@@ -228,8 +232,15 @@ class PieWindow(QMainWindow):
             final_button_updates = []
             processed_handles = set()
 
-            # First, process existing window-to-button mappings for fixed slots
-            for app_name, (button_index, exe_name) in CONFIG.FIXED_PIE_SLOTS.items():
+            # Filter for "program_window_fixed" buttons
+            prog_win_fixed_buttons = button_info.filter_buttons("task_type", "program_window_fixed")
+
+            # Iterate through filtered buttons
+            for button_index, button in enumerate(prog_win_fixed_buttons):  # button_index will be the index in the filtered list
+                app_name = button["properties"].get("app_name", "")
+                exe_name = button["properties"].get("exe_name", "")
+
+                # Get the app icon path from the cache
                 cache_entry = app_name_cache.get(exe_name)
                 if not cache_entry:
                     print(f"Cache entry for {exe_name} not found, skipping fixed slot")
@@ -265,15 +276,33 @@ class PieWindow(QMainWindow):
                         hwnd = 0
                         button_text = ""
 
+                # Fix: Look up the correct task_index based on button_index
+                # We need to get the corresponding task_index from the existing `tasks_dict` (which uses keys like 0, 4, 6)
+                # So, we will check which key in `tasks_dict` corresponds to the current `button_index`
+                task_index = None
+                for key, task in button_info.tasks_dict.items():
+                    if task["task_type"] == "program_window_fixed" and task["properties"]["app_name"] == app_name:
+                        task_index = key
+                        break
+
+                if task_index is None:
+                    print(f"Warning: No task found for {app_name} at index {button_index}")
+                    task_index = 0  # Default fallback to 0 if we can't find the correct task
+
+                # Add the button update
                 final_button_updates.append({
-                    "index": button_index,
-                    "text_1": button_text,
-                    "text_2": app_name,
-                    "window_handle": hwnd,
-                    "app_icon_path": app_icon_path,
-                    "exe_name": exe_name
+                    "index": task_index,  # Correct task index from tasks_dict
+                    "task_type": "program_window_fixed",
+                    "properties": {
+                        "app_name": app_name,
+                        "text_1": button_text,
+                        "text_2": app_name,
+                        "window_handle": hwnd,
+                        "app_icon_path": app_icon_path,
+                        "exe_name": exe_name
+                    }
                 })
-                temp_button_texts[button_index] = button_text
+
 
             # Process remaining buttons for non-fixed windows
             total_buttons = CONFIG.MAX_BUTTONS * self.num_pm_task_switchers
@@ -310,13 +339,16 @@ class PieWindow(QMainWindow):
 
                     final_button_updates.append({
                         "index": button_index,
-                        "text_1": button_text,
-                        "text_2": app_name,
-                        "window_handle": hwnd,
-                        "app_icon_path": app_icon_path,
-                        "exe_name": exe_name
+                        "task_type": "program_window_fixed",
+                        "properties": {
+                            "app_name": app_name,
+                            "text_1": button_text,
+                            "text_2": app_name,
+                            "window_handle": hwnd,
+                            "app_icon_path": app_icon_path,
+                            "exe_name": exe_name
+                        }
                     })
-                    temp_button_texts[button_index] = button_text
 
             # Finally, assign any remaining windows to empty buttons
             for button_index in range(total_buttons):
@@ -343,13 +375,16 @@ class PieWindow(QMainWindow):
 
                         final_button_updates.append({
                             "index": button_index,
-                            "text_1": button_text,
-                            "text_2": app_name,
-                            "window_handle": hwnd,
-                            "app_icon_path": app_icon_path,
-                            "exe_name": exe_name
+                            "task_type": "program_window_fixed",
+                            "properties": {
+                                "app_name": app_name,
+                                "text_1": button_text,
+                                "text_2": app_name,
+                                "window_handle": hwnd,
+                                "app_icon_path": app_icon_path,
+                                "exe_name": exe_name
+                            }
                         })
-                        temp_button_texts[button_index] = button_text
                         break
 
             # Clean up stale window mappings
@@ -372,87 +407,85 @@ class PieWindow(QMainWindow):
         """Update button UI in the main thread."""
         app_name_cache = load_cache()
 
-        for update in button_updates:
-            button_index = update["index"]
-            button_text_1 = update["text_1"]
-            button_text_2 = update["text_2"]
-            window_handle = update["window_handle"]
-            app_icon_path = update["app_icon_path"]
-            exe_name = update["exe_name"]
-
-            # Above the size of one pie menu, go to the next
-            if button_index > CONFIG.MAX_BUTTONS - 1:
-                button_index = button_index % 8
-                task_switcher = self.pm_task_switcher_2
-            else:
+        def get_task_switcher_and_index(button_index):
+            """Helper function to calculate the task switcher and index."""
+            # For the first task switcher, buttons 0-7
+            if button_index < CONFIG.MAX_BUTTONS * self.num_pm_task_switchers // 2:
                 task_switcher = self.pm_task_switcher_1
+                index = button_index  # Use the index directly for the first half of buttons
+            else:
+                # For the second task switcher, buttons 8-15
+                task_switcher = self.pm_task_switcher_2
+                index = button_index - (CONFIG.MAX_BUTTONS * self.num_pm_task_switchers // 2)  # Adjust the index for the second half of buttons
 
-            self.pie_button_texts[button_index] = button_text_1
+            return task_switcher, index
 
-            task_switcher: QWidget
-            task_switcher.pie_buttons: List[PieButton]
-            task_switcher.pie_buttons[button_index].set_label_1_text(button_text_1)
-            task_switcher.pie_buttons[button_index].set_label_2_text(button_text_2)
-            task_switcher.pie_buttons[button_index].update_icon(app_icon_path)
+
+        for update in button_updates:
+            # Extract 'index' directly from the update (not from 'properties')
+            button_index = update["index"]
+
+            # Extract the rest of the button info from 'properties'
+            button_text_1 = update["properties"]["text_1"]
+            button_text_2 = update["properties"]["text_2"]
+            window_handle = update["properties"]["window_handle"]
+            app_icon_path = update["properties"]["app_icon_path"]
+            exe_name = update["properties"]["exe_name"]
+
+            # Determine task switcher and index using the helper function
+            task_switcher, index = get_task_switcher_and_index(button_index)
+
+            # Update button text and icon
+            self.pie_button_texts[index] = button_text_1
+            task_switcher.pie_buttons[index].set_label_1_text(button_text_1)
+            task_switcher.pie_buttons[index].set_label_2_text(button_text_2)
+            task_switcher.pie_buttons[index].update_icon(app_icon_path)
 
             # Disconnect any previous connections first
             try:
-                task_switcher.pie_buttons[button_index].clicked.disconnect()
+                task_switcher.pie_buttons[index].clicked.disconnect()
             except TypeError:
                 pass  # No connections to disconnect
 
             # Set action for empty reserved buttons
             if window_handle == 0:
-                # print(button_index)
-                exe_path = app_name_cache[exe_name]["exe_path"]
-                task_switcher.pie_buttons[button_index].set_left_click_action(
-                    lambda captured_exe_path=exe_path: (
-                        self.hide(),
-                        QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
+                exe_path = app_name_cache.get(exe_name, {}).get("exe_path")
+                if exe_path:
+                    task_switcher.pie_buttons[index].set_left_click_action(
+                        lambda captured_exe_path=exe_path: (
+                            self.hide(),
+                            QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
+                        )
                     )
-                )
                 continue
 
-            # Set the clicking actions
-            task_switcher.pie_buttons[button_index].set_left_click_action(
+            # Set the clicking actions for windows
+            task_switcher.pie_buttons[index].set_left_click_action(
                 lambda hwnd=window_handle: (
-                    # QTimer.singleShot(100, lambda: focus_window_by_handle(hwnd)),  # Delay in event loop
                     self.hide(),
                     QTimer.singleShot(0, lambda: focus_window_by_handle(hwnd)),
                 )
             )
-            task_switcher.pie_buttons[button_index].set_middle_click_action(
+            task_switcher.pie_buttons[index].set_middle_click_action(
                 lambda hwnd=window_handle: (
                     QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
                     self.refresh(),
                 )
             )
-            task_switcher.pie_buttons[button_index].setEnabled(True)
+            task_switcher.pie_buttons[index].setEnabled(True)
 
         # Clear button attributes when button index not among updates
         for i in range(CONFIG.MAX_BUTTONS * self.num_pm_task_switchers):
             if i not in [update["index"] for update in button_updates]:
-                index = i
-                self.pie_button_texts[i] = "Empty"
-                # Above the size of one pie menu, go to the next
-                if i > CONFIG.MAX_BUTTONS - 1:
-                    index = i % 8
-                    task_switcher = self.pm_task_switcher_2
-                else:
-                    task_switcher = self.pm_task_switcher_1
-                try:
-                    task_switcher.pie_buttons[index].set_left_click_action(action=None)
-                    task_switcher.pie_buttons[index].set_right_click_action(action=None)
-                    task_switcher.pie_buttons[index].set_middle_click_action(action=None)
+                task_switcher, index = get_task_switcher_and_index(i)
 
-                except TypeError:
-                    pass
-                # self.pie_buttons[i].clicked.connect(
-                #     lambda checked: (
-                #         self.parent().hide(),
-                #     )
-                # )
+                # Disable the button
+                self.pie_button_texts[index] = "Empty"
+                task_switcher.pie_buttons[index].set_left_click_action(action=None)
+                task_switcher.pie_buttons[index].set_right_click_action(action=None)
+                task_switcher.pie_buttons[index].set_middle_click_action(action=None)
                 task_switcher.pie_buttons[index].setEnabled(False)  # Disable the button
+
                 task_switcher.pie_buttons[index].set_label_1_text("Empty")
                 task_switcher.pie_buttons[index].set_label_2_text("")
                 task_switcher.pie_buttons[index].update_icon("")
