@@ -130,7 +130,6 @@ def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple
             2. Exe name (str): The human-friendly name of the executable.
             3. Instance number (int): A unique instance number for this window.
     """
-    print("CALLING THE HUUUUGE FUNCTION")
     temp_window_hwnds_mapping: Dict[int, Tuple[str, str, int]] = {}
     if this_window is not None:
         this_program_hwnd = int(this_window.winId())  # Exclude this program from the Switcher

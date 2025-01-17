@@ -221,7 +221,7 @@ class PieWindow(QMainWindow):
         def background_task():
             print("THE THREAD BEGINS!\n")
             if cache_being_cleared:
-                print("DANGER! Skip}")
+                print("DANGER! CACHE IS BEING CLEARED. SKIP.")
                 return
 
             window_mapping = manager.get_window_hwnd_mapping()
@@ -263,7 +263,6 @@ class PieWindow(QMainWindow):
                     if button_index is None:
                         continue
 
-                    app_name = button["properties"].get("app_name", "")
                     exe_name = button["properties"].get("exe_name", "")
 
                     # Try to find existing window mapping
@@ -366,6 +365,9 @@ class PieWindow(QMainWindow):
             process_fixed_buttons()
             process_existing_mappings()
             fill_empty_buttons()
+            print(self.windowHandles_To_buttonIndexes_map)
+            print("\n")
+            print("")
 
             # Clean up stale window mappings
             if len(self.windowHandles_To_buttonIndexes_map) > 20:
