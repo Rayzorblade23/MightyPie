@@ -4,14 +4,14 @@ from config import CONFIG
 class ButtonInfo:
     def __init__(self):
         # Initialize the task dictionary
-        self.tasks_dict = {}
+        self.button_info_dict = {}
 
         # Fill the dictionary with initial tasks, including default tasks
         self._initialize_tasks()
 
     def _initialize_tasks(self):
         # Pre-defined tasks (example data)
-        self.tasks_dict = {
+        self.button_info_dict = {
             0: {
                 "task_type": "program_window_fixed",
                 "properties": {
@@ -49,8 +49,8 @@ class ButtonInfo:
 
         # Fill in missing tasks where there are gaps in the indices
         for i in range(CONFIG.MAX_BUTTONS * 2):
-            if i not in self.tasks_dict:  # If there's no task at this index
-                self.tasks_dict[i] = {
+            if i not in self.button_info_dict:  # If there's no task at this index
+                self.button_info_dict[i] = {
                     "task_type": "program_window_any",  # Only assign "program_window_any" for missing slots
                     "properties": {
                         "app_name": "",
@@ -64,13 +64,29 @@ class ButtonInfo:
 
     def __getitem__(self, index):
         """Allow direct access to tasks via index like task[index]."""
-        return self.tasks_dict.get(index, None)
+        return self.button_info_dict.get(index, None)
+
+    def __iter__(self):
+        """Allow iteration over the keys of button_info_dict."""
+        return iter(self.button_info_dict)
+
+    def items(self):
+        """Allow direct access to items like button_info.items()."""
+        return self.button_info_dict.items()
+
+    def keys(self):
+        """Allow direct access to keys like button_info.keys()."""
+        return self.button_info_dict.keys()
+
+    def values(self):
+        """Allow direct access to values like button_info.values()."""
+        return self.button_info_dict.values()
 
     def get_task_indexes(self):
         """
         Returns a list of all task indexes.
         """
-        return list(self.tasks_dict.keys())
+        return list(self.button_info_dict.keys())
 
     def filter_buttons(self, attribute, value):
         """
@@ -81,7 +97,7 @@ class ButtonInfo:
         :return: A list of tasks matching the criteria
         """
         filtered = []
-        for task_id, task in self.tasks_dict.items():
+        for task_id, task in self.button_info_dict.items():
 
             # Handle nested attributes using split('.')
             keys = attribute.split('.')
@@ -98,4 +114,4 @@ class ButtonInfo:
 
     def get_all_tasks(self):
         """Returns all tasks."""
-        return self.tasks_dict
+        return self.button_info_dict

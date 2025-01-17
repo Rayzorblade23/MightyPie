@@ -12,6 +12,7 @@ class TaskPieSwitcherConfig:
     HOTKEY_OPEN_TASKS: str = "F14"
     HOTKEY_OPEN_WINCON: str = "F13"
     MAX_BUTTONS: int = 8
+    NUM_PIE_MENUS: int = 2
     BUTTON_WIDTH: int = 140
     BUTTON_HEIGHT: int = 34
     CONTROL_BUTTON_SIZE: int = 30

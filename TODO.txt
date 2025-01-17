@@ -1,3 +1,5 @@
+- more efficient re-assignment when window closes
+
 - only one instance?
 
 - window control pie menu: implement restart window

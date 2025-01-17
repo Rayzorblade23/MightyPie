@@ -1,11 +1,10 @@
-import json
 import threading
 from threading import Lock
 from typing import Dict, List
 
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer, QPoint
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
-from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication, QWidget
+from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication
 
 from GUI.icon_functions_and_paths import EXTERNAL_ICON_PATHS
 from GUI.pie_button import PieButton
@@ -57,10 +56,9 @@ class PieWindow(QMainWindow):
         self.setup_window()
 
         self.pie_menu_pos = QPoint()
-        self.num_pm_task_switchers = 2
         self.button_mapping_lock = Lock()
         self.last_window_handles = []
-        self.pie_button_texts = ["Empty" for _ in range(CONFIG.MAX_BUTTONS * self.num_pm_task_switchers)]
+        self.pie_button_texts = ["Empty" for _ in range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_MENUS)]
         self.windowHandles_To_buttonIndexes_map = {}
 
         self.active_child = 1
@@ -227,16 +225,23 @@ class PieWindow(QMainWindow):
                 return
 
             window_mapping = manager.get_window_hwnd_mapping()
-            temp_button_texts = self.pie_button_texts.copy()
             app_name_cache = load_cache()
             final_button_updates = []
             processed_handles = set()
+            unprocessed_button_indexes = set(range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_MENUS))
 
-            # Filter for "program_window_fixed" buttons
+            # Filter for "program_window_fixed" buttons using the filter_buttons method
             prog_win_fixed_buttons = button_info.filter_buttons("task_type", "program_window_fixed")
 
-            # Iterate through filtered buttons
-            for button_index, button in enumerate(prog_win_fixed_buttons):  # button_index will be the index in the filtered list
+            # Iterate directly through the filtered buttons
+            for button in prog_win_fixed_buttons:
+                button_index = next(
+                    (index for index, b in button_info.items() if b is button), None
+                )  # Find the corresponding index of the button
+                if button_index is None:
+                    print("Warning: Button not found in button_info")
+                    continue
+
                 app_name = button["properties"].get("app_name", "")
                 exe_name = button["properties"].get("exe_name", "")
 
@@ -248,10 +253,10 @@ class PieWindow(QMainWindow):
 
                 app_icon_path = cache_entry.get("icon_path")
 
-                # Check if there's an existing window mapping for this button
+                # Check if there's an existing window mapping for this task
                 existing_window = None
-                for hwnd, button_idx in self.windowHandles_To_buttonIndexes_map.items():
-                    if button_idx == button_index and hwnd in window_mapping:
+                for hwnd, mapped_button_index in self.windowHandles_To_buttonIndexes_map.items():
+                    if mapped_button_index == button_index and hwnd in window_mapping:
                         window_title, window_exe, instance = window_mapping[hwnd]
                         if window_exe == exe_name:
                             existing_window = (hwnd, (window_title, window_exe, instance))
@@ -276,22 +281,9 @@ class PieWindow(QMainWindow):
                         hwnd = 0
                         button_text = ""
 
-                # Fix: Look up the correct task_index based on button_index
-                # We need to get the corresponding task_index from the existing `tasks_dict` (which uses keys like 0, 4, 6)
-                # So, we will check which key in `tasks_dict` corresponds to the current `button_index`
-                task_index = None
-                for key, task in button_info.tasks_dict.items():
-                    if task["task_type"] == "program_window_fixed" and task["properties"]["app_name"] == app_name:
-                        task_index = key
-                        break
-
-                if task_index is None:
-                    print(f"Warning: No task found for {app_name} at index {button_index}")
-                    task_index = 0  # Default fallback to 0 if we can't find the correct task
-
                 # Add the button update
                 final_button_updates.append({
-                    "index": task_index,  # Correct task index from tasks_dict
+                    "index": button_index,  # Directly use task_index
                     "task_type": "program_window_fixed",
                     "properties": {
                         "app_name": app_name,
@@ -303,13 +295,15 @@ class PieWindow(QMainWindow):
                     }
                 })
 
+                # Remove the button index from unprocessed_button_indexes
+                unprocessed_button_indexes.discard(button_index)
 
             # Process remaining buttons for non-fixed windows
-            total_buttons = CONFIG.MAX_BUTTONS * self.num_pm_task_switchers
+            total_buttons = CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_MENUS
             fixed_indexes = {slot for slot, _ in CONFIG.FIXED_PIE_SLOTS.values()}
 
-            # First process existing mappings for non-fixed buttons
-            for button_index in range(total_buttons //2):
+            # Process existing mappings for non-fixed buttons but only of Pie Menu 1
+            for button_index in range(total_buttons // 2):
                 if button_index in fixed_indexes:
                     continue
 
@@ -350,8 +344,8 @@ class PieWindow(QMainWindow):
                         }
                     })
 
+            # Do the same for Pie Menu 2
             if set(range(8)).issubset({update["index"] for update in final_button_updates}):
-                # Do the same for Pie Menu 2
                 # First process existing mappings for non-fixed buttons
                 for button_index in range(8, total_buttons):
                     if button_index in fixed_indexes:
@@ -454,16 +448,15 @@ class PieWindow(QMainWindow):
         def get_task_switcher_and_index(button_index):
             """Helper function to calculate the task switcher and index."""
             # For the first task switcher, buttons 0-7
-            if button_index < CONFIG.MAX_BUTTONS * self.num_pm_task_switchers // 2:
+            if button_index < CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_MENUS // 2:
                 task_switcher = self.pm_task_switcher_1
                 index = button_index  # Use the index directly for the first half of buttons
             else:
                 # For the second task switcher, buttons 8-15
                 task_switcher = self.pm_task_switcher_2
-                index = button_index - (CONFIG.MAX_BUTTONS * self.num_pm_task_switchers // 2)  # Adjust the index for the second half of buttons
+                index = button_index - (CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_MENUS // 2)  # Adjust the index for the second half of buttons
 
             return task_switcher, index
-
 
         for update in button_updates:
             # Extract 'index' directly from the update (not from 'properties')
@@ -519,7 +512,7 @@ class PieWindow(QMainWindow):
             task_switcher.pie_buttons[index].setEnabled(True)
 
         # Clear button attributes when button index not among updates
-        for i in range(CONFIG.MAX_BUTTONS * self.num_pm_task_switchers):
+        for i in range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_MENUS):
             if i not in [update["index"] for update in button_updates]:
                 task_switcher, index = get_task_switcher_and_index(i)
 
