@@ -76,6 +76,14 @@ class PieWindow(QMainWindow):
         self.pm_win_control.hide()
         self.setup_window_control_buttons()
 
+        # For now, right-click should always just hide
+        for i in range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_TASK_SWITCHERS):
+            task_switcher, index = self.get_task_switcher_and_index(i)
+            task_switcher.pie_buttons[index].set_right_click_action(action=lambda: self.hide())
+
+        for i in range(CONFIG.MAX_BUTTONS):
+            self.pm_win_control.pie_buttons[i].set_right_click_action(action=lambda: self.hide())
+
         self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None)
         self.special_menu.hide()
 
@@ -180,6 +188,21 @@ class PieWindow(QMainWindow):
 
     def refresh(self):
         self.update_pm_task_buttons()
+
+    def get_task_switcher_and_index(self, button_index):
+        """Helper function to calculate the task switcher and index dynamically."""
+        task_switchers = self.pm_task_switchers  # Assuming this is a list of task switchers
+        max_buttons = CONFIG.MAX_BUTTONS
+
+        task_switcher_index = button_index // max_buttons  # Determine the task switcher index
+        index = button_index % max_buttons  # Calculate the index within the task switcher
+
+        if task_switcher_index < len(task_switchers):
+            task_switcher = task_switchers[task_switcher_index]
+        else:
+            raise ValueError(f"Invalid button index {index}: exceeds available task switchers.")
+
+        return task_switcher, index
 
     def setup_window_control_buttons(self):
         actual_self = self
@@ -391,21 +414,6 @@ class PieWindow(QMainWindow):
         """Update button UI in the main thread."""
         app_name_cache = load_cache()
 
-        def get_task_switcher_and_index(button_index):
-            """Helper function to calculate the task switcher and index dynamically."""
-            task_switchers = self.pm_task_switchers  # Assuming this is a list of task switchers
-            max_buttons = CONFIG.MAX_BUTTONS
-
-            task_switcher_index = button_index // max_buttons  # Determine the task switcher index
-            index = button_index % max_buttons  # Calculate the index within the task switcher
-
-            if task_switcher_index < len(task_switchers):
-                task_switcher = task_switchers[task_switcher_index]
-            else:
-                raise ValueError(f"Invalid button index {index}: exceeds available task switchers.")
-
-            return task_switcher, index
-
         for update in button_updates:
             # Extract 'index' directly from the update (not from 'properties')
             button_index = update["index"]
@@ -418,7 +426,7 @@ class PieWindow(QMainWindow):
             exe_name = update["properties"]["exe_name"]
 
             # Determine task switcher and index using the helper function
-            task_switcher, index = get_task_switcher_and_index(button_index)
+            task_switcher, index = self.get_task_switcher_and_index(button_index)
 
             # Update button text and icon
             self.pie_button_texts[index] = button_text_1
@@ -462,12 +470,12 @@ class PieWindow(QMainWindow):
         # Clear button attributes when button index not among updates
         for i in range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_TASK_SWITCHERS):
             if i not in [update["index"] for update in button_updates]:
-                task_switcher, index = get_task_switcher_and_index(i)
+                task_switcher, index = self.get_task_switcher_and_index(i)
 
                 # Disable the button
                 self.pie_button_texts[index] = "Empty"
                 task_switcher.pie_buttons[index].set_left_click_action(action=None)
-                task_switcher.pie_buttons[index].set_right_click_action(action=None)
+                # task_switcher.pie_buttons[index].set_right_click_action(action=None)
                 task_switcher.pie_buttons[index].set_middle_click_action(action=None)
                 task_switcher.pie_buttons[index].setEnabled(False)  # Disable the button
 
