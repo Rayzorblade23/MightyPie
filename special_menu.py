@@ -65,7 +65,6 @@ class SpecialMenu(QWidget):
                                             on_action=lambda: self.clock.toggle_background(),
                                             off_action=lambda: self.clock.toggle_background(),
                                             parent=self)
-        QTimer.singleShot(0, self.trigger_toggle)
 
         self.invisible_UI = InvisibleUI()
         self.invisible_UI_toggle = ToggleSwitch("InvisibleUIToggle",
@@ -85,6 +84,7 @@ class SpecialMenu(QWidget):
                                                            off_action=lambda: self.invisible_UI.setStyleSheet(
                                                                "background-color: rgba(20, 20, 255, 2);"),
                                                            parent=self)
+        QTimer.singleShot(0, self.trigger_toggle)
 
         # self.tray_icon_menu = TrayIconButtonsWindow(parent=self)
         # layout.addWidget(self.tray_icon_menu)
@@ -137,7 +137,7 @@ class SpecialMenu(QWidget):
             self.taskbar_toggle.toggle.setCheckedWithoutAction(False)
 
     def trigger_toggle(self):
-        self.clock_toggle.toggle.setChecked(True)  # or False
+        self.clock_toggle.toggle.setChecked(False)  # Clock turned off by default
         self.clock_toggle.toggle.toggle_switch()
         self.invisible_UI_toggle.toggle.setChecked(True)  # or False
         self.invisible_UI_toggle.toggle.toggle_switch()
