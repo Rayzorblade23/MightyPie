@@ -1,3 +1,5 @@
+- projection switch on Function Pie Menu
+
 - more efficient re-assignment when window closes
 
 - only one instance?

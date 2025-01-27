@@ -27,12 +27,11 @@ def listen_for_hotkeys(main_window: QWidget):
 
     # Assign variables at the start
     pm_win_control = getattr(main_window, 'pm_win_control', None)
-    pm_task_switcher_1 = getattr(main_window, 'pm_task_switcher_1', None)
-    pm_task_switcher_2 = getattr(main_window, 'pm_task_switcher_2', None)
+    pm_task_switchers = getattr(main_window, 'pm_task_switchers', None)
 
-    # Check if any of the windows are None (not instantiated)
-    if not pm_win_control or not pm_task_switcher_1 or not pm_task_switcher_2:
-        print("Warning: One or more windows are not instantiated.")
+    # Check if any of the necessary windows are None (not instantiated)
+    if not pm_win_control or not pm_task_switchers or not isinstance(pm_task_switchers, list) or not pm_task_switchers:
+        print("Warning: Task switchers or window control are not instantiated.")
         return
 
     def on_press(hotkey_name: str):
@@ -40,16 +39,26 @@ def listen_for_hotkeys(main_window: QWidget):
         if can_open_window:  # Only show if not already open
             print(f"{hotkey_name} pressed!")
             initial_mouse_pos = QCursor.pos()  # Store initial mouse position using QCursor
+
+            child_window = None  # Default to no child window
+
             if hotkey_name == CONFIG.HOTKEY_OPEN_TASKS:
-                if pm_task_switcher_1.isVisible():
-                    child_window = pm_task_switcher_2
-                    main_window.active_child = 2
+                # Find the first task switcher to toggle or open the next one
+                for index, task_switcher in enumerate(pm_task_switchers):
+                    if task_switcher.isVisible():
+                        # Toggle to the next task switcher or back to the first
+                        next_index = (index + 1) % len(pm_task_switchers)
+                        child_window = pm_task_switchers[next_index]
+                        main_window.active_child = next_index + 1
+                        break
                 else:
-                    child_window = pm_task_switcher_1
+                    # If none are visible, open the first task switcher
+                    child_window = pm_task_switchers[0]
                     main_window.active_child = 1
+
             elif hotkey_name == CONFIG.HOTKEY_OPEN_WINCON:
                 child_window = pm_win_control
-                main_window.active_child = 3
+                main_window.active_child = 4
             else:
                 print("Hotkey not found.")
                 return
@@ -76,10 +85,12 @@ def listen_for_hotkeys(main_window: QWidget):
 
             # print("Mouse released WITH movement.")
             if hotkey_name == CONFIG.HOTKEY_OPEN_TASKS:
-                if main_window.active_child == 2:
-                    child_window = pm_task_switcher_2
-                elif main_window.active_child == 1:
-                    child_window = pm_task_switcher_1
+                if 1 <= main_window.active_child <= len(pm_task_switchers):
+                    # Select the task switcher based on the active_child value
+                    child_window = pm_task_switchers[main_window.active_child - 1]
+                else:
+                    print("Active child index is out of range for task switchers.")
+                    return
             elif hotkey_name == CONFIG.HOTKEY_OPEN_WINCON:
                 child_window = pm_win_control
             else:

@@ -9,8 +9,7 @@ class GlobalMouseFilter(QObject):
         super().__init__()
         self.main_window = main_window  # Reference to the main pie_window or specific widgets
         self.area_button = None
-        self.pie_menu: Any | None = getattr(self.main_window, 'pm_task_switcher_1', None)
-
+        self.pie_menu: Any | None = None  # Initially, no PieMenu is selected
         self.last_active_child = None  # Track the last active_child value
 
     def _update_pie_menu(self):
@@ -19,25 +18,18 @@ class GlobalMouseFilter(QObject):
 
         # Check if the active_child has changed
         if active_child != self.last_active_child:
-            pie_menu_map = {
-                1: 'pm_task_switcher_1',
-                2: 'pm_task_switcher_2',
-                3: 'pm_win_control'
-            }
-
-            # Get the attribute name based on active_child value
-            attribute_name = pie_menu_map.get(active_child)
-
-            # print(f"Mousey thinks it's {attribute_name}.")
-
-            # Only set pie_window.pie_menu if a valid attribute name is found
-            if attribute_name and hasattr(self.main_window, attribute_name):
-                self.pie_menu = getattr(self.main_window, attribute_name, None)
+            # Handle task switchers dynamically using their index
+            if isinstance(active_child, int) and 1 <= active_child <= len(self.main_window.pm_task_switchers):
+                # Map active_child to the appropriate task switcher
+                self.pie_menu = self.main_window.pm_task_switchers[active_child - 1]
+            elif active_child == 4:  # Special case for pm_win_control
+                self.pie_menu = getattr(self.main_window, 'pm_win_control', None)
             else:
-                self.pie_menu = None  # Ensure pie_menu is None if no valid attribute found
+                self.pie_menu = None  # Ensure pie_menu is None if no valid match is found
 
             # Update the last known active_child value
             self.last_active_child = active_child
+
 
     def eventFilter(self, obj, filtered_event):
         # Dynamically update the task switcher on each event

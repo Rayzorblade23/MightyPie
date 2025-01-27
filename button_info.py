@@ -47,8 +47,25 @@ class ButtonInfo:
             }
         }
 
+        # Explorer reserved spaces
+        explorer_reserved_indexes = [8, 10, 12, 14]  # Example list, replace with your desired values
+
+        for i in explorer_reserved_indexes:
+            if i not in self.button_info_dict:  # If there's no task at this index
+                self.button_info_dict[i] = {
+                    "task_type": "program_window_fixed",
+                    "properties": {
+                        "app_name": "Windows Explorer",
+                        "text_1": "",
+                        "text_2": "Windows Explorer",
+                        "window_handle": -1,
+                        "app_icon_path": "",
+                        "exe_name": "explorer.exe"
+                    }
+                }
+
         # Fill in missing tasks where there are gaps in the indices
-        for i in range(CONFIG.MAX_BUTTONS * 2):
+        for i in range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_TASK_SWITCHERS):
             if i not in self.button_info_dict:  # If there's no task at this index
                 self.button_info_dict[i] = {
                     "task_type": "program_window_any",  # Only assign "program_window_any" for missing slots
