@@ -1,7 +1,7 @@
 # button_info_editor.py
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea, \
-    QPushButton, QFrame, QGridLayout
+from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea, \
+    QPushButton, QFrame
 
 from button_info import ButtonInfo
 from config import CONFIG
@@ -26,17 +26,9 @@ class ButtonInfoEditor(QWidget):
 
         self.init_ui()
 
-    from PyQt6.QtWidgets import (QVBoxLayout, QHBoxLayout, QScrollArea, QWidget,
-                                 QLabel, QComboBox, QPushButton, QFrame)
-    from PyQt6.QtCore import Qt
-
-    from PyQt6.QtWidgets import (QVBoxLayout, QHBoxLayout, QScrollArea, QWidget,
-                                 QLabel, QComboBox, QPushButton, QFrame)
-    from PyQt6.QtCore import Qt
-
     def init_ui(self):
         self.setWindowTitle('Button Info Editor')
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 900, 1030)
 
         # Create the main layout
         main_layout = QVBoxLayout(self)
@@ -65,11 +57,6 @@ class ButtonInfoEditor(QWidget):
             title_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             column_layout.addWidget(title_label)
 
-            # Add horizontal line under the title with explicit styling
-            title_separator = QFrame()
-            title_separator.setFrameStyle(QFrame.Shape.HLine.value)
-            title_separator.setLineWidth(1)
-            column_layout.addWidget(title_separator)
 
             # Add vertical line separator before each column except the first
             if col > 0:
@@ -84,6 +71,7 @@ class ButtonInfoEditor(QWidget):
                 index = row + (col * buttons_per_column)
 
                 button_frame = QFrame()
+                button_frame.setObjectName("button_frame")
                 button_frame.setFrameStyle(QFrame.Shape.Panel.value | QFrame.Shadow.Raised.value)
                 button_layout = QVBoxLayout(button_frame)
 
@@ -112,6 +100,10 @@ class ButtonInfoEditor(QWidget):
                 exe_name_combo.addItems(self.exe_names)
                 exe_name_combo.setCurrentText(current_task["properties"]["exe_name"])
                 exe_name_combo.setEditable(True)
+                # Set initial enabled state based on task type
+                exe_name_combo.setEnabled(current_task["task_type"] != "program_window_any")
+                if current_task["task_type"] == "program_window_any":
+                    exe_name_combo.setCurrentText("")
                 exe_name_layout.addWidget(exe_name_combo)
                 button_layout.addLayout(exe_name_layout)
 
@@ -164,8 +156,24 @@ class ButtonInfoEditor(QWidget):
         sender = self.sender()
         button_index = sender.property("button_index")
         try:
+            # Find the corresponding exe_name_combo for this button
+            button_frame = sender.parent().parent()  # QFrame containing the button's widgets
+            exe_name_combo = None
+            for child in button_frame.findChildren(QComboBox):
+                if child.property("button_index") == button_index and child != sender:
+                    exe_name_combo = child
+                    break
+
+            if exe_name_combo:
+                if new_task_type == "program_window_any":
+                    exe_name_combo.setCurrentText("")
+                    exe_name_combo.setEnabled(False)
+                else:
+                    exe_name_combo.setEnabled(True)
+
             self.button_info.update_button(button_index, {
-                "task_type": new_task_type
+                "task_type": new_task_type,
+                "properties": {"exe_name": "" if new_task_type == "program_window_any" else exe_name_combo.currentText()}
             })
             self.update_window_title()
         except Exception as e:
@@ -196,7 +204,6 @@ class ButtonInfoEditor(QWidget):
             QMessageBox.information(self, "Success", "Configuration saved successfully!")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save configuration: {str(e)}")
-
 
 
 def main():

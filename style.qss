@@ -1,6 +1,7 @@
 /* Style the main_window background */
 QWidget {
     background-color:transparent;
+
 }
 
 #PieWindow {
@@ -11,7 +12,6 @@ QWidget {
 
 #PieMenuTaskSwitcher_1 {
     background-color: transparent;
-    border:none;              /* No border */
 }
 
 #PieMenuTaskSwitcher_2 {
@@ -134,11 +134,50 @@ QLabel {
 }
 
 QFrame[frameShape="VLine"] {
-    color: {{accent_muted}};
+    color: #101010;
 }
 
 QFrame[frameShape="HLine"] {
     color: {{accent_muted}};
+}
+
+QComboBox {
+    background-color: rgba(255, 255, 255, 5);
+    border: 1px solid {{accent_muted}}; /* Border color */
+    border-radius: 5px; /* Rounded corners */
+    padding: 5px;
+    min-width: 120px; /* Minimum width of the dropdown */
+}
+
+QComboBox:hover {
+    background-color: rgba(255, 255, 255, 30)
+}
+
+QComboBox:focus {
+    background-color: rgba(255, 255, 255, 30)
+}
+
+QComboBox:disabled {
+    border: 1px solid #202020; /* Border color */
+}
+
+
+QComboBox QAbstractItemView {
+    background-color: {{bg_color}}; /* Background color of the dropdown list */
+    border: 1px solid {{accent_muted}}; /* Border of the dropdown list */
+}
+
+QComboBox QAbstractItemView::item {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+
+#button_frame {
+    border: 1px solid #202020;  /* Border color */
+    background-color: rgba(255, 255, 255, 5);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);  /* Raised shadow effect */
+    border-radius: 10px;
 }
 
 #middleButton {
