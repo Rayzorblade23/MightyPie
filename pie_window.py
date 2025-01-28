@@ -279,7 +279,6 @@ class PieWindow(QMainWindow):
             def process_fixed_buttons():
                 """Process all buttons with task_type 'program_window_fixed'"""
                 fixed_buttons = button_info.filter_buttons("task_type", "program_window_fixed")
-                print("Processing fixed buttons\n", fixed_buttons)
 
                 for button in fixed_buttons:
                     button_index = next(

@@ -7,6 +7,7 @@ from functions.color_functions import adjust_saturation
 class TaskPieSwitcherConfig:
     PROGRAM_NAME: str = "MightyPie"
     CACHE_FILENAME: str = "apps_info_cache.json"
+    BUTTON_CONFIG_FILENAME: str = "button_config.json"
     REFRESH_INTERVAL: int = 3000  # ms
     TASKBAR_OPACITY: int = 150
     HOTKEY_OPEN_TASKS: str = "F14"

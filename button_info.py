@@ -13,16 +13,15 @@ from config import CONFIG
 class ButtonInfo:
     def __init__(self):
         self.button_info_dict = {}
-        self.config_file = "button_config.json"
         self.has_unsaved_changes = False
 
         self.load_json()
 
     def load_json(self):
         # Try to load from JSON first, fall back to default initialization
-        if os.path.exists(self.config_file):
+        if os.path.exists(CONFIG.BUTTON_CONFIG_FILENAME):
             try:
-                with open(self.config_file, 'r') as f:
+                with open(CONFIG.BUTTON_CONFIG_FILENAME, 'r') as f:
                     loaded_dict = json.load(f)
                     # Convert string keys back to integers
                     self.button_info_dict = {int(k): v for k, v in loaded_dict.items()}
@@ -37,7 +36,7 @@ class ButtonInfo:
             return  # Skip saving if no changes were made
 
         # Create a temporary file in the same directory as the target file
-        temp_fd, temp_path = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(self.config_file)))
+        temp_fd, temp_path = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(CONFIG.BUTTON_CONFIG_FILENAME)))
         try:
             with os.fdopen(temp_fd, 'w') as temp_file:
                 # Write the new content to the temporary file
@@ -48,9 +47,9 @@ class ButtonInfo:
 
             # Atomic replace of the old file with the new file
             if os.name == 'nt':  # Windows
-                if os.path.exists(self.config_file):
-                    os.remove(self.config_file)
-            shutil.move(temp_path, self.config_file)
+                if os.path.exists(CONFIG.BUTTON_CONFIG_FILENAME):
+                    os.remove(CONFIG.BUTTON_CONFIG_FILENAME)
+            shutil.move(temp_path, CONFIG.BUTTON_CONFIG_FILENAME)
 
             self.has_unsaved_changes = False
 
