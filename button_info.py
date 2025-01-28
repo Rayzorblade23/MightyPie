@@ -1,63 +1,96 @@
-# button_info.py
-
 import json
+import logging
 import os
-import shutil
+import sys
 import tempfile
-
-
+from pathlib import Path
+from typing import Dict, Any
 
 from config import CONFIG
 
 
 class ButtonInfo:
     def __init__(self):
-        self.button_info_dict = {}
+        self.button_info_dict: Dict[int, Dict[str, Any]] = {}
         self.has_unsaved_changes = False
+
+        # Set up logging
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
 
         self.load_json()
 
-    def load_json(self):
-        # Try to load from JSON first, fall back to default initialization
-        if os.path.exists(CONFIG.BUTTON_CONFIG_FILENAME):
-            try:
-                with open(CONFIG.BUTTON_CONFIG_FILENAME, 'r') as f:
+    def get_config_dir(self) -> str:
+        """Get the appropriate configuration directory based on runtime environment"""
+        if hasattr(sys, '_MEIPASS'):  # Running as compiled executable
+            if sys.platform == "win32":
+                return os.path.join(os.environ.get('APPDATA'), CONFIG.PROGRAM_NAME)
+            elif sys.platform == "darwin":
+                return os.path.join(str(Path.home()), "Library", "Application Support", CONFIG.PROGRAM_NAME)
+            else:  # Linux and other Unix
+                return os.path.join(str(Path.home()), ".config", CONFIG.PROGRAM_NAME)
+        else:  # Running as script
+            return os.path.abspath(".")
+
+    def get_config_file(self) -> str:
+        """Get the full path to the configuration file"""
+        config_dir = self.get_config_dir()
+        os.makedirs(config_dir, exist_ok=True)
+        return os.path.join(config_dir, CONFIG.BUTTON_CONFIG_FILENAME)
+
+    def load_json(self) -> None:
+        """Load button configuration from JSON file with proper error handling"""
+        config_file = self.get_config_file()
+        try:
+            if os.path.exists(config_file):
+                with open(config_file, 'r', encoding='utf-8') as f:
                     loaded_dict = json.load(f)
-                    # Convert string keys back to integers
                     self.button_info_dict = {int(k): v for k, v in loaded_dict.items()}
-            except Exception:
+                    self.logger.info(f"Successfully loaded configuration from {config_file}")
+            else:
                 self._initialize_tasks()
-        else:
+                self.logger.info("Config file not found. Initialized with default configuration")
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Error decoding JSON from {config_file}: {e}")
+            self._initialize_tasks()
+        except Exception as e:
+            self.logger.error(f"Unexpected error loading config: {e}")
             self._initialize_tasks()
 
-    def save_to_json(self):
-        """Save current configuration to JSON file atomically"""
+    def save_to_json(self) -> bool:
+        """Save current configuration to JSON file atomically with error handling"""
         if not self.has_unsaved_changes:
-            return  # Skip saving if no changes were made
+            return True
 
-        # Create a temporary file in the same directory as the target file
-        temp_fd, temp_path = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(CONFIG.BUTTON_CONFIG_FILENAME)))
+        config_file = self.get_config_file()
+        temp_file_path = None
+
         try:
-            with os.fdopen(temp_fd, 'w') as temp_file:
-                # Write the new content to the temporary file
+            # Create temporary file in the same directory
+            with tempfile.NamedTemporaryFile('w', delete=False, dir=os.path.dirname(config_file)) as temp_file:
                 json.dump(self.button_info_dict, temp_file, indent=4)
-                # Ensure all data is written to disk
-                temp_file.flush()
-                os.fsync(temp_fd)
+                temp_file_path = temp_file.name
 
-            # Atomic replace of the old file with the new file
-            if os.name == 'nt':  # Windows
-                if os.path.exists(CONFIG.BUTTON_CONFIG_FILENAME):
-                    os.remove(CONFIG.BUTTON_CONFIG_FILENAME)
-            shutil.move(temp_path, CONFIG.BUTTON_CONFIG_FILENAME)
+            # Atomic replace
+            if os.path.exists(config_file):
+                os.remove(config_file)
+            os.rename(temp_file_path, config_file)
 
             self.has_unsaved_changes = False
+            self.logger.info("Configuration saved successfully")
+            return True
 
         except Exception as e:
-            # Clean up the temporary file if something goes wrong
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-            raise e
+            self.logger.error(f"Error saving configuration: {e}")
+            # Cleanup: Remove the temporary file if it exists
+            if temp_file_path and os.path.exists(temp_file_path):
+                try:
+                    os.remove(temp_file_path)
+                except:
+                    pass
+            return False
+
+    # Rest of the ButtonInfo class methods remain the same...
 
     def update_button(self, index, update_dict):
         """Update a button's configuration (but don't save to file)"""
@@ -232,5 +265,3 @@ class ButtonInfo:
     def get_all_tasks(self):
         """Returns all tasks."""
         return self.button_info_dict
-
-

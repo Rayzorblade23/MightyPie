@@ -22,6 +22,8 @@ Remove Windows button but open when clicking bottom left of screen
 
 
 BUGS:
+- when changing Fixed Slot to an occupied slot it won't kick the non-fixed app
+
 - Special Menu doesn't hide every time when losing focus
 
 - never getting a clean app quit in pycharm. might be irrelevant for external use

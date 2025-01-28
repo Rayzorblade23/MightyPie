@@ -77,14 +77,14 @@
         }
     },
     "1": {
-        "task_type": "program_window_fixed",
+        "task_type": "program_window_any",
         "properties": {
             "app_name": "",
             "text_1": "",
             "text_2": "",
             "window_handle": -1,
             "app_icon_path": "",
-            "exe_name": "guitarpro7.exe"
+            "exe_name": ""
         }
     },
     "2": {
@@ -99,14 +99,14 @@
         }
     },
     "3": {
-        "task_type": "program_window_any",
+        "task_type": "program_window_fixed",
         "properties": {
             "app_name": "",
             "text_1": "",
             "text_2": "",
             "window_handle": -1,
             "app_icon_path": "",
-            "exe_name": ""
+            "exe_name": "guitarpro7.exe"
         }
     },
     "5": {

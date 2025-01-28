@@ -1,6 +1,6 @@
 # button_info_editor.py
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea, \
-    QPushButton, QFrame
+    QPushButton, QFrame, QGridLayout
 
 from button_info import ButtonInfo
 from config import CONFIG
@@ -35,12 +35,16 @@ class ButtonInfoEditor(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll_widget = QWidget()
-        scroll_layout = QVBoxLayout(scroll_widget)
+        scroll_layout = QGridLayout(scroll_widget)  # Change to QGridLayout for columns
         scroll.setWidget(scroll_widget)
         main_layout.addWidget(scroll)
 
         # Create editors for each button
         for index in range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_TASK_SWITCHERS):
+            # Calculate the row and column positions
+            row = index // CONFIG.NUM_PIE_TASK_SWITCHERS
+            col = index % CONFIG.NUM_PIE_TASK_SWITCHERS
+
             button_frame = QFrame()
             button_frame.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Raised)
             button_layout = QVBoxLayout(button_frame)
@@ -81,7 +85,8 @@ class ButtonInfoEditor(QWidget):
             task_type_combo.currentTextChanged.connect(self.on_task_type_changed)
             exe_name_combo.currentTextChanged.connect(lambda text, idx=index: self.on_exe_name_changed(text, idx))
 
-            scroll_layout.addWidget(button_frame)
+            # Add button_frame to grid at calculated row, col
+            scroll_layout.addWidget(button_frame, row, col)
 
         # Add save button
         save_button = QPushButton("Save Changes")

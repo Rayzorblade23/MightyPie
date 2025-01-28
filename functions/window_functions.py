@@ -4,19 +4,13 @@ import os
 import subprocess
 import sys
 import tempfile
-import time
 from pathlib import Path
 from typing import Dict, Tuple
 
 import psutil
 import pyautogui
-import win32api
-import win32con
-import win32gui
-import win32process
 import win32ui
 from PIL import Image
-from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QMainWindow, QWidget
 
@@ -114,6 +108,7 @@ def clear_cache():
     global app_cache
     app_cache = load_cache()
     cache_being_cleared = False
+
 
 app_cache = load_cache()
 
@@ -551,12 +546,10 @@ def show_pie_window(pie_window: QMainWindow, pie_menu: PieMenu):
 
 
 from PyQt6.QtCore import QTimer
-import win32gui
 import win32con
 import win32api
 import win32process
 import win32gui
-import time
 
 
 def toggle_maximize_window_at_cursor(pie_window: QWidget):
@@ -632,7 +625,6 @@ def toggle_maximize_window_at_cursor(pie_window: QWidget):
         print("No valid window found under cursor")
 
 
-
 def minimize_window_at_cursor(pie_window: QWidget):
     if not hasattr(pie_window, 'pie_menu_pos'):
         return
@@ -681,4 +673,3 @@ def launch_app(exe_path):
             print("Launched successfully.", exe_path)
     except Exception as e:
         print(f"An error occurred: {e}")
-
