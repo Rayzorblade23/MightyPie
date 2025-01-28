@@ -133,6 +133,13 @@ QLabel {
     background: transparent;
 }
 
+QFrame[frameShape="VLine"] {
+    color: {{accent_muted}};
+}
+
+QFrame[frameShape="HLine"] {
+    color: {{accent_muted}};
+}
 
 #middleButton {
     background-color: rgba(27, 27, 27, 0.1);
