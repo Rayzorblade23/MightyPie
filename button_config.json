@@ -1,0 +1,266 @@
+{
+    "0": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "vivaldi.exe"
+        }
+    },
+    "4": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "spotify.exe"
+        }
+    },
+    "6": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "telegram.exe"
+        }
+    },
+    "8": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "explorer.exe"
+        }
+    },
+    "10": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "explorer.exe"
+        }
+    },
+    "12": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "explorer.exe"
+        }
+    },
+    "14": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "explorer.exe"
+        }
+    },
+    "1": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "2": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "3": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "5": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "7": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "9": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "11": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "13": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "15": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "16": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "17": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "18": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "19": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "20": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "21": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "22": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    },
+    "23": {
+        "task_type": "program_window_any",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": ""
+        }
+    }
+}

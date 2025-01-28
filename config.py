@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from functions.color_functions import adjust_saturation
 
@@ -27,11 +27,6 @@ class TaskPieSwitcherConfig:
     ACCENT_COLOR: str = "#5a14b7"
     ACCENT_COLOR_MUTED: str = adjust_saturation(ACCENT_COLOR, 0.5)
     BG_COLOR: str = "#3b3b3b"
-    FIXED_PIE_SLOTS: dict[str, tuple[int, str]] = field(default_factory=lambda: {
-        "Spotify": (4, "spotify.exe"),
-        "Vivaldi": (0, "vivaldi.exe"),
-        "Telegram Desktop": (6, "telegram.exe")
-    })
 
 
 CONFIG = TaskPieSwitcherConfig()

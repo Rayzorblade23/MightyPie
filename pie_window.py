@@ -251,12 +251,12 @@ class PieWindow(QMainWindow):
                 return
 
             window_mapping = manager.get_window_hwnd_mapping()
-            app_name_cache = load_cache()
+            app_info_cache = load_cache()
             final_button_updates = []
             processed_handles = set()
 
             def create_button_update(button_index, hwnd, title, exe_name, instance):
-                cache_entry = app_name_cache.get(exe_name)
+                cache_entry = app_info_cache.get(exe_name)
                 if not cache_entry:
                     print(f"Cache entry for {exe_name} not found, skipping window")
                     return None
@@ -264,7 +264,7 @@ class PieWindow(QMainWindow):
                 app_name = cache_entry.get("app_name", "")
                 app_icon_path = cache_entry.get("icon_path")
                 button_text = f"{title} ({instance})" if instance != 0 else title
-
+                # sends "fixed" for task_type but it's not used for now so doesn't matter
                 return {
                     "index": button_index,
                     "task_type": "program_window_fixed",
@@ -412,7 +412,7 @@ class PieWindow(QMainWindow):
     @pyqtSlot(list)
     def update_button_ui(self, button_updates):
         """Update button UI in the main thread."""
-        app_name_cache = load_cache()
+        app_info_cache = load_cache()
 
         for update in button_updates:
             # Extract 'index' directly from the update (not from 'properties')
@@ -442,7 +442,7 @@ class PieWindow(QMainWindow):
 
             # Set action for empty reserved buttons
             if window_handle == 0:
-                exe_path = app_name_cache.get(exe_name, {}).get("exe_path")
+                exe_path = app_info_cache.get(exe_name, {}).get("exe_path")
                 if exe_path:
                     task_switcher.pie_buttons[index].set_left_click_action(
                         lambda captured_exe_path=exe_path: (
