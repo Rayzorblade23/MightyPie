@@ -139,6 +139,8 @@ class ButtonInfoEditor(QWidget):
     def save_changes(self):
         try:
             self.button_info.save_to_json()
+            self.button_info.load_json()  # This ensures the object is refreshed with the saved data
+
             self.update_window_title()
             QMessageBox.information(self, "Success", "Configuration saved successfully!")
         except Exception as e:

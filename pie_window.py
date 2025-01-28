@@ -20,9 +20,6 @@ from window_manager import WindowManager
 
 manager = WindowManager.get_instance()
 
-button_info = ButtonInfo()
-
-
 class PieWindow(QMainWindow):
     # Add a custom signal for thread-safe updates
     update_buttons_signal = pyqtSignal(list)
@@ -250,6 +247,7 @@ class PieWindow(QMainWindow):
                 print("DANGER! CACHE IS BEING CLEARED. SKIP.")
                 return
 
+            button_info = ButtonInfo()
             window_mapping = manager.get_window_hwnd_mapping()
             app_info_cache = load_cache()
             final_button_updates = []
@@ -281,6 +279,7 @@ class PieWindow(QMainWindow):
             def process_fixed_buttons():
                 """Process all buttons with task_type 'program_window_fixed'"""
                 fixed_buttons = button_info.filter_buttons("task_type", "program_window_fixed")
+                print("Processing fixed buttons\n", fixed_buttons)
 
                 for button in fixed_buttons:
                     button_index = next(

@@ -678,7 +678,7 @@ def launch_app(exe_path):
             # Redirect output to suppress terminal spam
             with open(os.devnull, 'w') as devnull:
                 subprocess.Popen(exe_path, stdout=devnull, stderr=devnull)
-            print("Vivaldi launched successfully.")
+            print("Launched successfully.")
     except Exception as e:
         print(f"An error occurred: {e}")
 

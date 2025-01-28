@@ -16,6 +16,9 @@ class ButtonInfo:
         self.config_file = "button_config.json"
         self.has_unsaved_changes = False
 
+        self.load_json()
+
+    def load_json(self):
         # Try to load from JSON first, fall back to default initialization
         if os.path.exists(self.config_file):
             try:
