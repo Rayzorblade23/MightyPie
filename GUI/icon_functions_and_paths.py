@@ -21,6 +21,7 @@ EXTERNAL_ICON_PATHS = {
     "quit": get_resource_path(os.path.join("external_icons", "playstation-x.png")),
     "restart": get_resource_path(os.path.join("external_icons", "restore.png")),
     "shredder": get_resource_path(os.path.join("external_icons", "file-shredder.png")),
+    "settings": get_resource_path(os.path.join("external_icons", "settings.png")),
 }
 
 # Load the icon based on the inverted_icons flag

@@ -1,5 +1,7 @@
 - projection switch on Function Pie Menu
 
+- JSON handling functionality double? For app_info_cache and button_config?
+
 - more efficient re-assignment when window closes
 
 - only one instance?

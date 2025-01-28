@@ -140,6 +140,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, signal_handler)
 
     app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
     app.setApplicationName("MightyPie")
 
     set_taskbar_opacity(CONFIG.TASKBAR_OPACITY)

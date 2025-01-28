@@ -6,6 +6,7 @@ from PyQt6.QtCore import QSize, Qt, QCoreApplication
 from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
 
 from GUI.icon_functions_and_paths import get_icon
+from button_info_editor import ButtonInfoEditor
 from config import CONFIG
 from functions.shortcut_utils import open_audio_settings, open_network_settings, open_projection_settings, \
     open_explorer_window, open_task_manager
@@ -24,6 +25,8 @@ class WindowsSettingsMenu(QWidget):
         self.icon_size = (20, 20)
         self.inverted_icons = True
 
+        self.button_config = None
+
         def create_button(parent, icon_name, tooltip, click_action, icon_size, button_height):
             button = QPushButton(parent)
             button.setIcon(get_icon(icon_name, is_inverted=True))
@@ -37,6 +40,7 @@ class WindowsSettingsMenu(QWidget):
         spacer = QSpacerItem(CONFIG.BUTTON_HEIGHT + default_spacing, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         # Define buttons and their properties
+        # (icon_name, tooltip, click_action)
         buttons_data = [
             ("taskman", "Open Task Manager", lambda: open_task_manager(self, hide_parent=True)),
             ("audio", "Open Audio Settings", lambda: open_audio_settings(self, hide_parent=True)),
@@ -46,6 +50,7 @@ class WindowsSettingsMenu(QWidget):
             ("shredder", "Clear App Info Cache", lambda: clear_cache()),
             ("restart", "Restart Program", lambda: restart_program()),
             ("quit", "Quit Program", lambda: quit_program()),
+            ("settings", "Open the Button Config", lambda: self.open_button_info_editor()),
         ]
 
         # Create and store buttons
@@ -77,6 +82,11 @@ class WindowsSettingsMenu(QWidget):
 
         # Set the layout for the window
         self.setLayout(layout)
+
+    def open_button_info_editor(self):
+        if self.button_config is None:
+            self.button_config = ButtonInfoEditor()
+        self.button_config.show()
 
 
 def restart_program():
