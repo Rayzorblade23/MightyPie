@@ -8,9 +8,13 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 import psutil
-import pyautogui
+import win32api
+import win32con
+import win32gui
+import win32process
 import win32ui
 from PIL import Image
+from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QMainWindow, QWidget
 
@@ -19,6 +23,8 @@ from pie_menu import PieMenu
 from window_manager import WindowManager
 
 cache_being_cleared = False
+
+last_minimized_hwnd = 0
 
 
 def get_cache_dir():
@@ -545,13 +551,6 @@ def show_pie_window(pie_window: QMainWindow, pie_menu: PieMenu):
         print(f"Error showing the main main_window: {e}")
 
 
-from PyQt6.QtCore import QTimer
-import win32con
-import win32api
-import win32process
-import win32gui
-
-
 def toggle_maximize_window_at_cursor(pie_window: QWidget):
     if not hasattr(pie_window, 'pie_menu_pos'):
         return
@@ -643,9 +642,81 @@ def minimize_window_at_cursor(pie_window: QWidget):
 
         print("Attempting to minimize window...")
         win32gui.ShowWindow(root_handle, win32con.SW_MINIMIZE)
+
+        global last_minimized_hwnd
+        last_minimized_hwnd = root_handle
         print("Window minimized successfully")
     else:
         print("No valid window found under cursor")
+
+
+def restore_last_minimized_window():
+    """Restores a maximized window under the cursor and brings it to the foreground."""
+    window_handle = last_minimized_hwnd
+
+    print(window_handle)
+
+    if window_handle and window_handle != win32gui.GetDesktopWindow():
+        root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
+
+        # Check the current state of the window
+        placement = win32gui.GetWindowPlacement(root_handle)
+        is_minimized = placement[1] == win32con.SW_SHOWMINIMIZED
+
+        if is_minimized:
+            print("Window is minimized. Restoring...")
+            win32gui.ShowWindow(root_handle, win32con.SW_RESTORE)
+
+        # Get the current foreground window
+        current_fore = win32gui.GetForegroundWindow()
+
+        # Get thread IDs
+        current_thread = win32api.GetCurrentThreadId()
+        other_thread = win32process.GetWindowThreadProcessId(current_fore)[0]
+
+        def process_window_input():
+            if current_thread != other_thread:
+                win32process.AttachThreadInput(current_thread, other_thread, True)
+                # No sleep here, handled by QTimer
+                try:
+                    # Try multiple approaches to bring window to front
+                    win32gui.BringWindowToTop(root_handle)
+                    win32gui.SetForegroundWindow(root_handle)
+
+                    # Alternative method using different flags
+                    win32gui.SetWindowPos(root_handle,
+                                          win32con.HWND_TOPMOST,
+                                          0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE |
+                                          win32con.SWP_NOSIZE |
+                                          win32con.SWP_SHOWWINDOW)
+
+                    # Remove topmost flag
+                    win32gui.SetWindowPos(root_handle,
+                                          win32con.HWND_NOTOPMOST,
+                                          0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE |
+                                          win32con.SWP_NOSIZE)
+                except Exception as e:
+                    print(f"Error during window manipulation: {e}")
+                finally:
+                    # Always detach threads
+                    win32process.AttachThreadInput(current_thread, other_thread, False)
+            else:
+                # If in same thread, try direct approach
+                try:
+                    win32gui.SetForegroundWindow(root_handle)
+                except Exception as e:
+                    print(f"Error bringing window to front: {e}")
+
+            print("Window restored successfully.")
+
+        # Defer the execution of window manipulation to prevent blocking
+        QTimer.singleShot(100, process_window_input)
+
+    else:
+        print("No valid window found.")
+
 
 
 def launch_app(exe_path):

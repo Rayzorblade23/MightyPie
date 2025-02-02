@@ -13,7 +13,7 @@ from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
 from functions.window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
     close_window_by_handle, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app, \
-    cache_being_cleared
+    cache_being_cleared, restore_last_minimized_window
 from pie_menu import PieMenu
 from special_menu import SpecialMenu
 from window_manager import WindowManager
@@ -212,8 +212,11 @@ class PieWindow(QMainWindow):
         ))
         self.pm_win_control.pie_buttons[0].update_icon(EXTERNAL_ICON_PATHS.get("window_maximize"), is_invert_icon=True)
 
-        self.pm_win_control.pie_buttons[1].set_label_1_text("")
-        self.pm_win_control.pie_buttons[1].setEnabled(False)  # Disable the button
+        self.pm_win_control.pie_buttons[1].set_label_1_text("Restore Minimized")
+        self.pm_win_control.pie_buttons[1].set_left_click_action(lambda: (
+            self.hide(),
+            QTimer.singleShot(0, lambda: restore_last_minimized_window()),
+        ))
 
         self.pm_win_control.pie_buttons[2].set_label_1_text("")
         self.pm_win_control.pie_buttons[2].setEnabled(False)  # Disable the button
