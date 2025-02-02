@@ -1,7 +1,7 @@
 # button_info_editor.py
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea, \
-    QPushButton, QFrame
+    QPushButton, QFrame, QSizePolicy
 
 from button_info import ButtonInfo
 from config import CONFIG
@@ -28,7 +28,7 @@ class ButtonInfoEditor(QWidget):
 
     def init_ui(self):
         self.setWindowTitle('Button Info Editor')
-        self.setGeometry(100, 100, 900, 1030)
+        self.setGeometry(100, 100, 1000, 860)
 
         # Create the main layout
         main_layout = QVBoxLayout(self)
@@ -73,39 +73,73 @@ class ButtonInfoEditor(QWidget):
                 button_frame = QFrame()
                 button_frame.setObjectName("button_frame")
                 button_frame.setFrameStyle(QFrame.Shape.Panel.value | QFrame.Shadow.Raised.value)
-                button_layout = QVBoxLayout(button_frame)
+                button_layout = QHBoxLayout(button_frame)
 
                 # Header with button index
                 header_layout = QHBoxLayout()
-                header_label = QLabel(f"Button {index}")
-                header_label.setStyleSheet("font-weight: bold;")
+
+                direction = ""
+
+                if row == 0:
+                    direction = "⭡"  # Up
+                elif row == 1:
+                    direction = "⭧"  # Up-Right
+                elif row == 2:
+                    direction = "⭢"  # Right
+                elif row == 3:
+                    direction = "⭨"  # Down-Right
+                elif row == 4:
+                    direction = "⭣"  # Down
+                elif row == 5:
+                    direction = "⭩"  # Down-Left
+                elif row == 6:
+                    direction = "⭠"  # Left
+                elif row == 7:
+                    direction = "⭦"  # Up-Left
+
+                header_label = QLabel(f" {direction} ")
+                header_label.setObjectName("settingsButtonHeader")
+                header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                header_label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+                header_label.setFixedSize(40,40)
                 header_layout.addWidget(header_label)
                 button_layout.addLayout(header_layout)
 
+                # Container for dropdowns and other content
+                content_layout = QVBoxLayout()  # Vertical layout for dropdowns
+
                 current_task = self.button_info[index]
+
+                class NoScrollComboBox(QComboBox):
+                    """QComboBox that ignores mouse wheel scrolling."""
+
+                    def wheelEvent(self, event):
+                        event.ignore()  # Prevents the wheel from changing the selection
 
                 # Task type selector
                 task_type_layout = QHBoxLayout()
                 task_type_layout.addWidget(QLabel("Task Type:"))
-                task_type_combo = QComboBox()
+                task_type_combo = NoScrollComboBox()
                 task_type_combo.addItems(self.task_types)
                 task_type_combo.setCurrentText(current_task["task_type"])
                 task_type_layout.addWidget(task_type_combo)
-                button_layout.addLayout(task_type_layout)
+                content_layout.addLayout(task_type_layout)
 
                 # Exe name selector
                 exe_name_layout = QHBoxLayout()
                 exe_name_layout.addWidget(QLabel("Exe Name:"))
-                exe_name_combo = QComboBox()
+                exe_name_combo = NoScrollComboBox()
                 exe_name_combo.addItems(self.exe_names)
                 exe_name_combo.setCurrentText(current_task["properties"]["exe_name"])
                 exe_name_combo.setEditable(True)
-                # Set initial enabled state based on task type
                 exe_name_combo.setEnabled(current_task["task_type"] != "program_window_any")
                 if current_task["task_type"] == "program_window_any":
                     exe_name_combo.setCurrentText("")
                 exe_name_layout.addWidget(exe_name_combo)
-                button_layout.addLayout(exe_name_layout)
+                content_layout.addLayout(exe_name_layout)
+
+                # Add all dropdowns and content to the right of the header label
+                button_layout.addLayout(content_layout)
 
                 # Store references to widgets for saving
                 task_type_combo.setProperty("button_index", index)
@@ -128,6 +162,7 @@ class ButtonInfoEditor(QWidget):
 
         # Add save button
         save_button = QPushButton("Save Changes")
+        save_button.setObjectName("saveButton")
         save_button.clicked.connect(self.save_changes)
         main_layout.addWidget(save_button)
 
@@ -202,6 +237,7 @@ class ButtonInfoEditor(QWidget):
 
             self.update_window_title()
             QMessageBox.information(self, "Success", "Configuration saved successfully!")
+            self.close()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save configuration: {str(e)}")
 

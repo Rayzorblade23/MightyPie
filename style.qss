@@ -180,6 +180,31 @@ QComboBox QAbstractItemView::item {
     border-radius: 10px;
 }
 
+#saveButton {
+    background-color: rgba(59, 59, 59, 0.5);
+    color: white;
+    border: none;
+    font-size: 12px;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+#saveButton:hover {
+    background-color: {{accent_muted}};
+}
+
+#settingsButtonHeader {
+    border: none;  /* Border color */
+    background-color: {{accent_muted}};
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.9);  /* Raised shadow effect */
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
+    border-radius: 10px;
+    margin: 5px;
+}
+
+
 #middleButton {
     background-color: rgba(27, 27, 27, 0.1);
     color: white;
