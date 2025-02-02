@@ -12,6 +12,10 @@ class TaskPieSwitcherConfig:
     TASKBAR_OPACITY: int = 150
     HOTKEY_OPEN_TASKS: str = "F14"
     HOTKEY_OPEN_WINCON: str = "F13"
+    SHOW_MONITOR_SECTION: bool = True
+    MONITOR_SHORTCUT_1: str = "win", "num1"
+    MONITOR_SHORTCUT_2: str = "win", "num2"
+    MONITOR_SHORTCUT_3: str = "win", "num3"
     MAX_BUTTONS: int = 8
     NUM_PIE_TASK_SWITCHERS: int = 3
     BUTTON_WIDTH: int = 140

@@ -94,8 +94,6 @@ class SpecialMenu(QWidget):
 
         self.windows_settings_shortcuts = WindowsSettingsMenu(parent=self)
 
-        self.monitor_shortcuts = MonitorSetupMenu(parent=self)
-
         self.app_shortcuts = AppSettingsMenu(parent=self)
 
         # # Create toggles for Clock
@@ -128,16 +126,19 @@ class SpecialMenu(QWidget):
         line.setLineWidth(1)
         layout.addWidget(line)
 
-        monitors_label = QLabel(f"Monitor Switching")
-        monitors_label.setObjectName("titleLabel")
-        monitors_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(monitors_label)
-        layout.addWidget(self.monitor_shortcuts)
+        if CONFIG.SHOW_MONITOR_SECTION:
+            self.monitor_shortcuts = MonitorSetupMenu(parent=self)
 
-        line = QFrame()
-        line.setFrameStyle(QFrame.Shape.HLine.value)
-        line.setLineWidth(1)
-        layout.addWidget(line)
+            monitors_label = QLabel(f"Monitor Switching")
+            monitors_label.setObjectName("titleLabel")
+            monitors_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            layout.addWidget(monitors_label)
+            layout.addWidget(self.monitor_shortcuts)
+
+            line = QFrame()
+            line.setFrameStyle(QFrame.Shape.HLine.value)
+            line.setLineWidth(1)
+            layout.addWidget(line)
 
         app_shortcuts_label = QLabel(f"Mighty Pie Shortcuts")
         app_shortcuts_label.setObjectName("titleLabel")
