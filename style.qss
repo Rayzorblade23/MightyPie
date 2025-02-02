@@ -175,14 +175,14 @@ QComboBox QAbstractItemView::item {
 }
 
 
-#button_frame {
+#buttonConfigFrame {
     border: 1px solid #202020;  /* Border color */
     background-color: rgba(255, 255, 255, 5);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);  /* Raised shadow effect */
     border-radius: 10px;
 }
 
-#saveButton {
+#buttonConfigButton {
     background-color: rgba(59, 59, 59, 0.5);
     color: white;
     border: none;
@@ -191,11 +191,24 @@ QComboBox QAbstractItemView::item {
     padding: 5px;
 }
 
-#saveButton:hover {
+#buttonConfigButton:hover {
     background-color: {{accent_muted}};
 }
 
-#settingsButtonHeader {
+#buttonConfigSingleResetButton {
+    background-color: rgba(59, 59, 59, 0.5);
+    border: 1px solid rgb(80, 80, 80); /* Border of the dropdown list */
+    border-radius: 5px;
+    padding: 5px;
+}
+
+#buttonConfigSingleResetButton:hover {
+    background-color: rgba(59, 59, 59, 0.9);
+    border: 1px solid {{accent_muted}}; /* Border of the dropdown list */
+
+}
+
+#buttonConfigFrameHeader {
     border: none;  /* Border color */
     background-color: {{accent_muted}};
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.9);  /* Raised shadow effect */

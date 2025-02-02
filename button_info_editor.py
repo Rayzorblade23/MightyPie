@@ -1,14 +1,14 @@
 # button_info_editor.py
 import json
-from functools import partial
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea, \
-    QPushButton, QFrame, QSizePolicy
+    QPushButton, QFrame
 
 from button_info import ButtonInfo
 from config import CONFIG
 from functions.file_handling_functions import get_resource_path
+from functions.icon_functions_and_paths import get_icon
 
 
 class ButtonInfoEditor(QWidget):
@@ -59,7 +59,6 @@ class ButtonInfoEditor(QWidget):
             title_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             column_layout.addWidget(title_label)
 
-
             # Add vertical line separator before each column except the first
             if col > 0:
                 line = QFrame()
@@ -73,11 +72,14 @@ class ButtonInfoEditor(QWidget):
                 index = row + (col * buttons_per_column)
 
                 button_frame = QFrame()
-                button_frame.setObjectName("button_frame")
+                button_frame.setObjectName("buttonConfigFrame")
                 button_frame.setFrameStyle(QFrame.Shape.Panel.value | QFrame.Shadow.Raised.value)
-                button_layout = QHBoxLayout(button_frame)
+                frame_layout = QHBoxLayout(button_frame)
 
                 # Header with button index
+                the_layout = QVBoxLayout()
+                frame_layout.addLayout(the_layout)
+
                 header_layout = QHBoxLayout()
 
                 direction = ""
@@ -100,12 +102,29 @@ class ButtonInfoEditor(QWidget):
                     direction = "⭦"  # Up-Left
 
                 header_label = QLabel(f" {direction} ")
-                header_label.setObjectName("settingsButtonHeader")
+                header_label.setObjectName("buttonConfigFrameHeader")
                 header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                header_label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-                header_label.setFixedSize(40,40)
+                header_label.setFixedSize(40, 40)
+                header_layout.addStretch()
                 header_layout.addWidget(header_label)
-                button_layout.addLayout(header_layout)
+                header_layout.addStretch()
+
+                # Add reset button for this frame
+                reset_button = QPushButton()
+                reset_button.setToolTip("Reset")
+                reset_button.setIcon(get_icon("restart", is_inverted=True))
+                reset_button.setFixedSize(24, 20)
+                reset_button.setObjectName("buttonConfigSingleResetButton")
+                reset_button.setProperty("button_index", index)
+                reset_button.clicked.connect(self.reset_single_frame)
+
+                reset_layout = QVBoxLayout()
+                reset_layout.addStretch()  # Push to center vertically
+                reset_layout.addWidget(reset_button, alignment=Qt.AlignmentFlag.AlignCenter)
+                reset_layout.addStretch()  # Push to center vertically
+
+                the_layout.addLayout(header_layout)
+                the_layout.addLayout(reset_layout)
 
                 # Container for dropdowns and other content
                 content_layout = QHBoxLayout()  # Vertical layout for dropdowns
@@ -168,7 +187,7 @@ class ButtonInfoEditor(QWidget):
                 content_layout.addLayout(dropdowns_layout)
 
                 # Add all dropdowns and content to the right of the header label
-                button_layout.addLayout(content_layout)
+                frame_layout.addLayout(content_layout)
 
                 # Store references to widgets for saving
                 task_type_combo.setProperty("button_index", index)
@@ -176,8 +195,6 @@ class ButtonInfoEditor(QWidget):
 
                 # Connect signals
                 task_type_combo.currentTextChanged.connect(self.on_task_type_changed)
-
-
 
                 # Add button frame to column
                 column_layout.addWidget(button_frame)
@@ -188,11 +205,82 @@ class ButtonInfoEditor(QWidget):
             # Add the column to the scroll layout
             scroll_layout.addWidget(column_widget)
 
+        # Create button container
+        button_container = QHBoxLayout()
+
+        # Add reset button
+        reset_button = QPushButton("Reset to Defaults")
+        reset_button.setObjectName("buttonConfigButton")
+        reset_button.clicked.connect(self.reset_to_defaults)
+        button_container.addWidget(reset_button)
+
         # Add save button
         save_button = QPushButton("Save Changes")
-        save_button.setObjectName("saveButton")
+        save_button.setObjectName("buttonConfigButton")
         save_button.clicked.connect(self.save_changes)
-        main_layout.addWidget(save_button)
+        button_container.addWidget(save_button)
+
+        main_layout.addLayout(button_container)
+
+    def reset_single_frame(self):
+        """Reset the dropdowns of a single button frame."""
+        sender = self.sender()
+        button_index = sender.property("button_index")
+
+        if button_index is None:
+            return
+
+        # Find the parent button frame
+        button_frame = sender.parent()
+
+        # Find the task type combo box
+        task_type_combo = button_frame.findChild(QComboBox)
+        if task_type_combo:
+            task_type_combo.setCurrentText("program_window_any")
+
+            # Find the corresponding exe name combo box
+            exe_name_combo = button_frame.findChild(QComboBox, None)
+            if exe_name_combo and exe_name_combo != task_type_combo:
+                exe_name_combo.setCurrentText("")
+                exe_name_combo.setEnabled(False)
+
+            # Update internal data
+            self.button_info.update_button(button_index, {
+                "task_type": "program_window_any",
+                "properties": {"exe_name": ""}
+            })
+
+        self.update_window_title()
+
+    def reset_to_defaults(self):
+        """Reset all dropdowns to default values."""
+        reply = QMessageBox.question(
+            self, "Reset Confirmation",
+            "Are you sure you want to reset all settings to default?\nYou can still discard the changes afterwards.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            for button_frame in self.findChildren(QFrame, "buttonConfigFrame"):
+                # Find the task type combo box
+                task_type_combo = button_frame.findChild(QComboBox)
+                if task_type_combo:
+                    button_index = task_type_combo.property("button_index")
+                    task_type_combo.setCurrentText("program_window_any")
+
+                    # Find the exe name combo box in the same frame
+                    exe_name_combo = button_frame.findChild(QComboBox, None)
+                    if exe_name_combo and exe_name_combo != task_type_combo:
+                        exe_name_combo.setCurrentText("")
+                        exe_name_combo.setEnabled(False)
+
+                    # Update internal data
+                    self.button_info.update_button(button_index, {
+                        "task_type": "program_window_any",
+                        "properties": {"exe_name": ""}
+                    })
+
+            self.update_window_title()
 
     def closeEvent(self, event):
         """Handle unsaved changes on close."""

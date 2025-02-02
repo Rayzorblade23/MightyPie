@@ -6,7 +6,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer, QPoint
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication
 
-from GUI.icon_functions_and_paths import EXTERNAL_ICON_PATHS
+from functions.icon_functions_and_paths import EXTERNAL_ICON_PATHS
 from GUI.pie_button import PieButton
 from button_info import ButtonInfo
 from config import CONFIG

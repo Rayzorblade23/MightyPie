@@ -20,6 +20,10 @@
 IDEA:
 Remove Windows button but open when clicking bottom left of screen
 
+We could run PWAs like Youtube Music via custom run commands. Would need a new type of pie menu button.
+
+Also: reverse buttons via Window Name, instead of App Name
+
 
 BUGS:
 - when changing Fixed Slot to an occupied slot it won't kick the non-fixed app

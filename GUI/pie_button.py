@@ -6,7 +6,7 @@ from PyQt6.QtGui import QPixmap, QCursor
 from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
 
 from GUI.font_styles import FontStyle
-from GUI.icon_functions_and_paths import invert_icon
+from functions.icon_functions_and_paths import invert_icon
 from GUI.scrolling_text_label import ScrollingLabel
 from config import CONFIG
 

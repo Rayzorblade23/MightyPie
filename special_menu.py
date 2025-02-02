@@ -10,7 +10,7 @@ from config import CONFIG
 from events import taskbar_event
 from functions.taskbar_hide_utils import toggle_taskbar, is_taskbar_visible
 from invisible_ui import InvisibleUI
-from windows_shortcuts_menu import WindowsSettingsMenu
+from special_menu_shortcuts import WindowsSettingsMenu
 
 
 class SpecialMenu(QWidget):

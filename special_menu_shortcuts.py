@@ -1,11 +1,10 @@
 import os
-import os
 import sys
 
 from PyQt6.QtCore import QSize, Qt, QCoreApplication
 from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
 
-from GUI.icon_functions_and_paths import get_icon
+from functions.icon_functions_and_paths import get_icon
 from button_info_editor import ButtonInfoEditor
 from config import CONFIG
 from functions.shortcut_utils import open_audio_settings, open_network_settings, open_projection_settings, \
@@ -48,9 +47,9 @@ class WindowsSettingsMenu(QWidget):
             ("projection", "Open Projection Settings", lambda: open_projection_settings(self, hide_parent=True)),
             ("folder", "Open File Explorer", lambda: open_explorer_window(self, hide_parent=True)),
             ("shredder", "Clear App Info Cache", lambda: clear_cache()),
+            ("settings", "Open the Button Config", lambda: self.open_button_info_editor()),
             ("restart", "Restart Program", lambda: restart_program()),
             ("quit", "Quit Program", lambda: quit_program()),
-            ("settings", "Open the Button Config", lambda: self.open_button_info_editor()),
         ]
 
         # Create and store buttons
@@ -64,17 +63,17 @@ class WindowsSettingsMenu(QWidget):
         layout.setSpacing(default_spacing)
 
         # Add buttons to layout
-        for button in buttons[:4]:  # Add the first set of buttons
+        for button in buttons[:5]:  # Add the first set of buttons
             layout.addWidget(button)
 
         layout.addSpacerItem(spacer)
 
-        for button in buttons[4:6]:  # Add the middle set of buttons
+        for button in buttons[5:7]:  # Add the middle set of buttons
             layout.addWidget(button)
 
         layout.addSpacerItem(spacer)
 
-        for button in buttons[6:]:  # Add the last set of buttons
+        for button in buttons[7:]:  # Add the last set of buttons
             layout.addWidget(button)
 
         # Remove spacing between buttons and margins around layout
