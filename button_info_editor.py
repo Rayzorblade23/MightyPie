@@ -1,4 +1,7 @@
 # button_info_editor.py
+import json
+from functools import partial
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea, \
     QPushButton, QFrame, QSizePolicy
@@ -16,13 +19,12 @@ class ButtonInfoEditor(QWidget):
         # Available options for dropdowns
         self.task_types = ["program_window_fixed", "program_window_any"]
 
-        # Get unique app names and exe names from existing configuration
-        self.exe_names = set()
-        for task in self.button_info.values():
-            self.exe_names.add(task["properties"]["exe_name"])
+        # Load data from apps_info_cache.json
+        with open('apps_info_cache.json', 'r') as file:
+            apps_info = json.load(file)
 
-        # Convert to sorted lists and ensure empty option is available
-        self.exe_names = sorted(list(self.exe_names)) + [""]
+        # Extract exe names (keys in the JSON)
+        self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in apps_info.items()]) + [("", "")]
 
         self.init_ui()
 
@@ -127,14 +129,39 @@ class ButtonInfoEditor(QWidget):
 
                 # Exe name selector
                 exe_name_layout = QHBoxLayout()
-                exe_name_layout.addWidget(QLabel("Exe Name:"))
+                exe_name_layout.addWidget(QLabel("Program:"))
                 exe_name_combo = NoScrollComboBox()
-                exe_name_combo.addItems(self.exe_names)
-                exe_name_combo.setCurrentText(current_task["properties"]["exe_name"])
+
+                # Add items to combo box with display text and actual data
+                for exe_name, app_name in self.exe_names:
+                    # print(f"App Name: {app_name} and exe: {exe_name}")
+                    if not app_name.strip():  # If app_name is empty
+                        display_text = f"({exe_name})"
+                    else:  # If app_name is empty, just show exe_name in parentheses
+                        display_text = f"{app_name}"
+
+                    exe_name_combo.addItem(display_text, exe_name)
+
+                # Find the current exe_name in the button_info
+                current_exe_name = current_task["properties"]["exe_name"]
+
+                # Set the current index based on the actual exe_name (stored in userData)
+                for i in range(exe_name_combo.count()):
+                    if exe_name_combo.itemData(i) == current_exe_name:
+                        exe_name_combo.setCurrentIndex(i)
+                        break
+
+                # Connect signal using lambda to get both display text and data
+                def create_handler(button_index):
+                    return lambda idx, combo=exe_name_combo: self.on_exe_name_changed(combo.itemData(idx), button_index)
+
+                exe_name_combo.currentIndexChanged.connect(create_handler(index))
+
                 exe_name_combo.setEditable(True)
                 exe_name_combo.setEnabled(current_task["task_type"] != "program_window_any")
                 if current_task["task_type"] == "program_window_any":
                     exe_name_combo.setCurrentText("")
+
                 exe_name_layout.addWidget(exe_name_combo)
                 content_layout.addLayout(exe_name_layout)
 
@@ -147,9 +174,8 @@ class ButtonInfoEditor(QWidget):
 
                 # Connect signals
                 task_type_combo.currentTextChanged.connect(self.on_task_type_changed)
-                exe_name_combo.currentTextChanged.connect(
-                    lambda text, idx=index: self.on_exe_name_changed(text, idx)
-                )
+
+
 
                 # Add button frame to column
                 column_layout.addWidget(button_frame)

@@ -81,6 +81,7 @@ QPushButton {
     border: 1px solid {{accent_color}};              /* No border */
     border-radius: 5px;        /* Rounded corners */
     opacity:1.0;
+    padding:10px;
 }
 
 DonutSliceButton {
