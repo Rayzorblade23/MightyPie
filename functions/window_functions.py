@@ -372,7 +372,7 @@ def _get_friendly_app_name(exe_path: str, exe_name: str):
             "FileDescription",
         )
         friendly_name = win32api.GetFileVersionInfo(exe_path, string_file_info)
-        if friendly_name:
+        if friendly_name.strip():
             return friendly_name
         else:
             return os.path.splitext(exe_name)[0].capitalize()  # Remove the ".exe" extension
