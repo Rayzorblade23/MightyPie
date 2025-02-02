@@ -16,7 +16,7 @@ import win32ui
 from PIL import Image
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor, QGuiApplication
-from PyQt6.QtWidgets import QMainWindow, QWidget
+from PyQt6.QtWidgets import QMainWindow, QWidget, QMessageBox
 
 from config import CONFIG
 from pie_menu import PieMenu
@@ -96,24 +96,32 @@ def save_cache(cache):
         print(f"Temporary file {temp_file_path} removed.")
 
 
-def clear_cache():
+def clear_cache(self):
     """Clear the cache by deleting the cache file."""
-    global cache_being_cleared
-    cache_being_cleared = True
-    CACHE_FILE = get_cache_file()
+    reply = QMessageBox.question(
+        self, "Reset Confirmation",
+        "Are you sure you want to reset le Cache?",
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+    )
 
-    if os.path.exists(CACHE_FILE):
-        try:
-            os.remove(CACHE_FILE)
-            print("Cache file cleared successfully.")
-        except Exception as e:
-            print(f"Error clearing cache file: {e}")
-    else:
-        print("Cache file does not exist.")
+    if reply == QMessageBox.StandardButton.Yes:
 
-    global app_cache
-    app_cache = load_cache()
-    cache_being_cleared = False
+        global cache_being_cleared
+        cache_being_cleared = True
+        CACHE_FILE = get_cache_file()
+
+        if os.path.exists(CACHE_FILE):
+            try:
+                os.remove(CACHE_FILE)
+                print("Cache file cleared successfully.")
+            except Exception as e:
+                print(f"Error clearing cache file: {e}")
+        else:
+            print("Cache file does not exist.")
+
+        global app_cache
+        app_cache = load_cache()
+        cache_being_cleared = False
 
 
 app_cache = load_cache()

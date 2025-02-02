@@ -55,7 +55,7 @@ class ButtonInfoEditor(QWidget):
 
             # Add column title
             title_label = QLabel(f"Pie Menu {col + 1}")
-            title_label.setStyleSheet("font-weight: bold; font-size: 14px; padding: 5px;")
+            title_label.setObjectName("titleLabel")
             title_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             column_layout.addWidget(title_label)
 

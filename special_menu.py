@@ -2,7 +2,7 @@ import sys
 
 from PyQt6.QtCore import Qt, QEvent, QTimer, pyqtSignal
 from PyQt6.QtGui import QPainter, QKeyEvent, QCursor
-from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout
+from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel
 
 from GUI.toggle_switch import ToggleSwitch
 from clock import Clock
@@ -10,7 +10,9 @@ from config import CONFIG
 from events import taskbar_event
 from functions.taskbar_hide_utils import toggle_taskbar, is_taskbar_visible
 from invisible_ui import InvisibleUI
-from special_menu_shortcuts import WindowsSettingsMenu
+from special_menu_DF_monitor_selector import MonitorSetupMenu
+from special_menu_app_shortcuts import AppSettingsMenu
+from special_menu_windows_shortcuts import WindowsSettingsMenu
 
 
 class SpecialMenu(QWidget):
@@ -22,7 +24,6 @@ class SpecialMenu(QWidget):
         self.obj_name = obj_name
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
 
         self.scene = QGraphicsScene(self)
         self.view = QGraphicsView(self.scene, self)
@@ -34,6 +35,8 @@ class SpecialMenu(QWidget):
         self.setObjectName(self.obj_name)
         self.setup_window()
 
+        toggles_layout = QVBoxLayout()
+
         # Taskbar toggle switch
         self.taskbar_toggle = ToggleSwitch(
             "TaskbarToggle",
@@ -42,7 +45,7 @@ class SpecialMenu(QWidget):
             off_action=self.toggle_taskbar_action,
             parent=self
         )
-        layout.addWidget(self.taskbar_toggle)
+        toggles_layout.addWidget(self.taskbar_toggle)
 
         # Initialize the taskbar visibility based on current state
         self.initialize_taskbar_toggle()
@@ -50,21 +53,21 @@ class SpecialMenu(QWidget):
         # Subscribe to the taskbar visibility event
         taskbar_event.visibility_changed.connect(self.update_taskbar_toggle)
 
-        self.clock = Clock()
-        self.clock_toggle = ToggleSwitch("ClockToggle",
-                                         label_text="Clock!",
-                                         on_action=lambda: (self.clock.show(),
-                                                            self.clock_bg_toggle.setDisabled(False)),
-
-                                         off_action=lambda: (self.clock.hide(),
-                                                             self.clock_bg_toggle.setDisabled(True)),
-                                         parent=self)
-
-        self.clock_bg_toggle = ToggleSwitch("ClockBgToggle",
-                                            label_text="Clock: Opaque Background",
-                                            on_action=lambda: self.clock.toggle_background(),
-                                            off_action=lambda: self.clock.toggle_background(),
-                                            parent=self)
+        # self.clock = Clock()
+        # self.clock_toggle = ToggleSwitch("ClockToggle",
+        #                                  label_text="Clock!",
+        #                                  on_action=lambda: (self.clock.show(),
+        #                                                     self.clock_bg_toggle.setDisabled(False)),
+        #
+        #                                  off_action=lambda: (self.clock.hide(),
+        #                                                      self.clock_bg_toggle.setDisabled(True)),
+        #                                  parent=self)
+        #
+        # self.clock_bg_toggle = ToggleSwitch("ClockBgToggle",
+        #                                     label_text="Clock: Opaque BG",
+        #                                     on_action=lambda: self.clock.toggle_background(),
+        #                                     off_action=lambda: self.clock.toggle_background(),
+        #                                     parent=self)
 
         self.invisible_UI = InvisibleUI()
         self.invisible_UI_toggle = ToggleSwitch("InvisibleUIToggle",
@@ -91,19 +94,56 @@ class SpecialMenu(QWidget):
 
         self.windows_settings_shortcuts = WindowsSettingsMenu(parent=self)
 
-        # Create toggles for Clock
-        layout_clock = QHBoxLayout()
-        layout_clock.addWidget(self.clock_toggle)
-        layout_clock.addWidget(self.clock_bg_toggle)
-        layout.addLayout(layout_clock)
+        self.monitor_shortcuts = MonitorSetupMenu(parent=self)
+
+        self.app_shortcuts = AppSettingsMenu(parent=self)
+
+        # # Create toggles for Clock
+        # layout_clock = QHBoxLayout()
+        # layout_clock.addWidget(self.clock_toggle)
+        # layout_clock.addWidget(self.clock_bg_toggle)
+        # toggles_layout.addLayout(layout_clock)
 
         # Create toggles for Invisible UI
         layout_invisUI = QHBoxLayout()
         layout_invisUI.addWidget(self.invisible_UI_toggle)
         layout_invisUI.addWidget(self.invisible_UI_visibility_toggle)
-        layout.addLayout(layout_invisUI)
+        toggles_layout.addLayout(layout_invisUI)
 
+        layout.addLayout(toggles_layout)
+
+        line = QFrame()
+        line.setFrameStyle(QFrame.Shape.HLine.value)
+        line.setLineWidth(1)
+        layout.addWidget(line)
+
+        windows_shortcuts_label = QLabel(f"Windows Shortcuts")
+        windows_shortcuts_label.setObjectName("titleLabel")
+        windows_shortcuts_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(windows_shortcuts_label)
         layout.addWidget(self.windows_settings_shortcuts)
+
+        line = QFrame()
+        line.setFrameStyle(QFrame.Shape.HLine.value)
+        line.setLineWidth(1)
+        layout.addWidget(line)
+
+        monitors_label = QLabel(f"Monitor Switching")
+        monitors_label.setObjectName("titleLabel")
+        monitors_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(monitors_label)
+        layout.addWidget(self.monitor_shortcuts)
+
+        line = QFrame()
+        line.setFrameStyle(QFrame.Shape.HLine.value)
+        line.setLineWidth(1)
+        layout.addWidget(line)
+
+        app_shortcuts_label = QLabel(f"Mighty Pie Shortcuts")
+        app_shortcuts_label.setObjectName("titleLabel")
+        app_shortcuts_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(app_shortcuts_label)
+        layout.addWidget(self.app_shortcuts)
 
         self.setLayout(layout)
 
@@ -137,8 +177,8 @@ class SpecialMenu(QWidget):
             self.taskbar_toggle.toggle.setCheckedWithoutAction(False)
 
     def trigger_toggle(self):
-        self.clock_toggle.toggle.setChecked(False)  # Clock turned off by default
-        self.clock_toggle.toggle.toggle_switch()
+        # self.clock_toggle.toggle.setChecked(False)  # Clock turned off by default
+        # self.clock_toggle.toggle.toggle_switch()
         self.invisible_UI_toggle.toggle.setChecked(True)  # or False
         self.invisible_UI_toggle.toggle.toggle_switch()
 

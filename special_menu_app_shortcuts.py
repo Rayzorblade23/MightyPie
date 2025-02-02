@@ -12,7 +12,7 @@ from functions.shortcut_utils import open_audio_settings, open_network_settings,
 from functions.window_functions import clear_cache
 
 
-class WindowsSettingsMenu(QWidget):
+class AppSettingsMenu(QWidget):
     # noinspection PyUnresolvedReferences
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -24,7 +24,7 @@ class WindowsSettingsMenu(QWidget):
         self.icon_size = (20, 20)
         self.inverted_icons = True
 
-        self.button_config = None
+        self.button_config = ButtonInfoEditor()
 
         def create_button(parent, icon_name, tooltip, click_action, icon_size, button_height):
             button = QPushButton(parent)
@@ -41,12 +41,7 @@ class WindowsSettingsMenu(QWidget):
         # Define buttons and their properties
         # (icon_name, tooltip, click_action)
         buttons_data = [
-            ("taskman", "Open Task Manager", lambda: open_task_manager(self, hide_parent=True)),
-            ("audio", "Open Audio Settings", lambda: open_audio_settings(self, hide_parent=True)),
-            ("network", "Open Network Settings", lambda: open_network_settings(self, hide_parent=True)),
-            ("projection", "Open Projection Settings", lambda: open_projection_settings(self, hide_parent=True)),
-            ("folder", "Open File Explorer", lambda: open_explorer_window(self, hide_parent=True)),
-            ("shredder", "Clear App Info Cache", lambda: clear_cache()),
+            ("shredder", "Clear App Info Cache", lambda: clear_cache(self)),
             ("settings", "Open the Button Config", lambda: self.open_button_info_editor()),
             ("restart", "Restart Program", lambda: restart_program()),
             ("quit", "Quit Program", lambda: quit_program()),
@@ -63,17 +58,12 @@ class WindowsSettingsMenu(QWidget):
         layout.setSpacing(default_spacing)
 
         # Add buttons to layout
-        for button in buttons[:5]:  # Add the first set of buttons
+        for button in buttons[:1]:  # Add the first set of buttons
             layout.addWidget(button)
 
         layout.addSpacerItem(spacer)
 
-        for button in buttons[5:7]:  # Add the middle set of buttons
-            layout.addWidget(button)
-
-        layout.addSpacerItem(spacer)
-
-        for button in buttons[7:]:  # Add the last set of buttons
+        for button in buttons[1:]:  # Add the middle set of buttons
             layout.addWidget(button)
 
         # Remove spacing between buttons and margins around layout
@@ -108,6 +98,6 @@ def quit_program():
 # Main entry point
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = WindowsSettingsMenu()
+    window = AppSettingsMenu()
     window.show()
     sys.exit(app.exec())
