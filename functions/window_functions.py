@@ -660,11 +660,7 @@ def launch_app(exe_path):
         if "spotify" in exe_path.lower():
             print("Detected Spotify. Using Start Menu simulation...")
 
-            # Use QTimer to avoid blocking
-            QTimer.singleShot(20, lambda: pyautogui.hotkey('ctrl', 'esc'))  # Open Start menu
-            QTimer.singleShot(40, lambda: pyautogui.write('Spotify'))  # Type 'Spotify'
-            QTimer.singleShot(60, lambda: pyautogui.press('enter'))  # Press Enter
-            QTimer.singleShot(80, lambda: print("Spotify launched using Start Menu simulation."))
+            subprocess.run(['start', 'spotify:'], shell=True)
 
         else:
             # Redirect output to suppress terminal spam
