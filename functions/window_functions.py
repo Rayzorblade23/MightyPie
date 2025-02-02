@@ -372,13 +372,13 @@ def _get_friendly_app_name(exe_path: str, exe_name: str):
             "FileDescription",
         )
         friendly_name = win32api.GetFileVersionInfo(exe_path, string_file_info)
-        if friendly_name.strip():
+        if friendly_name.strip() and not "Unknown App":
             return friendly_name
         else:
             return os.path.splitext(exe_name)[0].capitalize()  # Remove the ".exe" extension
     except Exception as e:
         print(f"Error retrieving file description for {exe_path}: {e}")
-        return "Unknown App"
+        return os.path.splitext(exe_name)[0].capitalize()  # Remove the ".exe" extension
 
 
 def _get_window_icon(exe_path, hwnd):
