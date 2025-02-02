@@ -12,6 +12,7 @@ QWidget {
 
 #PieMenuTaskSwitcher_1 {
     background-color: transparent;
+    border:none;
 }
 
 #PieMenuTaskSwitcher_2 {
