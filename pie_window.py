@@ -289,7 +289,7 @@ class PieWindow(QMainWindow):
 
                     exe_name = button["properties"].get("exe_name", "")
 
-                    # Try to find existing window mapping
+                    # Check if there's already a correct window in this slot
                     existing_window = None
                     for hwnd, mapped_index in self.windowHandles_To_buttonIndexes_map.items():
                         if (mapped_index == button_index and
@@ -300,22 +300,38 @@ class PieWindow(QMainWindow):
                             break
 
                     if existing_window:
+                        # Keep the existing window in place
                         hwnd, (title, _, instance) = existing_window
+                        update = create_button_update(button_index, hwnd, title, exe_name, instance)
+                        if update:
+                            final_button_updates.append(update)
                     else:
-                        # Look for new window of correct type
+                        # Clear any wrong program from this slot
+                        final_button_updates[:] = [update for update in final_button_updates
+                                                   if update["index"] != button_index]
+
+                        # Remove the window handle mapping for any wrong window at this index
+                        for hwnd, mapped_index in list(self.windowHandles_To_buttonIndexes_map.items()):
+                            if mapped_index == button_index:
+                                del self.windowHandles_To_buttonIndexes_map[hwnd]
+
+                        # Look for a new window of the correct type
+                        window_found = False
                         for hwnd, (title, window_exe, instance) in window_mapping.items():
                             if window_exe == exe_name and hwnd not in processed_handles:
                                 processed_handles.add(hwnd)
+                                window_found = True
+                                update = create_button_update(button_index, hwnd, title, exe_name, instance)
+                                if update:
+                                    final_button_updates.append(update)
+                                    self.windowHandles_To_buttonIndexes_map[hwnd] = button_index
                                 break
-                        else:
-                            # No window found - create empty fixed slot
-                            hwnd, title, instance = 0, "", 0
 
-                    update = create_button_update(button_index, hwnd, title, exe_name, instance)
-                    if update:
-                        final_button_updates.append(update)
-                        if hwnd != 0:
-                            self.windowHandles_To_buttonIndexes_map[hwnd] = button_index
+                        if not window_found:
+                            # No window found - create empty fixed slot
+                            update = create_button_update(button_index, 0, "", exe_name, 0)
+                            if update:
+                                final_button_updates.append(update)
 
             def get_valid_windows():
                 """Return dict of all currently valid window handles and their info"""

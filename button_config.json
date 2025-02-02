@@ -10,81 +10,15 @@
             "exe_name": "vivaldi.exe"
         }
     },
-    "4": {
-        "task_type": "program_window_fixed",
-        "properties": {
-            "app_name": "",
-            "text_1": "",
-            "text_2": "",
-            "window_handle": -1,
-            "app_icon_path": "",
-            "exe_name": "spotify.exe"
-        }
-    },
-    "6": {
-        "task_type": "program_window_fixed",
-        "properties": {
-            "app_name": "",
-            "text_1": "",
-            "text_2": "",
-            "window_handle": -1,
-            "app_icon_path": "",
-            "exe_name": "telegram.exe"
-        }
-    },
-    "8": {
-        "task_type": "program_window_fixed",
-        "properties": {
-            "app_name": "",
-            "text_1": "",
-            "text_2": "",
-            "window_handle": -1,
-            "app_icon_path": "",
-            "exe_name": "explorer.exe"
-        }
-    },
-    "10": {
-        "task_type": "program_window_fixed",
-        "properties": {
-            "app_name": "",
-            "text_1": "",
-            "text_2": "",
-            "window_handle": -1,
-            "app_icon_path": "",
-            "exe_name": "guitarpro7.exe"
-        }
-    },
-    "12": {
-        "task_type": "program_window_fixed",
-        "properties": {
-            "app_name": "",
-            "text_1": "",
-            "text_2": "",
-            "window_handle": -1,
-            "app_icon_path": "",
-            "exe_name": "explorer.exe"
-        }
-    },
-    "14": {
-        "task_type": "program_window_fixed",
-        "properties": {
-            "app_name": "",
-            "text_1": "",
-            "text_2": "",
-            "window_handle": -1,
-            "app_icon_path": "",
-            "exe_name": "explorer.exe"
-        }
-    },
     "1": {
-        "task_type": "program_window_any",
+        "task_type": "program_window_fixed",
         "properties": {
             "app_name": "",
             "text_1": "",
             "text_2": "",
             "window_handle": -1,
             "app_icon_path": "",
-            "exe_name": ""
+            "exe_name": "notepad.exe"
         }
     },
     "2": {
@@ -109,6 +43,17 @@
             "exe_name": ""
         }
     },
+    "4": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "spotify.exe"
+        }
+    },
     "5": {
         "task_type": "program_window_any",
         "properties": {
@@ -118,6 +63,17 @@
             "window_handle": -1,
             "app_icon_path": "",
             "exe_name": ""
+        }
+    },
+    "6": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "telegram.exe"
         }
     },
     "7": {
@@ -131,6 +87,17 @@
             "exe_name": ""
         }
     },
+    "8": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "explorer.exe"
+        }
+    },
     "9": {
         "task_type": "program_window_any",
         "properties": {
@@ -140,6 +107,17 @@
             "window_handle": -1,
             "app_icon_path": "",
             "exe_name": ""
+        }
+    },
+    "10": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "guitarpro7.exe"
         }
     },
     "11": {
@@ -153,6 +131,17 @@
             "exe_name": ""
         }
     },
+    "12": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "explorer.exe"
+        }
+    },
     "13": {
         "task_type": "program_window_any",
         "properties": {
@@ -162,6 +151,17 @@
             "window_handle": -1,
             "app_icon_path": "",
             "exe_name": ""
+        }
+    },
+    "14": {
+        "task_type": "program_window_fixed",
+        "properties": {
+            "app_name": "",
+            "text_1": "",
+            "text_2": "",
+            "window_handle": -1,
+            "app_icon_path": "",
+            "exe_name": "explorer.exe"
         }
     },
     "15": {
