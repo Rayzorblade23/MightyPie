@@ -24,7 +24,7 @@ class ButtonInfoEditor(QWidget):
             apps_info = json.load(file)
 
         # Extract exe names (keys in the JSON)
-        self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in apps_info.items()]) + [("", "")]
+        self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in apps_info.items()])
 
         self.init_ui()
 
@@ -108,7 +108,7 @@ class ButtonInfoEditor(QWidget):
                 button_layout.addLayout(header_layout)
 
                 # Container for dropdowns and other content
-                content_layout = QVBoxLayout()  # Vertical layout for dropdowns
+                content_layout = QHBoxLayout()  # Vertical layout for dropdowns
 
                 current_task = self.button_info[index]
 
@@ -119,17 +119,19 @@ class ButtonInfoEditor(QWidget):
                         event.ignore()  # Prevents the wheel from changing the selection
 
                 # Task type selector
-                task_type_layout = QHBoxLayout()
-                task_type_layout.addWidget(QLabel("Task Type:"))
+                texts_layout = QVBoxLayout()
+                dropdowns_layout = QVBoxLayout()
                 task_type_combo = NoScrollComboBox()
                 task_type_combo.addItems(self.task_types)
                 task_type_combo.setCurrentText(current_task["task_type"])
-                task_type_layout.addWidget(task_type_combo)
-                content_layout.addLayout(task_type_layout)
+
+                texts_layout.addWidget(QLabel("Task Type:"))
+                texts_layout.addWidget(QLabel("Program:"))
+
+                dropdowns_layout.addWidget(task_type_combo)
+                content_layout.addLayout(texts_layout)
 
                 # Exe name selector
-                exe_name_layout = QHBoxLayout()
-                exe_name_layout.addWidget(QLabel("Program:"))
                 exe_name_combo = NoScrollComboBox()
 
                 # Add items to combo box with display text and actual data
@@ -162,8 +164,8 @@ class ButtonInfoEditor(QWidget):
                 if current_task["task_type"] == "program_window_any":
                     exe_name_combo.setCurrentText("")
 
-                exe_name_layout.addWidget(exe_name_combo)
-                content_layout.addLayout(exe_name_layout)
+                dropdowns_layout.addWidget(exe_name_combo)
+                content_layout.addLayout(dropdowns_layout)
 
                 # Add all dropdowns and content to the right of the header label
                 button_layout.addLayout(content_layout)
