@@ -1,6 +1,6 @@
 import threading
 from threading import Lock
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer, QPoint
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
@@ -62,7 +62,7 @@ class PieWindow(QMainWindow):
         self.is_window_open = False
 
         # Create Pie Menus with this main_window as parent
-        self.pm_task_switchers = []  # List to hold the task switchers
+        self.pm_task_switchers: list[PieMenu] = []  # List to hold the task switchers
         for i in range(1, CONFIG._NUM_PIE_TASK_SWITCHERS + 1):  # Adjust the range if the number of task switchers changes
             task_switcher = PieMenu(obj_name=f"PieMenuTaskSwitcher_{i}", parent=self)
             if i > 1:  # Hide task switchers 2 and 3 initially
@@ -185,7 +185,7 @@ class PieWindow(QMainWindow):
     def refresh(self):
         self.update_pm_task_buttons()
 
-    def get_task_switcher_and_index(self, button_index):
+    def get_task_switcher_and_index(self, button_index: int) -> Tuple[PieMenu, int]:
         """Helper function to calculate the task switcher and index dynamically."""
         task_switchers = self.pm_task_switchers  # Assuming this is a list of task switchers
         max_buttons = CONFIG._MAX_BUTTONS

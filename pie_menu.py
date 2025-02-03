@@ -25,7 +25,7 @@ class PieMenu(QWidget):
         self.view = None
         self.btn = None
         self.pie_button_texts = ["Empty" for _ in range(CONFIG._MAX_BUTTONS)]
-        self.pie_buttons = []
+        self.pie_buttons: list[PieButton] = []
         self.animations = []
 
         self.obj_name = obj_name
