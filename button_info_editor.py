@@ -19,11 +19,10 @@ class ButtonInfoEditor(QWidget):
         # Available options for dropdowns
         self.task_types = ["program_window_fixed", "program_window_any"]
 
-        # Load data from apps_info_cache.json
-        apps_info = JSONManager.load(CONFIG._PROGRAM_NAME, "apps_info_cache.json", default={})
+        self.apps_info =  JSONManager.load(CONFIG._PROGRAM_NAME, "apps_info_cache.json", default={})
 
         # Extract exe names (keys in the JSON)
-        self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in apps_info.items()])
+        self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in self.apps_info.items()])
 
         self.init_ui()
 

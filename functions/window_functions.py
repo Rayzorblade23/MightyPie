@@ -3,6 +3,7 @@
 import ctypes
 import os
 import subprocess
+import sys
 from typing import Dict, Tuple
 
 import psutil
@@ -64,6 +65,29 @@ def clear_cache(self):
                 print(f"Error clearing cache file: {e}")
         else:
             print("Cache file does not exist.")
+
+        # Determine the program directory
+        if hasattr(sys, '_MEIPASS'):  # Running as a compiled executable
+            program_dir = os.path.dirname(sys.executable)
+        else:  # Running as a script
+            program_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # Go up one level
+
+        # Path to the app_icons folder
+        icons_dir = os.path.join(program_dir, 'app_icons')
+        print(f"Checking directory: {icons_dir}")  # For debugging purposes
+        if os.path.exists(icons_dir):
+            try:
+                for filename in os.listdir(icons_dir):
+                    file_path = os.path.join(icons_dir, filename)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                    else:
+                        os.rmdir(file_path)  # Remove any subdirectories if present
+                print("Icons folder cleared successfully.")
+            except Exception as e:
+                print(f"Error clearing icons folder: {e}")
+        else:
+            print("Icons folder does not exist.")  # For debugging purposes
 
         global app_cache
         app_cache = load_cache()

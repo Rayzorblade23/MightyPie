@@ -169,7 +169,6 @@ class PieWindow(QMainWindow):
     def auto_refresh(self):
         """Automatically monitor and refresh windows periodically in a thread-safe way."""
         # start_time = time.time()
-        print("AUTO REFRESH")
         # Lock access to shared data to ensure thread safety
         with self.button_mapping_lock:
             current_window_handles = [
@@ -245,7 +244,6 @@ class PieWindow(QMainWindow):
         """Update main_window buttons with current main_window information."""
 
         def background_task():
-            print("THE THREAD BEGINS!\n")
             if cache_being_cleared:
                 print("DANGER! CACHE IS BEING CLEARED. SKIP.")
                 return
