@@ -186,7 +186,6 @@ NoScrollSpinbox {
 #buttonConfigFrame {
     border: 1px solid #202020;  /* Border color */
     background-color: rgba(255, 255, 255, 5);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);  /* Raised shadow effect */
     border-radius: 10px;
 }
 
@@ -219,7 +218,6 @@ NoScrollSpinbox {
 #buttonConfigFrameHeader {
     border: none;  /* Border color */
     background-color: {{accent_muted}};
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.9);  /* Raised shadow effect */
     font-weight: bold;
     font-size: 18px;
     text-align: center;
