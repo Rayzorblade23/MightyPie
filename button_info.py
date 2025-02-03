@@ -1,12 +1,10 @@
-import json
+# button_info.py
+
 import logging
-import os
-import sys
-import tempfile
-from pathlib import Path
 from typing import Dict, Any
 
 from config import CONFIG
+from json_utils import JSONManager
 
 
 class ButtonInfo:
@@ -20,77 +18,29 @@ class ButtonInfo:
 
         self.load_json()
 
-    def get_config_dir(self) -> str:
-        """Get the appropriate configuration directory based on runtime environment"""
-        if hasattr(sys, '_MEIPASS'):  # Running as compiled executable
-            if sys.platform == "win32":
-                return os.path.join(os.environ.get('APPDATA'), CONFIG.PROGRAM_NAME)
-            elif sys.platform == "darwin":
-                return os.path.join(str(Path.home()), "Library", "Application Support", CONFIG.PROGRAM_NAME)
-            else:  # Linux and other Unix
-                return os.path.join(str(Path.home()), ".config", CONFIG.PROGRAM_NAME)
-        else:  # Running as script
-            return os.path.abspath(".")
-
-    def get_config_file(self) -> str:
-        """Get the full path to the configuration file"""
-        config_dir = self.get_config_dir()
-        os.makedirs(config_dir, exist_ok=True)
-        return os.path.join(config_dir, CONFIG.BUTTON_CONFIG_FILENAME)
-
     def load_json(self) -> None:
         """Load button configuration from JSON file with proper error handling"""
-        config_file = self.get_config_file()
-        try:
-            if os.path.exists(config_file):
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    loaded_dict = json.load(f)
-                    self.button_info_dict = {int(k): v for k, v in loaded_dict.items()}
-                    self.logger.info(f"Successfully loaded configuration from {config_file}")
-            else:
-                self._initialize_tasks()
-                self.logger.info("Config file not found. Initialized with default configuration")
-        except json.JSONDecodeError as e:
-            self.logger.error(f"Error decoding JSON from {config_file}: {e}")
+        loaded_dict = JSONManager.load(CONFIG.PROGRAM_NAME, CONFIG.BUTTON_CONFIG_FILENAME, default={})
+
+        if loaded_dict:
+            self.button_info_dict = {int(k): v for k, v in loaded_dict.items()}
+            self.logger.info("Successfully loaded configuration.")
+        else:
             self._initialize_tasks()
-        except Exception as e:
-            self.logger.error(f"Unexpected error loading config: {e}")
-            self._initialize_tasks()
+            self.logger.info("Config file not found. Initialized with default configuration.")
 
     def save_to_json(self) -> bool:
         """Save current configuration to JSON file atomically with error handling"""
         if not self.has_unsaved_changes:
             return True
 
-        config_file = self.get_config_file()
-        temp_file_path = None
-
-        try:
-            # Create temporary file in the same directory
-            with tempfile.NamedTemporaryFile('w', delete=False, dir=os.path.dirname(config_file)) as temp_file:
-                json.dump(self.button_info_dict, temp_file, indent=4)
-                temp_file_path = temp_file.name
-
-            # Atomic replace
-            if os.path.exists(config_file):
-                os.remove(config_file)
-            os.rename(temp_file_path, config_file)
-
+        if JSONManager.save(CONFIG.PROGRAM_NAME, CONFIG.BUTTON_CONFIG_FILENAME, self.button_info_dict):
             self.has_unsaved_changes = False
-            self.logger.info("Configuration saved successfully")
+            self.logger.info("Configuration saved successfully.")
             return True
-
-        except Exception as e:
-            self.logger.error(f"Error saving configuration: {e}")
-            # Cleanup: Remove the temporary file if it exists
-            if temp_file_path and os.path.exists(temp_file_path):
-                try:
-                    os.remove(temp_file_path)
-                except:
-                    pass
+        else:
+            self.logger.error("Error saving configuration.")
             return False
-
-    # Rest of the ButtonInfo class methods remain the same...
 
     def update_button(self, index, update_dict):
         """Update a button's configuration (but don't save to file)"""

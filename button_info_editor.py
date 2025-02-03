@@ -1,5 +1,4 @@
 # button_info_editor.py
-import json
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea, \
@@ -9,6 +8,7 @@ from button_info import ButtonInfo
 from config import CONFIG
 from functions.file_handling_functions import get_resource_path
 from functions.icon_functions_and_paths import get_icon
+from json_utils import JSONManager
 
 
 class ButtonInfoEditor(QWidget):
@@ -20,8 +20,7 @@ class ButtonInfoEditor(QWidget):
         self.task_types = ["program_window_fixed", "program_window_any"]
 
         # Load data from apps_info_cache.json
-        with open('apps_info_cache.json', 'r') as file:
-            apps_info = json.load(file)
+        apps_info = JSONManager.load(CONFIG.PROGRAM_NAME, "apps_info_cache.json", default={})
 
         # Extract exe names (keys in the JSON)
         self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in apps_info.items()])
@@ -36,11 +35,7 @@ class ButtonInfoEditor(QWidget):
         main_layout = QVBoxLayout(self)
 
         # Create scroll area
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll_widget = QWidget()
-        scroll_layout = QHBoxLayout(scroll_widget)
-        scroll.setWidget(scroll_widget)
+        scroll, scroll_layout = self.create_scroll_area()
         main_layout.addWidget(scroll)
 
         # Calculate number of columns needed
@@ -221,6 +216,14 @@ class ButtonInfoEditor(QWidget):
         button_container.addWidget(save_button)
 
         main_layout.addLayout(button_container)
+
+    def create_scroll_area(self):
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll_widget = QWidget()
+        scroll_layout = QHBoxLayout(scroll_widget)
+        scroll.setWidget(scroll_widget)
+        return scroll, scroll_layout
 
     def reset_single_frame(self):
         """Reset the dropdowns of a single button frame."""
