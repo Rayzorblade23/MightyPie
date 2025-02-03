@@ -345,7 +345,7 @@ class TrayIconButtonsWindow(QWidget):
             button = ExpandedButton(
                 text="",
                 object_name="TrayButton",
-                size=(CONFIG.BUTTON_HEIGHT, CONFIG.BUTTON_HEIGHT)
+                size=(CONFIG._BUTTON_HEIGHT, CONFIG._BUTTON_HEIGHT)
             )
 
             # Connect the specific signals to their respective actions

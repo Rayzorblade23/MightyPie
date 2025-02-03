@@ -9,7 +9,7 @@ class ExpandedButton(QPushButton):
     right_clicked = pyqtSignal()  # Signal for right-click
     middle_clicked = pyqtSignal()  # Signal for middle-click
 
-    def __init__(self, text, object_name, fixed_size=True, size=(CONFIG.BUTTON_WIDTH, CONFIG.BUTTON_HEIGHT),
+    def __init__(self, text, object_name, fixed_size=True, size=(CONFIG._BUTTON_WIDTH, CONFIG._BUTTON_HEIGHT),
                  pos=(0, 0), parent=None):
         super().__init__(text, parent)
         self.setObjectName(object_name)

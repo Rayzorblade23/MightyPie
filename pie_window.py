@@ -55,7 +55,7 @@ class PieWindow(QMainWindow):
         self.pie_menu_pos = QPoint()
         self.button_mapping_lock = Lock()
         self.last_window_handles = []
-        self.pie_button_texts = ["Empty" for _ in range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_TASK_SWITCHERS)]
+        self.pie_button_texts = ["Empty" for _ in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS)]
         self.windowHandles_To_buttonIndexes_map = {}
 
         self.active_child = 1
@@ -63,7 +63,7 @@ class PieWindow(QMainWindow):
 
         # Create Pie Menus with this main_window as parent
         self.pm_task_switchers = []  # List to hold the task switchers
-        for i in range(1, CONFIG.NUM_PIE_TASK_SWITCHERS + 1):  # Adjust the range if the number of task switchers changes
+        for i in range(1, CONFIG._NUM_PIE_TASK_SWITCHERS + 1):  # Adjust the range if the number of task switchers changes
             task_switcher = PieMenu(obj_name=f"PieMenuTaskSwitcher_{i}", parent=self)
             if i > 1:  # Hide task switchers 2 and 3 initially
                 task_switcher.hide()
@@ -74,11 +74,11 @@ class PieWindow(QMainWindow):
         self.setup_window_control_buttons()
 
         # For now, right-click should always just hide
-        for i in range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_TASK_SWITCHERS):
+        for i in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS):
             task_switcher, index = self.get_task_switcher_and_index(i)
             task_switcher.pie_buttons[index].set_right_click_action(action=lambda: self.hide())
 
-        for i in range(CONFIG.MAX_BUTTONS):
+        for i in range(CONFIG._MAX_BUTTONS):
             self.pm_win_control.pie_buttons[i].set_right_click_action(action=lambda: self.hide())
 
         self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None)
@@ -126,7 +126,7 @@ class PieWindow(QMainWindow):
 
     def setup_window(self):
         """Set up the main main_window properties."""
-        self.setWindowTitle(f"{CONFIG.PROGRAM_NAME} - Main")
+        self.setWindowTitle(f"{CONFIG._PROGRAM_NAME} - Main")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
@@ -189,7 +189,7 @@ class PieWindow(QMainWindow):
     def get_task_switcher_and_index(self, button_index):
         """Helper function to calculate the task switcher and index dynamically."""
         task_switchers = self.pm_task_switchers  # Assuming this is a list of task switchers
-        max_buttons = CONFIG.MAX_BUTTONS
+        max_buttons = CONFIG._MAX_BUTTONS
 
         task_switcher_index = button_index // max_buttons  # Determine the task switcher index
         index = button_index % max_buttons  # Calculate the index within the task switcher
@@ -347,7 +347,7 @@ class PieWindow(QMainWindow):
             def process_existing_mappings():
                 """Process existing window mappings, maintaining positions where possible"""
                 valid_windows = get_valid_windows()
-                menu_1_slots = set(range(CONFIG.MAX_BUTTONS))
+                menu_1_slots = set(range(CONFIG._MAX_BUTTONS))
 
                 # First, maintain positions for Menu 1
                 for hwnd, mapped_index in list(self.windowHandles_To_buttonIndexes_map.items()):
@@ -365,7 +365,7 @@ class PieWindow(QMainWindow):
                 for hwnd, mapped_index in list(self.windowHandles_To_buttonIndexes_map.items()):
                     if (hwnd in valid_windows and
                             hwnd not in processed_handles and
-                            mapped_index >= CONFIG.MAX_BUTTONS):
+                            mapped_index >= CONFIG._MAX_BUTTONS):
 
                         # Check if there's space in Menu 1
                         used_indexes = {update["index"] for update in final_button_updates}
@@ -391,7 +391,7 @@ class PieWindow(QMainWindow):
             def fill_empty_buttons():
                 """Fill any remaining empty buttons with unprocessed windows"""
                 used_indexes = {update["index"] for update in final_button_updates}
-                all_empty_indexes = set(range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_TASK_SWITCHERS)) - used_indexes
+                all_empty_indexes = set(range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS)) - used_indexes
 
                 # Fill remaining empty slots with new windows
                 for button_index in sorted(all_empty_indexes):
@@ -485,7 +485,7 @@ class PieWindow(QMainWindow):
             task_switcher.pie_buttons[index].setEnabled(True)
 
         # Clear button attributes when button index not among updates
-        for i in range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_TASK_SWITCHERS):
+        for i in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS):
             if i not in [update["index"] for update in button_updates]:
                 task_switcher, index = self.get_task_switcher_and_index(i)
 

@@ -24,8 +24,8 @@ from window_manager import WindowManager
 cache_being_cleared = False
 last_minimized_hwnd = 0
 
-APP_NAME = CONFIG.PROGRAM_NAME
-CACHE_FILENAME = CONFIG.CACHE_FILENAME
+APP_NAME = CONFIG._PROGRAM_NAME
+CACHE_FILENAME = CONFIG._CACHE_FILENAME
 
 
 def load_cache():
@@ -115,7 +115,7 @@ def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple
                     and class_name != "AutoHotkeyGUI"  # Exclude "AutoHotkey" windows
                     and class_name != "TaskManagerWindow"  # Exclude Taskmanager
                     and hwnd != this_program_hwnd  # Exclude this program
-                    and CONFIG.PROGRAM_NAME not in raw_window_title  # exclude all windows of this program
+                    and CONFIG._PROGRAM_NAME not in raw_window_title  # exclude all windows of this program
 
             ):
                 # entry for temp_window_hwnds_mapping

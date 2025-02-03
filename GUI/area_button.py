@@ -78,7 +78,7 @@ class AreaButton(QPushButton):
         # Compute distance and check if smaller than inner radius
         r = math.sqrt(dx ** 2 + dy ** 2)
 
-        if r < CONFIG.INNER_RADIUS * 2:
+        if r < CONFIG._INNER_RADIUS * 2:
             return -1
 
         # Check if the angle is within the sector
@@ -126,7 +126,7 @@ class MainWindow(QMainWindow):
 
         # Set the main main_window title and size
         self.setWindowTitle("Main Window with AreaButton")
-        self.setGeometry(300, 100, CONFIG.CANVAS_SIZE[0], CONFIG.CANVAS_SIZE[1])  # Initial size of the main_window
+        self.setGeometry(300, 100, CONFIG._CANVAS_SIZE[0], CONFIG._CANVAS_SIZE[1])  # Initial size of the main_window
 
         # Create a QWidget to hold the layout
         central_widget = QWidget(self)
@@ -134,8 +134,8 @@ class MainWindow(QMainWindow):
         # Create a QHBoxLayout
         layout = QHBoxLayout()
 
-        button_pos_x = int(CONFIG.CANVAS_SIZE[0] / 2)
-        button_pos_y = int(CONFIG.CANVAS_SIZE[1] / 2)
+        button_pos_x = int(CONFIG._CANVAS_SIZE[0] / 2)
+        button_pos_y = int(CONFIG._CANVAS_SIZE[1] / 2)
 
         # Create an AreaButton instance and add it to the layout
         self.area_button = AreaButton("Slice!",

@@ -22,6 +22,10 @@ EXTERNAL_ICON_PATHS = {
     "restart": get_resource_path(os.path.join("external_icons", "restore.png")),
     "shredder": get_resource_path(os.path.join("external_icons", "file-shredder.png")),
     "settings": get_resource_path(os.path.join("external_icons", "settings.png")),
+    "adjustments": get_resource_path(os.path.join("external_icons", "adjustments.png")),
+    "circles": get_resource_path(os.path.join("external_icons", "circles.png")),
+    "dots-circle": get_resource_path(os.path.join("external_icons", "dots-circle.png")),
+    "palette": get_resource_path(os.path.join("external_icons", "palette.png")),
 }
 
 # Load the icon based on the inverted_icons flag

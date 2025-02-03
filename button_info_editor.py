@@ -20,7 +20,7 @@ class ButtonInfoEditor(QWidget):
         self.task_types = ["program_window_fixed", "program_window_any"]
 
         # Load data from apps_info_cache.json
-        apps_info = JSONManager.load(CONFIG.PROGRAM_NAME, "apps_info_cache.json", default={})
+        apps_info = JSONManager.load(CONFIG._PROGRAM_NAME, "apps_info_cache.json", default={})
 
         # Extract exe names (keys in the JSON)
         self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in apps_info.items()])
@@ -39,8 +39,8 @@ class ButtonInfoEditor(QWidget):
         main_layout.addWidget(scroll)
 
         # Calculate number of columns needed
-        num_columns = CONFIG.NUM_PIE_TASK_SWITCHERS
-        buttons_per_column = CONFIG.MAX_BUTTONS
+        num_columns = CONFIG._NUM_PIE_TASK_SWITCHERS
+        buttons_per_column = CONFIG._MAX_BUTTONS
 
         # Create columns
         for col in range(num_columns):

@@ -4,6 +4,7 @@ import sys
 from PyQt6.QtCore import QSize, Qt, QCoreApplication
 from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
 
+from config_settings_window import ConfigSettingsWindow
 from functions.icon_functions_and_paths import get_icon
 from button_info_editor import ButtonInfoEditor
 from config import CONFIG
@@ -26,6 +27,8 @@ class AppSettingsMenu(QWidget):
 
         self.button_config = ButtonInfoEditor()
 
+        self.app_settings = ConfigSettingsWindow()
+
         def create_button(parent, icon_name, tooltip, click_action, icon_size, button_height):
             button = QPushButton(parent)
             button.setIcon(get_icon(icon_name, is_inverted=True))
@@ -36,20 +39,21 @@ class AppSettingsMenu(QWidget):
             return button
 
         default_spacing = 6
-        spacer = QSpacerItem(CONFIG.BUTTON_HEIGHT + default_spacing, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        spacer = QSpacerItem(CONFIG._BUTTON_HEIGHT + default_spacing, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         # Define buttons and their properties
         # (icon_name, tooltip, click_action)
         buttons_data = [
             ("shredder", "Clear App Info Cache", lambda: clear_cache(self)),
-            ("settings", "Open the Button Config", lambda: self.open_button_info_editor()),
+            ("dots-circle", "Open the Button Config", lambda: self.open_button_info_editor()),
+            ("settings", "Open the App Settings", lambda: self.open_settings_window()),
             ("restart", "Restart Program", lambda: restart_program()),
             ("quit", "Quit Program", lambda: quit_program()),
         ]
 
         # Create and store buttons
         buttons = [
-            create_button(self, icon_name, tooltip, click_action, self.icon_size, CONFIG.BUTTON_HEIGHT)
+            create_button(self, icon_name, tooltip, click_action, self.icon_size, CONFIG._BUTTON_HEIGHT)
             for icon_name, tooltip, click_action in buttons_data
         ]
 
@@ -76,6 +80,11 @@ class AppSettingsMenu(QWidget):
         if self.button_config is None:
             self.button_config = ButtonInfoEditor()
         self.button_config.show()
+
+    def open_settings_window(self):
+        if self.app_settings is None:
+            self.app_settings = ConfigSettingsWindow()
+        self.app_settings.show()
 
 
 def restart_program():

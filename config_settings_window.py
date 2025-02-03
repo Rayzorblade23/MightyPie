@@ -1,14 +1,18 @@
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
                              QLabel, QLineEdit, QCheckBox, QSpinBox, QWidget,
-                             QPushButton, QScrollArea, QMessageBox)
-from PyQt6.QtCore import Qt
-from config import CONFIG, TaskPieSwitcherConfig
+                             QPushButton, QScrollArea, QMessageBox, QSizePolicy, QColorDialog)
+
+from config import CONFIG, DefaultConfig
+from functions.file_handling_functions import get_resource_path
+from functions.icon_functions_and_paths import get_icon
 
 
 class ConfigSettingsWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle(f"{CONFIG.PROGRAM_NAME} Settings")
+        self.setWindowTitle(f"{CONFIG._PROGRAM_NAME} Settings")
         self.setMinimumWidth(400)
 
         # Central widget and main layout
@@ -57,24 +61,91 @@ class ConfigSettingsWindow(QMainWindow):
 
         # Label
         label = QLabel(setting['name'])
+        label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         row_layout.addWidget(label)
 
         # Input based on type
         if setting['type'] == "<class 'bool'>":
             input_widget = QCheckBox()
             input_widget.setChecked(setting['value'])
+            row_layout.addWidget(input_widget)
         elif setting['type'] in ["<class 'int'>", "<class 'float'>"]:
             input_widget = QSpinBox()
             input_widget.setRange(1, 9999)  # Set appropriate min/max range
             input_widget.setValue(setting['value'])
+            row_layout.addWidget(input_widget)
+        elif setting['type'] == "<class 'str'>":  # Handle string type (color hex code)
+            input_widget = QLineEdit(str(setting['value']))
+
+            # Create a color picker button if it's a hex color
+            if input_widget.text().startswith("#"):
+                # Create a color picker button
+                color_picker_button = QPushButton()
+                color_picker_button.setToolTip("Pick Color")
+                color_picker_button.setIcon(get_icon("palette", is_inverted=True))
+                color_picker_button.setFixedSize(24, 20)
+                color_picker_button.setObjectName("buttonConfigSingleResetButton")
+
+                color_picker_button.clicked.connect(lambda: self.pick_color(input_widget, color_picker_button))
+
+                # Update the color preview
+                color_picker_button.setStyleSheet(f"background-color: {input_widget.text()};")
+
+                # Connect the QLineEdit to update the color picker button
+                input_widget.textChanged.connect(lambda: self.update_color_preview(input_widget, color_picker_button))
+
+                # Create a layout specifically for the color field and the picker button
+                color_field_and_picker_layout = QHBoxLayout()
+                color_field_and_picker_layout.addWidget(input_widget)
+                color_field_and_picker_layout.addWidget(color_picker_button)
+
+                # Add the color picker layout to the main row layout
+                row_layout.addLayout(color_field_and_picker_layout)
+            else:
+                row_layout.addWidget(input_widget)
         else:
             input_widget = QLineEdit(str(setting['value']))
+            row_layout.addWidget(input_widget)
 
         input_widget.setObjectName(setting['name'])
         self.setting_widgets[setting['name']] = input_widget
-        row_layout.addWidget(input_widget)
+
+        # Reset button for this specific setting
+        reset_button = QPushButton()
+        reset_button.setToolTip("Reset")
+        reset_button.setIcon(get_icon("restart", is_inverted=True))
+        reset_button.setFixedSize(24, 20)
+        reset_button.setObjectName("buttonConfigSingleResetButton")
+        reset_button.clicked.connect(
+            lambda _, widget=input_widget, setting_name=setting['name']: self.reset_single_setting(widget, setting_name))
+        row_layout.addWidget(reset_button)
+
+        # Ensure that all widgets in this row are stretched evenly
+        label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        input_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        reset_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         return row_layout
+
+    def update_color_preview(self, input_widget, color_picker_button):
+        """Updates the color preview button when the QLineEdit text changes."""
+        color_text = input_widget.text()
+        if color_text.startswith("#"):  # Only update if the text is a valid hex code
+            color_picker_button.setStyleSheet(f"background-color: {color_text};")
+
+    def pick_color(self, input_widget, color_picker_button):
+        """Opens a color picker and sets the selected color as a hex code in the QLineEdit."""
+        initial_color = QColor(input_widget.text()) if input_widget.text().startswith("#") else QColor()
+        color = QColorDialog.getColor(initial_color, self, "Pick a Color")
+
+        if color.isValid():
+            # Set the color as a hex string (e.g., #RRGGBB)
+            hex_color = color.name()
+            input_widget.setText(hex_color)
+
+            # Update the color picker button's background color to match the selected color
+            color_picker_button.setStyleSheet(f"background-color: {hex_color};")
+
 
     def save_settings(self):
         for name, widget in self.setting_widgets.items():
@@ -92,7 +163,7 @@ class ConfigSettingsWindow(QMainWindow):
 
         if reply == QMessageBox.StandardButton.Yes:
             # Get default values from the original TaskPieSwitcherConfig
-            default_config = TaskPieSwitcherConfig()
+            default_config = DefaultConfig()
 
             # Update widgets with default values
             for name, widget in self.setting_widgets.items():
@@ -108,7 +179,25 @@ class ConfigSettingsWindow(QMainWindow):
                 # Update the actual configuration
                 CONFIG.update_setting(name, default_value)
 
+            CONFIG.save_config()  # Save the config after resetting
+
             QMessageBox.information(self, 'Reset Complete', 'Settings have been reset to default values.')
+
+    def reset_single_setting(self, widget, setting_name):
+        """Resets the given setting to its default value."""
+        default_config = DefaultConfig()
+        default_value = getattr(default_config, setting_name)
+
+        if isinstance(widget, QCheckBox):
+            widget.setChecked(default_value)
+        elif isinstance(widget, QSpinBox):
+            widget.setValue(default_value)
+        elif isinstance(widget, QLineEdit):
+            widget.setText(str(default_value))
+
+        # Update the actual configuration
+        CONFIG.update_setting(setting_name, default_value)
+        CONFIG.save_config()  # Optionally save after resetting
 
     def _get_widget_value(self, widget):
         if isinstance(widget, QCheckBox):
@@ -120,12 +209,21 @@ class ConfigSettingsWindow(QMainWindow):
         return None
 
 
-def open_config_window():
-    app = QApplication.instance() or QApplication([])
+if __name__ == "__main__":
+    import sys
+    app = QApplication(sys.argv)
+    # Load the QSS template
+    with open(get_resource_path("style.qss"), "r") as file:
+        qss_template = file.read()
+
+    # inserting style attributes from the config.py file
+    qss = (qss_template
+           .replace("{{accent_color}}", CONFIG.ACCENT_COLOR)
+           .replace("{{accent_muted}}", CONFIG.ACCENT_COLOR_MUTED)
+           .replace("{{bg_color}}", CONFIG.BG_COLOR))
+
+    # Apply the QSS to the application or widgets
+    app.setStyleSheet(qss)
     window = ConfigSettingsWindow()
     window.show()
     app.exec()
-
-
-if __name__ == "__main__":
-    open_config_window()

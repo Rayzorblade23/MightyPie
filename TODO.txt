@@ -1,6 +1,8 @@
-- projection switch on Function Pie Menu
+- add app settings
 
-- JSON handling functionality double? For app_info_cache and button_config?
+- clean up what app settings are exposed
+
+- projection switch on Function Pie Menu
 
 - more efficient re-assignment when window closes
 

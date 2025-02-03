@@ -6,89 +6,96 @@ from typing import Any, Tuple, List
 from functions.color_functions import adjust_saturation
 from json_utils import JSONManager  # Assuming the previous JSONManager is saved as json_utils.py
 
+from dataclasses import dataclass
+from typing import Tuple
 
-# Shared configuration constants
-DEFAULT_CONFIG = {
-    "PROGRAM_NAME": "MightyPie",
-    "CACHE_FILENAME": "apps_info_cache.json",
-    "BUTTON_CONFIG_FILENAME": "button_config.json",
-    "REFRESH_INTERVAL": 3000,
-    "TASKBAR_OPACITY": 150,
-    "HOTKEY_OPEN_TASKS": "F14",
-    "HOTKEY_OPEN_WINCON": "F13",
-    "SHOW_MONITOR_SECTION": True,
-    "MONITOR_SHORTCUT_1": ("win", "num1"),
-    "MONITOR_SHORTCUT_2": ("win", "num2"),
-    "MONITOR_SHORTCUT_3": ("win", "num3"),
-    "MAX_BUTTONS": 8,
-    "NUM_PIE_TASK_SWITCHERS": 3,
-    "BUTTON_WIDTH": 140,
-    "BUTTON_HEIGHT": 34,
-    "CONTROL_BUTTON_SIZE": 30,
-    "CANVAS_SIZE": (800, 600),
-    "RADIUS": 150,
-    "INNER_RADIUS": 18,
-    "PIE_TEXT_LABEL_MARGINS": 10,
-    "PIE_TEXT_LABEL_SCROLL_SPEED": 1,
-    "PIE_TEXT_LABEL_SCROLL_INTERVAL": 25,
-    "ACCENT_COLOR": "#5a14b7",
-    "BG_COLOR": "#3b3b3b",
-}
+@dataclass
+class BaseConfig:
+    """Base class with core, runtime, and UI configuration fields."""
+
+    # Core configuration fields
+    _PROGRAM_NAME: str = "MightyPie"
+    _CACHE_FILENAME: str = "apps_info_cache.json"
+    _BUTTON_CONFIG_FILENAME: str = "button_config.json"
+
+    # Runtime configuration fields
+    REFRESH_INTERVAL: int = 3000
+    TASKBAR_OPACITY: int = 150
+    HOTKEY_OPEN_TASKS: str = "F14"
+    HOTKEY_OPEN_WINCON: str = "F13"
+
+    # Monitor and display settings
+    SHOW_MONITOR_SECTION: bool = True
+    MONITOR_SHORTCUT_1: Tuple[str, str] = ("win", "num1")
+    MONITOR_SHORTCUT_2: Tuple[str, str] = ("win", "num2")
+    MONITOR_SHORTCUT_3: Tuple[str, str] = ("win", "num3")
+
+    # UI and layout configurations
+    _MAX_BUTTONS: int = 8
+    _NUM_PIE_TASK_SWITCHERS: int = 3
+    _BUTTON_WIDTH: int = 140
+    _BUTTON_HEIGHT: int = 34
+    _CONTROL_BUTTON_SIZE: int = 30
+    _CANVAS_SIZE: Tuple[int, int] = (800, 600)
+    _RADIUS: int = 150
+    _INNER_RADIUS: int = 18
+
+    # Text and animation settings
+    _PIE_TEXT_LABEL_MARGINS: int = 10
+    _PIE_TEXT_LABEL_SCROLL_SPEED: int = 1
+    _PIE_TEXT_LABEL_SCROLL_INTERVAL: int = 25
+
+    # Color configurations
+    ACCENT_COLOR: str = "#5a14b7"
+    BG_COLOR: str = "#3b3b3b"
 
 
 @dataclass
-class ConfigBase:
-    """Base configuration for managing application settings with persistence and runtime editing."""
-
-    # Core configuration fields
-    PROGRAM_NAME: str = DEFAULT_CONFIG["PROGRAM_NAME"]
-    CACHE_FILENAME: str = DEFAULT_CONFIG["CACHE_FILENAME"]
-    BUTTON_CONFIG_FILENAME: str = DEFAULT_CONFIG["BUTTON_CONFIG_FILENAME"]
-
-    # Runtime configuration fields
-    REFRESH_INTERVAL: int = DEFAULT_CONFIG["REFRESH_INTERVAL"]
-    TASKBAR_OPACITY: int = DEFAULT_CONFIG["TASKBAR_OPACITY"]
-    HOTKEY_OPEN_TASKS: str = DEFAULT_CONFIG["HOTKEY_OPEN_TASKS"]
-    HOTKEY_OPEN_WINCON: str = DEFAULT_CONFIG["HOTKEY_OPEN_WINCON"]
-
-    # Monitor and display settings
-    SHOW_MONITOR_SECTION: bool = DEFAULT_CONFIG["SHOW_MONITOR_SECTION"]
-    MONITOR_SHORTCUT_1: Tuple[str, str] = DEFAULT_CONFIG["MONITOR_SHORTCUT_1"]
-    MONITOR_SHORTCUT_2: Tuple[str, str] = DEFAULT_CONFIG["MONITOR_SHORTCUT_2"]
-    MONITOR_SHORTCUT_3: Tuple[str, str] = DEFAULT_CONFIG["MONITOR_SHORTCUT_3"]
-
-    # UI and layout configurations
-    MAX_BUTTONS: int = DEFAULT_CONFIG["MAX_BUTTONS"]
-    NUM_PIE_TASK_SWITCHERS: int = DEFAULT_CONFIG["NUM_PIE_TASK_SWITCHERS"]
-    BUTTON_WIDTH: int = DEFAULT_CONFIG["BUTTON_WIDTH"]
-    BUTTON_HEIGHT: int = DEFAULT_CONFIG["BUTTON_HEIGHT"]
-    CONTROL_BUTTON_SIZE: int = DEFAULT_CONFIG["CONTROL_BUTTON_SIZE"]
-    CANVAS_SIZE: Tuple[int, int] = DEFAULT_CONFIG["CANVAS_SIZE"]
-    RADIUS: int = DEFAULT_CONFIG["RADIUS"]
-    INNER_RADIUS: int = DEFAULT_CONFIG["INNER_RADIUS"]
-
-    # Text and animation settings
-    PIE_TEXT_LABEL_MARGINS: int = DEFAULT_CONFIG["PIE_TEXT_LABEL_MARGINS"]
-    PIE_TEXT_LABEL_SCROLL_SPEED: int = DEFAULT_CONFIG["PIE_TEXT_LABEL_SCROLL_SPEED"]
-    PIE_TEXT_LABEL_SCROLL_INTERVAL: int = DEFAULT_CONFIG["PIE_TEXT_LABEL_SCROLL_INTERVAL"]
-
-    # Color configurations
-    ACCENT_COLOR: str = DEFAULT_CONFIG["ACCENT_COLOR"]
-    BG_COLOR: str = DEFAULT_CONFIG["BG_COLOR"]
+class ConfigManager(BaseConfig):
+    """Manages application configuration with persistence and runtime editing."""
 
     def __post_init__(self):
         """Initialize configuration with JSON management."""
+        # Load configuration using JSONManager
         loaded_config = JSONManager.load(
-            app_name=self.PROGRAM_NAME,
+            app_name=self._PROGRAM_NAME,
             filename='app_settings.json',
             default=self._get_default_config()
         )
+
+        # Update instance with loaded configuration
         self._update_from_dict(loaded_config)
+
+        # Compute derived values
         self.ACCENT_COLOR_MUTED = adjust_saturation(self.ACCENT_COLOR, 0.5)
+
+    def _get_config_directory(self) -> str:
+        """Determine the appropriate configuration directory."""
+        base_dirs = {
+            "win32": os.path.join(os.environ.get('APPDATA', ''), self._PROGRAM_NAME),
+            "darwin": os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', self._PROGRAM_NAME),
+            "linux": os.path.join(os.path.expanduser('~'), '.config', self._PROGRAM_NAME)
+        }
+        return base_dirs.get(os.name, os.path.abspath('.'))
 
     def _get_default_config(self) -> dict:
         """Generate a default configuration dictionary."""
-        return {f.name: getattr(self, f.name) for f in fields(self)}
+        return {
+            f.name: getattr(self, f.name)
+            for f in fields(self)
+        }
+
+    def _load_config(self):
+        """Load configuration from JSON, with fallback to default values."""
+        os.makedirs(self.config_dir, exist_ok=True)
+
+        try:
+            if os.path.exists(self.config_path):
+                with open(self.config_path, 'r') as f:
+                    loaded_config = json.load(f)
+                    self._update_from_dict(loaded_config)
+        except Exception as e:
+            print(f"Error loading config: {e}. Using defaults.")
 
     def _update_from_dict(self, config_dict: dict):
         """Update configuration from a dictionary, handling type conversions."""
@@ -96,6 +103,7 @@ class ConfigBase:
             if field.name in config_dict:
                 value = config_dict[field.name]
                 try:
+                    # Handle tuple conversions specifically
                     if field.type in (Tuple[str, str], Tuple[int, int]) and isinstance(value, list):
                         setattr(self, field.name, tuple(value))
                     else:
@@ -105,9 +113,13 @@ class ConfigBase:
 
     def save_config(self):
         """Save current configuration using JSONManager."""
-        config_dict = {f.name: getattr(self, f.name) for f in fields(self)}
+        config_dict = {
+            f.name: getattr(self, f.name)
+            for f in fields(self)
+        }
+
         JSONManager.save(
-            app_name=self.PROGRAM_NAME,
+            app_name=self._PROGRAM_NAME,
             filename='app_settings.json',
             data=config_dict
         )
@@ -116,8 +128,12 @@ class ConfigBase:
         """Update a single configuration setting."""
         if hasattr(self, setting):
             setattr(self, setting, value)
+
+            # Special handling for derived values
             if setting == 'ACCENT_COLOR':
                 self.ACCENT_COLOR_MUTED = adjust_saturation(value, 0.5)
+
+            # Save updated configuration
             self.save_config()
         else:
             print(f"Setting {setting} not found.")
@@ -125,20 +141,17 @@ class ConfigBase:
     def get_settings_for_ui(self) -> List[dict]:
         """Prepare settings for UI representation."""
         return [
-            {"name": f.name, "value": getattr(self, f.name), "type": str(f.type)}
+            {
+                "name": f.name,
+                "value": getattr(self, f.name),
+                "type": str(f.type)
+            }
             for f in fields(self) if not f.name.startswith('_')
         ]
 
 
-# ConfigManager now extends ConfigBase to avoid duplication
-@dataclass
-class ConfigManager(ConfigBase):
-    pass
-
-
 CONFIG = ConfigManager()
 
-# TaskPieSwitcherConfig can also extend ConfigBase
-@dataclass
-class TaskPieSwitcherConfig(ConfigBase):
+class DefaultConfig(BaseConfig):
+    """Holds the default configuration values."""
     pass

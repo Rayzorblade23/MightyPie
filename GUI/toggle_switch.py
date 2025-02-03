@@ -133,7 +133,7 @@ class Toggle(QPushButton):
 
 
 class ToggleSwitch(QWidget):
-    def __init__(self, object_name="", size=(CONFIG.BUTTON_HEIGHT, int(CONFIG.BUTTON_HEIGHT * 4 / 7)), on_action=None, off_action=None,
+    def __init__(self, object_name="", size=(CONFIG._BUTTON_HEIGHT, int(CONFIG._BUTTON_HEIGHT * 4 / 7)), on_action=None, off_action=None,
                  label_text="", parent=None):
         super().__init__(parent)
 

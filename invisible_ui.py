@@ -14,7 +14,7 @@ class InvisibleUI(QWidget):
     def __init__(self, obj_name: str = "InvisibleUI", parent=None, button_size: int = 5):
         super().__init__(parent)
         self.obj_name = obj_name
-        self.setWindowTitle(f"{CONFIG.PROGRAM_NAME} - InvisibleUI")  # Set the window title
+        self.setWindowTitle(f"{CONFIG._PROGRAM_NAME} - InvisibleUI")  # Set the window title
         self.button_size = button_size  # Button size variable
 
         # Set up window properties

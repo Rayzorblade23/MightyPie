@@ -20,7 +20,7 @@ class ButtonInfo:
 
     def load_json(self) -> None:
         """Load button configuration from JSON file with proper error handling"""
-        loaded_dict = JSONManager.load(CONFIG.PROGRAM_NAME, CONFIG.BUTTON_CONFIG_FILENAME, default={})
+        loaded_dict = JSONManager.load(CONFIG._PROGRAM_NAME, CONFIG._BUTTON_CONFIG_FILENAME, default={})
 
         if loaded_dict:
             self.button_info_dict = {int(k): v for k, v in loaded_dict.items()}
@@ -34,7 +34,7 @@ class ButtonInfo:
         if not self.has_unsaved_changes:
             return True
 
-        if JSONManager.save(CONFIG.PROGRAM_NAME, CONFIG.BUTTON_CONFIG_FILENAME, self.button_info_dict):
+        if JSONManager.save(CONFIG._PROGRAM_NAME, CONFIG._BUTTON_CONFIG_FILENAME, self.button_info_dict):
             self.has_unsaved_changes = False
             self.logger.info("Configuration saved successfully.")
             return True
@@ -145,7 +145,7 @@ class ButtonInfo:
                 }
 
         # Fill in missing tasks
-        for i in range(CONFIG.MAX_BUTTONS * CONFIG.NUM_PIE_TASK_SWITCHERS):
+        for i in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS):
             if i not in self.button_info_dict:
                 self.button_info_dict[i] = {
                     "task_type": "program_window_any",

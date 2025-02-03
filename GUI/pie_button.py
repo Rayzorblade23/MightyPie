@@ -21,7 +21,7 @@ class PieButton(QPushButton):
                  icon_path: str = "",
                  action: Optional[Callable] = None,
                  fixed_size: bool = True,
-                 size: Tuple[int, int] = (CONFIG.BUTTON_WIDTH, CONFIG.BUTTON_HEIGHT),
+                 size: Tuple[int, int] = (CONFIG._BUTTON_WIDTH, CONFIG._BUTTON_HEIGHT),
                  pos: Tuple[int, int] = (0, 0),
                  parent: Optional[QWidget] = None
                  ):
@@ -141,7 +141,7 @@ class PieButton(QPushButton):
 
         # Add new icon and spacer if an icon path is provided
         if app_icon_path:
-            spacer = QSpacerItem(CONFIG.PIE_TEXT_LABEL_MARGINS, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+            spacer = QSpacerItem(CONFIG._PIE_TEXT_LABEL_MARGINS, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
             self.layout().insertItem(0, spacer)
 
             # Load the icon from the file path
@@ -156,7 +156,7 @@ class PieButton(QPushButton):
                 icon_label = QLabel()
                 icon_label.setPixmap(icon.scaled(16, 16, Qt.AspectRatioMode.KeepAspectRatio,
                                                  Qt.TransformationMode.SmoothTransformation))  # Adjust size as needed
-                icon_label.setFixedSize(16, CONFIG.BUTTON_HEIGHT)  # Adjust size to match your icon dimensions
+                icon_label.setFixedSize(16, CONFIG._BUTTON_HEIGHT)  # Adjust size to match your icon dimensions
                 icon_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
                 icon_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
 
