@@ -19,6 +19,7 @@ class BaseConfig:
     _BUTTON_CONFIG_FILENAME: str = "button_config.json"
 
     # Runtime configuration fields
+    SHOW_SETTINGS_AT_STARTUP: bool = True
     REFRESH_INTERVAL: int = 3000
     TASKBAR_OPACITY: int = 150
     HOTKEY_OPEN_TASKS: str = "F14"

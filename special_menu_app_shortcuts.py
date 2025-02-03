@@ -29,6 +29,9 @@ class AppSettingsMenu(QWidget):
 
         self.app_settings = ConfigSettingsWindow()
 
+        if CONFIG.SHOW_SETTINGS_AT_STARTUP:
+            self.app_settings.show()
+
         def create_button(parent, icon_name, tooltip, click_action, icon_size, button_height):
             button = QPushButton(parent)
             button.setIcon(get_icon(icon_name, is_inverted=True))

@@ -1,7 +1,3 @@
-- add app settings
-
-- clean up what app settings are exposed
-
 - projection switch on Function Pie Menu
 
 - more efficient re-assignment when window closes
