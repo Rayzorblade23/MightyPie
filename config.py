@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 from dataclasses import dataclass, fields
@@ -98,12 +99,21 @@ class ConfigManager(BaseConfig):
         except Exception as e:
             print(f"Error loading config: {e}. Using defaults.")
 
+
     def _update_from_dict(self, config_dict: dict):
         """Update configuration from a dictionary, handling type conversions."""
         for field in fields(self):
             if field.name in config_dict:
                 value = config_dict[field.name]
                 try:
+                    # Convert string representations of tuples back into actual tuples
+                    if isinstance(value, str):
+                        try:
+                            # Safely convert string to tuple using ast.literal_eval
+                            value = ast.literal_eval(value)
+                        except (ValueError, SyntaxError):
+                            pass  # If it's not a valid tuple string, leave as is
+
                     # Handle tuple conversions specifically
                     if field.type in (Tuple[str, str], Tuple[int, int]) and isinstance(value, list):
                         setattr(self, field.name, tuple(value))

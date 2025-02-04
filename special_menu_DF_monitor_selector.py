@@ -38,9 +38,9 @@ class MonitorSetupMenu(QWidget):
         # Define buttons and their properties
         # (icon_name, tooltip, click_action)
         buttons_data = [
-            ("", "", lambda: (pyautogui.hotkey(CONFIG.MONITOR_SHORTCUT_1)), "Desk Single"),
-            ("", "", lambda: (pyautogui.hotkey(CONFIG.MONITOR_SHORTCUT_2)), "Desk Dual"),
-            ("", "", lambda: (pyautogui.hotkey(CONFIG.MONITOR_SHORTCUT_3)), "TV"),
+            ("", "", lambda: pyautogui.hotkey(*CONFIG.MONITOR_SHORTCUT_1), "Desk Single"),
+            ("", "", lambda: pyautogui.hotkey(*CONFIG.MONITOR_SHORTCUT_2), "Desk Dual"),
+            ("", "", lambda: (pyautogui.hotkey(*CONFIG.MONITOR_SHORTCUT_3)), "TV"),
         ]
 
         # Create and store buttons
