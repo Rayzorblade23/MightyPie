@@ -1,4 +1,5 @@
 # button_info_editor.py
+from functools import partial
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea, \
@@ -167,10 +168,13 @@ class ButtonInfoEditor(QWidget):
                         break
 
                 # Connect signal using lambda to get both display text and data
-                def create_handler(button_index):
-                    return lambda idx, combo=exe_name_combo: self.on_exe_name_changed(combo.itemData(idx), button_index)
+                exe_name_combo.currentIndexChanged.connect(
+                    partial(self.on_exe_index_changed, button_index=index, combo=exe_name_combo)
+                )
 
-                exe_name_combo.currentIndexChanged.connect(create_handler(index))
+                # Also update the model when the user types in a custom exe name.
+                exe_name_combo.editTextChanged.connect(lambda text, idx=index: self.on_exe_name_changed(text, idx))
+
 
                 exe_name_combo.setEditable(True)
                 exe_name_combo.setEnabled(current_task["task_type"] != "program_window_any")
@@ -392,6 +396,13 @@ class ButtonInfoEditor(QWidget):
             self.update_window_title()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to update exe name: {str(e)}")
+
+    def on_exe_index_changed(self, idx: int, button_index: int, combo: QComboBox) -> None:
+        """Handle index changes for the exe_name_combo."""
+        # Use itemData() if available; otherwise, fall back to currentText()
+        value = combo.itemData(idx) or combo.currentText()
+        self.on_exe_name_changed(value, button_index)
+
 
     def update_window_title(self):
         """Update window title to show unsaved changes"""
