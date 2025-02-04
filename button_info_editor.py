@@ -288,6 +288,32 @@ class ButtonInfoEditor(QWidget):
 
             self.update_window_title()
 
+    def update_apps_info(self) -> None:
+        """Reload apps_info from cache and update exe name dropdowns."""
+        # Reload the apps_info cache and update self.exe_names
+        self.apps_info = JSONManager.load(CONFIG._PROGRAM_NAME, "apps_info_cache.json", default={})
+        self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in self.apps_info.items()])
+
+        # Find all QComboBox widgets that are used for exe names.
+        # (We assume they are editable, unlike the task type combo.)
+        for exe_combo in self.findChildren(QComboBox):
+            if not exe_combo.isEditable():
+                continue  # Skip task type combo boxes
+
+            # Store current text so you can try to restore it later.
+            current_text = exe_combo.currentText()
+
+            exe_combo.blockSignals(True)
+            exe_combo.clear()
+            # Re-add items from the updated self.exe_names list.
+            for exe_name, app_name in self.exe_names:
+                display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
+                exe_combo.addItem(display_text, exe_name)
+            # Optionally try to reapply the previous value.
+            exe_combo.setCurrentText(current_text)
+            exe_combo.blockSignals(False)
+
+
     def restore_values_from_model(self) -> None:
         """Restore the dropdown values from button_info."""
         for button_frame in self.findChildren(QFrame, "buttonConfigFrame"):
@@ -350,6 +376,12 @@ class ButtonInfoEditor(QWidget):
                 event.ignore()
         else:
             event.accept()
+
+    def showEvent(self, event) -> None:
+        """Reload apps_info cache and update exe dropdowns each time the window is shown."""
+        self.update_apps_info()
+        super().showEvent(event)
+
 
     def on_task_type_changed(self, new_task_type: str) -> None:
         """Update internal data when task type changes."""
