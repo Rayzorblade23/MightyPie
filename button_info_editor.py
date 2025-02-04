@@ -347,13 +347,14 @@ class ButtonInfoEditor(QWidget):
         else:
             event.accept()
 
-    def on_task_type_changed(self, new_task_type):
+    def on_task_type_changed(self, new_task_type: str) -> None:
+        """Update internal data when task type changes."""
         sender = self.sender()
         button_index = sender.property("button_index")
         try:
             # Find the corresponding exe_name_combo for this button
             button_frame = sender.parent().parent()  # QFrame containing the button's widgets
-            exe_name_combo = None
+            exe_name_combo: QComboBox | None = None
             for child in button_frame.findChildren(QComboBox):
                 if child.property("button_index") == button_index and child != sender:
                     exe_name_combo = child
@@ -363,12 +364,21 @@ class ButtonInfoEditor(QWidget):
                 if new_task_type == "program_window_any":
                     exe_name_combo.setCurrentText("")
                     exe_name_combo.setEnabled(False)
+                    exe_value = ""
                 else:
                     exe_name_combo.setEnabled(True)
+                    # If no selection has been made, default to the first item.
+                    if not exe_name_combo.currentText():
+                        exe_name_combo.setCurrentIndex(0)
+                    # Use currentData to get the actual exe value if available.
+                    exe_value = exe_name_combo.currentData() or exe_name_combo.currentText()
+
+            else:
+                exe_value = ""
 
             self.button_info.update_button(button_index, {
                 "task_type": new_task_type,
-                "properties": {"exe_name": "" if new_task_type == "program_window_any" else exe_name_combo.currentText()}
+                "properties": {"exe_name": "" if new_task_type == "program_window_any" else exe_value}
             })
             self.update_window_title()
         except Exception as e:
