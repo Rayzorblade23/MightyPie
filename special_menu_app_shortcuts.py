@@ -1,15 +1,12 @@
-import os
 import sys
 
-from PyQt6.QtCore import QSize, Qt, QCoreApplication
-from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication, QMainWindow
 
-from config_settings_window import ConfigSettingsWindow
-from functions.icon_functions_and_paths import get_icon
 from button_info_editor import ButtonInfoEditor
 from config import CONFIG
-from functions.shortcut_utils import open_audio_settings, open_network_settings, open_projection_settings, \
-    open_explorer_window, open_task_manager
+from config_settings_window import ConfigSettingsWindow
+from functions.icon_functions_and_paths import get_icon
 from functions.window_functions import clear_cache
 
 
@@ -50,8 +47,8 @@ class AppSettingsMenu(QWidget):
             ("shredder", "Clear App Info Cache", lambda: clear_cache(self)),
             ("dots-circle", "Open the Button Config", lambda: self.open_button_info_editor()),
             ("settings", "Open the App Settings", lambda: self.open_settings_window()),
-            ("restart", "Restart Program", lambda: restart_program()),
-            ("quit", "Quit Program", lambda: quit_program()),
+            ("restart", "Restart Program", lambda: self.parent().main_window.restart_program()),
+            ("quit", "Quit Program", lambda: self.parent().main_window.quit_program()),
         ]
 
         # Create and store buttons
@@ -88,23 +85,6 @@ class AppSettingsMenu(QWidget):
         if self.app_settings is None:
             self.app_settings = ConfigSettingsWindow()
         self.app_settings.show()
-
-
-def restart_program():
-    """Restart the current program."""
-    print("Restarting program...")  # Debugging output
-
-    # Quit the application
-    QCoreApplication.quit()
-
-    # Re-launch the program as an external process
-    python = sys.executable
-    os.spawnl(os.P_NOWAIT, python, python, *sys.argv)
-    sys.exit()
-
-
-def quit_program():
-    QCoreApplication.exit()
 
 
 # Main entry point

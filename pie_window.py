@@ -1,16 +1,22 @@
+import os
+import os
+import subprocess
+import sys
 import threading
+import time
 from threading import Lock
 from typing import Dict, List, Tuple
 
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer, QPoint
+import psutil
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer, QPoint, QCoreApplication
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication
 
-from functions.icon_functions_and_paths import EXTERNAL_ICON_PATHS
 from GUI.pie_button import PieButton
 from button_info import ButtonInfo
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
+from functions.icon_functions_and_paths import EXTERNAL_ICON_PATHS
 from functions.window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
     close_window_by_handle, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app, \
     cache_being_cleared, restore_last_minimized_window
@@ -20,7 +26,10 @@ from window_manager import WindowManager
 
 manager = WindowManager.get_instance()
 
+
 class PieWindow(QMainWindow):
+    EXIT_CODE_REBOOT = 122
+
     # Add a custom signal for thread-safe updates
     update_buttons_signal = pyqtSignal(list)
 
@@ -81,7 +90,7 @@ class PieWindow(QMainWindow):
         for i in range(CONFIG._MAX_BUTTONS):
             self.pm_win_control.pie_buttons[i].set_right_click_action(action=lambda: self.hide())
 
-        self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None)
+        self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None, main_window=self)
         self.special_menu.hide()
 
         # Start auto-refreshing every REFRESH_INTERVAL milliseconds
@@ -93,6 +102,32 @@ class PieWindow(QMainWindow):
         screen.geometryChanged.connect(self.handle_geometry_change)
 
         self.auto_refresh()
+
+    def restart_program(self):
+        """Kill all instances and restart the program fresh."""
+        current_pid = os.getpid()
+        print(f"Restarting. Current PID: {current_pid}")
+
+        # Kill any other running instances of the program
+        for proc in psutil.process_iter(attrs=['pid', 'name', 'cmdline']):
+            try:
+                if proc.info['pid'] != current_pid and proc.info['cmdline']:
+                    if sys.argv[0] in proc.info['cmdline']:
+                        print(f"Killing old instance: PID {proc.info['pid']}")
+                        proc.terminate()
+            except psutil.NoSuchProcess:
+                pass
+
+        # Start a new instance
+        new_process = subprocess.Popen([sys.executable] + sys.argv)
+        print(f"New process started with PID: {new_process.pid}")
+
+        # Ensure current instance exits fully
+        time.sleep(1)
+        os._exit(0)
+
+    def quit_program(self):
+        QCoreApplication.exit()
 
     def handle_geometry_change(self):
         screen = QApplication.primaryScreen()

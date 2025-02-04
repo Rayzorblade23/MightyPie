@@ -18,10 +18,12 @@ from special_menu_windows_shortcuts import WindowsSettingsMenu
 class SpecialMenu(QWidget):
     taskbar_visibility_changed = pyqtSignal(bool)  # Custom signal
 
-    def __init__(self, obj_name: str = "", parent=None):
+    def __init__(self, obj_name: str = "", parent=None, main_window=None):
 
         super().__init__(parent)
         self.obj_name = obj_name
+
+        self.main_window = main_window
 
         layout = QVBoxLayout(self)
 
