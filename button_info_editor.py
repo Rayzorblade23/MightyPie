@@ -284,6 +284,46 @@ class ButtonInfoEditor(QWidget):
 
             self.update_window_title()
 
+    def restore_values_from_model(self) -> None:
+        """Restore the dropdown values from button_info."""
+        for button_frame in self.findChildren(QFrame, "buttonConfigFrame"):
+            combos = button_frame.findChildren(QComboBox)
+            if not combos:
+                continue
+
+            # Assume the first combo is task_type and the second is exe_name.
+            task_type_combo = combos[0]
+            exe_name_combo = combos[1] if len(combos) > 1 else None
+            button_index = task_type_combo.property("button_index")
+            current_task = self.button_info[button_index]
+
+            # Update task type combo
+            task_type_combo.blockSignals(True)
+            task_type_combo.setCurrentText(current_task["task_type"])
+            task_type_combo.blockSignals(False)
+
+            # Update exe name combo if available
+            if exe_name_combo:
+                exe_name_combo.blockSignals(True)
+                if current_task["task_type"] == "program_window_any":
+                    exe_name_combo.setCurrentText("")
+                    exe_name_combo.setEnabled(False)
+                else:
+                    exe_name_combo.setEnabled(True)
+                    # Look for the correct index based on stored exe_name
+                    exe_name = current_task["properties"].get("exe_name", "")
+                    found_index = -1
+                    for i in range(exe_name_combo.count()):
+                        if exe_name_combo.itemData(i) == exe_name:
+                            found_index = i
+                            break
+                    if found_index != -1:
+                        exe_name_combo.setCurrentIndex(found_index)
+                    else:
+                        exe_name_combo.setCurrentText(exe_name)
+                exe_name_combo.blockSignals(False)
+
+
     def closeEvent(self, event):
         """Handle unsaved changes on close."""
         if self.button_info.has_unsaved_changes:
@@ -299,6 +339,8 @@ class ButtonInfoEditor(QWidget):
                 self.save_changes()
                 event.accept()
             elif reply == QMessageBox.StandardButton.Discard:
+                self.button_info.load_json()  # Reload saved data
+                self.restore_values_from_model()  # Restore UI widgets from reloaded data
                 event.accept()
             else:
                 event.ignore()
