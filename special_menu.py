@@ -1,11 +1,12 @@
+import os
 import sys
+from pathlib import Path
 
 from PyQt6.QtCore import Qt, QEvent, QTimer, pyqtSignal
 from PyQt6.QtGui import QPainter, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel
 
 from GUI.toggle_switch import ToggleSwitch
-from clock import Clock
 from config import CONFIG
 from events import taskbar_event
 from functions.taskbar_hide_utils import toggle_taskbar, is_taskbar_visible
@@ -90,6 +91,17 @@ class SpecialMenu(QWidget):
                                                                "background-color: rgba(20, 20, 255, 2);"),
                                                            parent=self)
         QTimer.singleShot(0, self.trigger_toggle)
+
+        if getattr(sys, 'frozen', False):
+            self.startup_toggle = ToggleSwitch(
+                "StartupToggle",
+                label_text="Start with Windows",
+                on_action=SpecialMenu.add_to_startup,
+                off_action=SpecialMenu.remove_from_startup,
+                parent=self
+            )
+            toggles_layout.addWidget(self.startup_toggle)
+            self.startup_toggle.toggle.setCheckedWithoutAction(SpecialMenu.is_in_startup())
 
         # self.tray_icon_menu = TrayIconButtonsWindow(parent=self)
         # layout.addWidget(self.tray_icon_menu)
@@ -190,6 +202,50 @@ class SpecialMenu(QWidget):
         self.setWindowTitle("Special Menu")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+
+    @staticmethod
+    def is_portable():
+        if not getattr(sys, 'frozen', False):
+            return False
+        exe_path = Path(sys.executable)
+        program_files = os.environ.get('PROGRAMFILES', '')
+        return not str(exe_path).startswith(program_files)
+
+    @staticmethod
+    def get_startup_folder():
+        return os.path.join(os.getenv('APPDATA'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+
+    @staticmethod
+    def add_to_startup():
+        if not getattr(sys, 'frozen', False):
+            return
+
+        startup_path = os.path.join(SpecialMenu.get_startup_folder(), 'MightyPie.lnk')
+
+        from win32com.client import Dispatch
+
+        shell = Dispatch('WScript.Shell')
+        shortcut = shell.CreateShortCut(startup_path)
+        shortcut.Targetpath = sys.executable
+        shortcut.WorkingDirectory = os.path.dirname(sys.executable)
+        shortcut.save()
+
+    @staticmethod
+    def remove_from_startup():
+        if not getattr(sys, 'frozen', False):
+            return
+
+        startup_path = os.path.join(SpecialMenu.get_startup_folder(), 'MightyPie.lnk')
+        try:
+            os.remove(startup_path)
+        except (OSError, WindowsError):
+            pass
+
+    @staticmethod
+    def is_in_startup():
+        if not getattr(sys, 'frozen', False):
+            return False
+        return os.path.exists(os.path.join(SpecialMenu.get_startup_folder(), 'MightyPie.lnk'))
 
     def closeEvent(self, event):
         """Hide the window instead of closing it."""
