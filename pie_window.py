@@ -104,11 +104,12 @@ class PieWindow(QMainWindow):
         self.auto_refresh()
 
     def restart_program(self):
-        """Kill all instances and restart the program fresh."""
         current_pid = os.getpid()
         print(f"Restarting. Current PID: {current_pid}")
 
-        # Kill any other running instances of the program
+        if hasattr(sys, '_instance'):
+            sys._instance.release_for_restart()
+
         for proc in psutil.process_iter(attrs=['pid', 'name', 'cmdline']):
             try:
                 if proc.info['pid'] != current_pid and proc.info['cmdline']:
@@ -118,11 +119,9 @@ class PieWindow(QMainWindow):
             except psutil.NoSuchProcess:
                 pass
 
-        # Start a new instance
         new_process = subprocess.Popen([sys.executable] + sys.argv)
         print(f"New process started with PID: {new_process.pid}")
 
-        # Ensure current instance exits fully
         time.sleep(1)
         os._exit(0)
 
