@@ -1,9 +1,3 @@
-- projection switch on Function Pie Menu
-
-- more efficient re-assignment when window closes
-
-- only one instance?
-
 - window control pie menu: implement restart window
 
 - context menu for programs?

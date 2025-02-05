@@ -1,6 +1,8 @@
+import atexit
 import os
 import signal
 import sys
+import tempfile
 import threading
 import warnings
 
@@ -132,7 +134,46 @@ def signal_handler(signal, frame):
     sys.exit(0)
 
 
+class SingleInstance:
+    def __init__(self):
+        self.lockfile = os.path.join(tempfile.gettempdir(), 'mightypie.lock')
+
+        # Handle cleanup on Windows
+        if sys.platform == 'win32':
+            try:
+                if os.path.exists(self.lockfile):
+                    os.unlink(self.lockfile)
+                self.fd = os.open(self.lockfile, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+            except OSError:
+                sys.exit("Another instance is already running.")
+
+        # Handle cleanup on Unix
+        else:
+            import fcntl
+            self.fp = open(self.lockfile, 'w')
+            try:
+                fcntl.lockf(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                sys.exit("Another instance is already running.")
+
+        # Register cleanup
+        atexit.register(self.cleanup)
+
+    def cleanup(self):
+        if sys.platform == 'win32':
+            if hasattr(self, 'fd'):
+                os.close(self.fd)
+                os.unlink(self.lockfile)
+        else:
+            import fcntl
+            if hasattr(self, 'fp'):
+                fcntl.lockf(self.fp, fcntl.LOCK_UN)
+                self.fp.close()
+                os.unlink(self.lockfile)
+
 if __name__ == "__main__":
+    instance = SingleInstance()
+
     os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
 
     # Register signal handler for SIGINT (Ctrl+C) and SIGTERM (termination signals)
