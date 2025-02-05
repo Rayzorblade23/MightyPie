@@ -2,13 +2,14 @@ import os
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QEvent, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QEvent, QTimer, pyqtSignal, QProcess
 from PyQt6.QtGui import QPainter, QKeyEvent, QCursor
-from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel
+from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QPushButton
 
 from GUI.toggle_switch import ToggleSwitch
 from config import CONFIG
 from events import taskbar_event
+from functions.icon_functions_and_paths import get_icon
 from functions.taskbar_hide_utils import toggle_taskbar, is_taskbar_visible
 from invisible_ui import InvisibleUI
 from special_menu_DF_monitor_selector import MonitorSetupMenu
@@ -92,6 +93,14 @@ class SpecialMenu(QWidget):
                                                            parent=self)
         QTimer.singleShot(0, self.trigger_toggle)
 
+        # Settings for Startup
+        self.startup_toggle = ToggleSwitch(
+            "StartupToggle",
+            label_text="Start with Windows",
+            on_action=None,
+            off_action=None,
+            parent=self)
+
         if getattr(sys, 'frozen', False):
             self.startup_toggle = ToggleSwitch(
                 "StartupToggle",
@@ -102,6 +111,38 @@ class SpecialMenu(QWidget):
             )
             toggles_layout.addWidget(self.startup_toggle)
             self.startup_toggle.toggle.setCheckedWithoutAction(SpecialMenu.is_in_startup())
+
+        layout_startup = QHBoxLayout()
+        layout_startup.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Ensure left alignment
+
+        if self.startup_toggle:
+            layout_startup.addWidget(self.startup_toggle)
+        toggles_layout.addLayout(layout_startup)
+
+        # Button to open Startup Folder
+        self.startup_folder_button = QPushButton(" Startup", self)
+        self.startup_folder_button.setToolTip("Open Startup Folder")
+        self.startup_folder_button.setIcon(get_icon("folder-up", is_inverted=True))
+        self.startup_folder_button.clicked.connect(self.open_startup_folder)
+
+        # Button to open App Data Folder
+        self.app_config_folder_button = QPushButton(" App Data", self)
+        self.app_config_folder_button.setToolTip(f"Open {CONFIG._PROGRAM_NAME} App Data Folder")
+        self.app_config_folder_button.setIcon(get_icon("folder-settings", is_inverted=True))
+        self.app_config_folder_button.clicked.connect(self.open_app_data_directory)
+
+        # Button to open the Program Folder
+        self.program_folder_button = QPushButton(" Program", self)
+        self.program_folder_button.setToolTip(f"Open {CONFIG._PROGRAM_NAME} Program Folder")
+        self.program_folder_button.setIcon(get_icon("folder-star", is_inverted=True))
+        self.program_folder_button.clicked.connect(self.open_program_folder)
+
+        layout_app_folders = QHBoxLayout()
+        layout_app_folders.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Ensure left alignment
+        layout_app_folders.addWidget(self.startup_folder_button)
+        layout_app_folders.addWidget(self.app_config_folder_button)
+        layout_app_folders.addWidget(self.program_folder_button)
+        toggles_layout.addLayout(layout_app_folders)
 
         # self.tray_icon_menu = TrayIconButtonsWindow(parent=self)
         # layout.addWidget(self.tray_icon_menu)
@@ -246,6 +287,58 @@ class SpecialMenu(QWidget):
         if not getattr(sys, 'frozen', False):
             return False
         return os.path.exists(os.path.join(SpecialMenu.get_startup_folder(), 'MightyPie.lnk'))
+
+    @staticmethod
+    def _get_os_open_command():
+        """Returns the appropriate file explorer command for the current OS."""
+        os_commands = {
+            "nt": "explorer",
+            "posix": "xdg-open",
+            "darwin": "open"
+        }
+        return os_commands.get(os.name, "xdg-open")
+
+    @staticmethod
+    def _open_folder(path):
+        """Generic function to open a folder in the system's file explorer."""
+        if not os.path.exists(path):
+            os.makedirs(path, exist_ok=True)
+
+        command = SpecialMenu._get_os_open_command()
+        QProcess.startDetached(command, [path])
+
+    @staticmethod
+    def open_program_folder():
+        """Opens the folder where the program is located."""
+        if getattr(sys, 'frozen', False):
+            # Running in PyInstaller bundle
+            program_dir = os.path.dirname(sys.executable)
+        else:
+            # Running in development
+            program_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        SpecialMenu._open_folder(program_dir)
+
+    @staticmethod
+    def open_startup_folder():
+        """Opens the system startup folder."""
+        if os.name == "nt":
+            startup_folder = os.path.join(os.getenv("APPDATA"), "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
+        else:
+            # For macOS and Linux, you might want to implement their specific startup folder paths
+            startup_folder = os.path.expanduser("~")
+        SpecialMenu._open_folder(startup_folder)
+
+    @staticmethod
+    def open_app_data_directory():
+        """Opens the application data directory where configs are saved."""
+        base_dirs = {
+            "nt": os.path.join(os.environ.get('APPDATA', ''), CONFIG._PROGRAM_NAME),
+            "darwin": os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', CONFIG._PROGRAM_NAME),
+            "linux": os.path.join(os.path.expanduser('~'), '.config', CONFIG._PROGRAM_NAME)
+        }
+        config_dir = base_dirs.get(os.name, os.path.abspath('.'))
+        SpecialMenu._open_folder(config_dir)
 
     def closeEvent(self, event):
         """Hide the window instead of closing it."""

@@ -71,14 +71,14 @@ class ConfigManager(BaseConfig):
         # Compute derived values
         self.ACCENT_COLOR_MUTED = adjust_saturation(self.ACCENT_COLOR, 0.5)
 
-    def _get_config_directory(self) -> str:
-        """Determine the appropriate configuration directory."""
-        base_dirs = {
-            "win32": os.path.join(os.environ.get('APPDATA', ''), self._PROGRAM_NAME),
-            "darwin": os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', self._PROGRAM_NAME),
-            "linux": os.path.join(os.path.expanduser('~'), '.config', self._PROGRAM_NAME)
-        }
-        return base_dirs.get(os.name, os.path.abspath('.'))
+    # def _get_config_directory(self) -> str:
+    #     """Determine the appropriate configuration directory."""
+    #     base_dirs = {
+    #         "win32": os.path.join(os.environ.get('APPDATA', ''), self._PROGRAM_NAME),
+    #         "darwin": os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', self._PROGRAM_NAME),
+    #         "linux": os.path.join(os.path.expanduser('~'), '.config', self._PROGRAM_NAME)
+    #     }
+    #     return base_dirs.get(os.name, os.path.abspath('.'))
 
     def _get_default_config(self) -> dict:
         """Generate a default configuration dictionary."""

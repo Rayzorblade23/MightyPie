@@ -108,7 +108,6 @@ def add_hwnd_to_exclude(widget: QWidget):
 
     hwnd = int(widget.winId())  # Convert the voidptr to an integer
     hwnds_to_exclude.append(hwnd)
-    print(hwnds_to_exclude)
 
 def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple[str, str, int]]:
     """Enumerate and retrieve a list of visible windows
