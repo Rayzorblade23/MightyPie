@@ -7,6 +7,7 @@ import sys
 from typing import Dict, Tuple
 
 import psutil
+import pyautogui
 import win32api
 import win32con
 import win32gui
@@ -137,7 +138,7 @@ def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple
                     and raw_window_title.strip()  # Window must have a non-empty title
                     and class_name != "Progman"  # Exclude system windows like "Progman"
                     and class_name != "AutoHotkeyGUI"  # Exclude "AutoHotkey" windows
-                    and class_name != "TaskManagerWindow"  # Exclude Taskmanager
+                    # and class_name != "TaskManagerWindow"  # Exclude Taskmanager
                     and hwnd != this_program_hwnd  # Exclude this program
                     and CONFIG._PROGRAM_NAME not in raw_window_title  # exclude all windows of this program
 
@@ -233,6 +234,12 @@ def _get_pid_from_window_handle(hwnd):
 
 def focus_window_by_handle(hwnd):
     """Bring a main_window to the foreground and restore/maximize as needed."""
+    class_name = win32gui.GetClassName(hwnd)
+
+    if class_name == "TaskManagerWindow":
+        pyautogui.hotkey('ctrl', 'shift', 'esc')
+        return
+
     try:
         # Get the current window placement
         placement = win32gui.GetWindowPlacement(hwnd)

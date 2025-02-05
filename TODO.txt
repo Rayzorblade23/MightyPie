@@ -13,6 +13,8 @@ Also: reverse buttons via Window Name, instead of App Name
 
 
 BUGS:
+- MightyPie sometimes starts with smaller Pie Menus
+
 - Restarting breaks some buttons on the first go. Completely crashes on the second go.
 
 - when changing Fixed Slot to an occupied slot it won't kick the non-fixed app
