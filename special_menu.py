@@ -94,12 +94,7 @@ class SpecialMenu(QWidget):
         QTimer.singleShot(0, self.trigger_toggle)
 
         # Settings for Startup
-        self.startup_toggle = ToggleSwitch(
-            "StartupToggle",
-            label_text="Start with Windows",
-            on_action=None,
-            off_action=None,
-            parent=self)
+        self.startup_toggle = None
 
         if getattr(sys, 'frozen', False):
             self.startup_toggle = ToggleSwitch(
@@ -109,7 +104,6 @@ class SpecialMenu(QWidget):
                 off_action=SpecialMenu.remove_from_startup,
                 parent=self
             )
-            toggles_layout.addWidget(self.startup_toggle)
             self.startup_toggle.toggle.setCheckedWithoutAction(SpecialMenu.is_in_startup())
 
         layout_startup = QHBoxLayout()

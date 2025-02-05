@@ -4,8 +4,6 @@
 
 - disable for fullscreen applications?
 
-- autostart in windows
-
 
 IDEA:
 
@@ -17,17 +15,9 @@ Also: reverse buttons via Window Name, instead of App Name
 BUGS:
 - MightyPie sometimes starts with smaller Pie Menus
 
-- Restarting breaks some buttons on the first go. Completely crashes on the second go.
-
-- when changing Fixed Slot to an occupied slot it won't kick the non-fixed app
-
-- Special Menu doesn't hide every time when losing focus
-
-- simulated click to focus window is too low. open groups settings in Telegram
+- Special Menu doesn't hide every time when losing focus #############!!!!!!!!!!!!!
 
 - positioning not exactly right
-
-- sometimes focus-on-window makes the taskbar flash / throws an error but it still works
 
 - Spotify text is cut off when title changes (maybe fixed?!)
 
@@ -35,5 +25,3 @@ BUGS:
 
 
 BUGS in BUILD:
-
-- restart doesn't work right
