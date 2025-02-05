@@ -4,6 +4,8 @@
 
 - disable for fullscreen applications?
 
+- autostart in windows
+
 
 IDEA:
 

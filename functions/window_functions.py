@@ -99,6 +99,16 @@ app_cache = load_cache()
 
 manager = WindowManager.get_instance()
 
+# List to store HWNDs to exclude
+hwnds_to_exclude = []
+
+def add_hwnd_to_exclude(widget: QWidget):
+    """Adds the HWND of the given QWidget to the exclusion list."""
+    global hwnds_to_exclude
+
+    hwnd = int(widget.winId())  # Convert the voidptr to an integer
+    hwnds_to_exclude.append(hwnd)
+    print(hwnds_to_exclude)
 
 def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple[str, str, int]]:
     """Enumerate and retrieve a list of visible windows
@@ -138,9 +148,9 @@ def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple
                     and raw_window_title.strip()  # Window must have a non-empty title
                     and class_name != "Progman"  # Exclude system windows like "Progman"
                     and class_name != "AutoHotkeyGUI"  # Exclude "AutoHotkey" windows
-                    # and class_name != "TaskManagerWindow"  # Exclude Taskmanager
+                    # # and class_name != "TaskManagerWindow"  # Exclude Taskmanager
                     and hwnd != this_program_hwnd  # Exclude this program
-                    and CONFIG._PROGRAM_NAME not in raw_window_title  # exclude all windows of this program
+                    and hwnd not in hwnds_to_exclude
 
             ):
                 # entry for temp_window_hwnds_mapping

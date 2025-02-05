@@ -4,8 +4,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QPushButton, QWidget
 
 from config import CONFIG
-from functions.shortcut_utils import open_start_menu, open_action_center, open_explorer_window, open_onscreen_keyboard
+from functions.shortcut_utils import open_start_menu, open_explorer_window
 from functions.taskbar_hide_utils import toggle_taskbar
+from functions.window_functions import add_hwnd_to_exclude
 
 
 class InvisibleUI(QWidget):
@@ -16,6 +17,8 @@ class InvisibleUI(QWidget):
         self.obj_name = obj_name
         self.setWindowTitle(f"{CONFIG._PROGRAM_NAME} - InvisibleUI")  # Set the window title
         self.button_size = button_size  # Button size variable
+
+        add_hwnd_to_exclude(self)
 
         # Set up window properties
         self.setup_window()
