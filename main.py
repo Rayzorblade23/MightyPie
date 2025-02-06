@@ -12,7 +12,7 @@ import keyboard
 from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import (
     QApplication,
-    QWidget, )
+    QWidget, QMessageBox, )
 
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
@@ -145,14 +145,27 @@ class SingleInstance:
                     os.unlink(self.lockfile)
                 self.fd = os.open(self.lockfile, os.O_CREAT | os.O_EXCL | os.O_RDWR)
             except OSError:
-                sys.exit("Another instance is already running.")
+                self._show_messagebox()
         else:
             import fcntl
             self.fp = open(self.lockfile, 'w')
             try:
                 fcntl.lockf(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except IOError:
-                sys.exit("Another instance is already running.")
+                self._show_messagebox()
+
+    def _show_messagebox(self):
+        app = QApplication.instance()  # Check if QApplication already exists
+        if not app:  # Create only if needed
+            app = QApplication(sys.argv)
+
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Warning)
+        msg.setWindowTitle("Already Running")
+        msg.setText("It's already runnin', mate!")
+        msg.exec()
+
+        sys.exit(1)  # Ensure the program exits after showing the message
 
     def cleanup(self):
         if sys.platform == 'win32':
