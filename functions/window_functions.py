@@ -103,12 +103,14 @@ manager = WindowManager.get_instance()
 # List to store HWNDs to exclude
 hwnds_to_exclude = []
 
+
 def add_hwnd_to_exclude(widget: QWidget):
     """Adds the HWND of the given QWidget to the exclusion list."""
     global hwnds_to_exclude
 
     hwnd = int(widget.winId())  # Convert the voidptr to an integer
     hwnds_to_exclude.append(hwnd)
+
 
 def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple[str, str, int]]:
     """Enumerate and retrieve a list of visible windows
@@ -230,6 +232,18 @@ def assign_instance_numbers(temp_window_hwnds_mapping: Dict[int, Tuple[str, str,
 
         # print(result_mapping)
     return result_mapping
+
+
+def focus_all_explorer_windows():
+    """Focuses all open Explorer Windows"""
+    explorer_hwnds = []
+    window_mapping = manager.get_window_hwnd_mapping()
+
+    for hwnd, (title, exe_name, _) in window_mapping.items():
+        # Explorer windows typically show up with "File Explorer" or "Windows Explorer" as the exe_name
+        if exe_name == "explorer.exe":
+            explorer_hwnds.append(hwnd)
+            focus_window_by_handle(hwnd)
 
 
 def _get_pid_from_window_handle(hwnd):
@@ -652,6 +666,7 @@ def minimize_window_at_cursor(pie_window: QWidget):
     else:
         print("No valid window found under cursor")
 
+
 def minimize_window_by_hwnd(hwnd):
     window_handle = hwnd
 
@@ -673,6 +688,7 @@ def minimize_window_by_hwnd(hwnd):
         print("Window minimized successfully")
     else:
         print("No valid window found under cursor")
+
 
 def restore_last_minimized_window():
     """Restores a maximized window under the cursor and brings it to the foreground."""

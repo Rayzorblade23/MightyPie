@@ -13,9 +13,11 @@ EXTERNAL_ICON_PATHS = {
     "projection": get_resource_path(os.path.join("external_icons", "device-desktop.png")),
     "touch_keyboard": get_resource_path(os.path.join("external_icons", "keyboard.png")),
     "folder": get_resource_path(os.path.join("external_icons", "folder.png")),
+    "folders": get_resource_path(os.path.join("external_icons", "folders.png")),
     "folder-up": get_resource_path(os.path.join("external_icons", "folder-up.png")),
     "folder-settings": get_resource_path(os.path.join("external_icons", "folder-settings.png")),
     "folder-star": get_resource_path(os.path.join("external_icons", "folder-star.png")),
+    "folder-exclamation": get_resource_path(os.path.join("external_icons", "folder-exclamation.png")),
     "taskman": get_resource_path(os.path.join("external_icons", "subtask.png")),
     "browser_maximize": get_resource_path(os.path.join("external_icons", "browser-maximize.png")),
     "square_x": get_resource_path(os.path.join("external_icons", "square-x.png")),
@@ -31,6 +33,7 @@ EXTERNAL_ICON_PATHS = {
     "palette": get_resource_path(os.path.join("external_icons", "palette.png")),
     "arrow-right": get_resource_path(os.path.join("external_icons", "arrow-right.png")),
     "change": get_resource_path(os.path.join("external_icons", "change.png")),
+    "cake": get_resource_path(os.path.join("external_icons", "cake.png")),
 }
 
 # Load the icon based on the inverted_icons flag

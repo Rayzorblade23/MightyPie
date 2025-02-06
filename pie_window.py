@@ -20,7 +20,7 @@ from events import ShowWindowEvent, HotkeyReleaseEvent
 from functions.icon_functions_and_paths import EXTERNAL_ICON_PATHS
 from functions.window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
     close_window_by_handle, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app, \
-    cache_being_cleared, restore_last_minimized_window
+    cache_being_cleared, restore_last_minimized_window, focus_all_explorer_windows
 from pie_menu import PieMenu
 from special_menu import SpecialMenu
 from window_manager import WindowManager
@@ -103,7 +103,6 @@ class PieWindow(QMainWindow):
         screen.geometryChanged.connect(self.handle_geometry_change)
 
         self.auto_refresh()
-
 
     @staticmethod
     def restart_program():
@@ -241,6 +240,7 @@ class PieWindow(QMainWindow):
         actual_self = self
         self.pm_win_control.pie_buttons: List[PieButton]
 
+        # N Button
         self.pm_win_control.pie_buttons[0].set_label_1_text("MAXIMIZE")
         self.pm_win_control.pie_buttons[0].set_left_click_action(lambda: (
             self.hide(),
@@ -248,6 +248,7 @@ class PieWindow(QMainWindow):
         ))
         self.pm_win_control.pie_buttons[0].update_icon(EXTERNAL_ICON_PATHS.get("window_maximize"), is_invert_icon=True)
 
+        # NE Button
         self.pm_win_control.pie_buttons[1].set_label_1_text("Restore Minimized")
         self.pm_win_control.pie_buttons[1].set_left_click_action(lambda: (
             self.hide(),
@@ -255,6 +256,7 @@ class PieWindow(QMainWindow):
         ))
         self.pm_win_control.pie_buttons[1].update_icon(EXTERNAL_ICON_PATHS.get("change"), is_invert_icon=True)
 
+        # E Button
         self.pm_win_control.pie_buttons[2].set_label_1_text("Forward!")
         self.pm_win_control.pie_buttons[2].set_left_click_action(lambda: (
             self.hide(),
@@ -263,9 +265,16 @@ class PieWindow(QMainWindow):
         self.pm_win_control.pie_buttons[2].setEnabled(True)  # Disable the button
         self.pm_win_control.pie_buttons[2].update_icon(EXTERNAL_ICON_PATHS.get("arrow-right"), is_invert_icon=True)
 
-        self.pm_win_control.pie_buttons[3].set_label_1_text("")
-        self.pm_win_control.pie_buttons[3].setEnabled(False)  # Disable the button
+        # SE Button
+        self.pm_win_control.pie_buttons[3].set_label_1_text("Get All Expl. Win.")
+        self.pm_win_control.pie_buttons[3].set_left_click_action(lambda: (
+            self.hide(),
+            QTimer.singleShot(0, lambda: focus_all_explorer_windows()),
+        ))
+        self.pm_win_control.pie_buttons[3].setEnabled(True)  # Disable the button
+        self.pm_win_control.pie_buttons[3].update_icon(EXTERNAL_ICON_PATHS.get("folders"), is_invert_icon=True)
 
+        # S Button
         self.pm_win_control.pie_buttons[4].set_label_1_text("Minimize")
         self.pm_win_control.pie_buttons[4].set_left_click_action(lambda: (
             self.hide(),
@@ -273,12 +282,15 @@ class PieWindow(QMainWindow):
         ))
         self.pm_win_control.pie_buttons[4].update_icon(EXTERNAL_ICON_PATHS.get("window_minimize"), is_invert_icon=True)
 
+        # SW Button
         self.pm_win_control.pie_buttons[5].set_label_1_text("")
         self.pm_win_control.pie_buttons[5].setEnabled(False)  # Disable the button
 
+        # W Button
         self.pm_win_control.pie_buttons[6].set_label_1_text("")
         self.pm_win_control.pie_buttons[6].setEnabled(False)  # Disable the button
 
+        # NW Button
         self.pm_win_control.pie_buttons[7].set_label_1_text("")
         self.pm_win_control.pie_buttons[7].setEnabled(False)  # Disable the button
 

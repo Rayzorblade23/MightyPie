@@ -45,7 +45,7 @@ class AppSettingsMenu(QWidget):
         # (icon_name, tooltip, click_action)
         buttons_data = [
             ("shredder", "Clear App Info Cache", lambda: clear_cache(self)),
-            ("dots-circle", "Open the Button Config", lambda: self.open_button_info_editor()),
+            ("cake", "Open the Button Config", lambda: self.open_button_info_editor()),
             ("settings", "Open the App Settings", lambda: self.open_settings_window()),
             ("restart", "Restart Program", lambda: self.parent().main_window.restart_program()),
             ("quit", "Quit Program", lambda: self.parent().main_window.quit_program()),
