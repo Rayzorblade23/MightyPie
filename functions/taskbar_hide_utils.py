@@ -138,7 +138,6 @@ def hide_taskbar():
 
 def toggle_taskbar():
     """Toggle the taskbar visibility and emit event."""
-
     if not is_taskbar_visible():
         show_taskbar()
     else:

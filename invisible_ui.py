@@ -1,10 +1,11 @@
 import sys
+from functools import partial
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QPushButton, QWidget
 
 from config import CONFIG
-from functions.shortcut_utils import open_start_menu, open_explorer_window
+from functions.shortcut_utils import open_start_menu, open_explorer_window, open_action_center
 from functions.taskbar_hide_utils import toggle_taskbar
 from functions.window_functions import add_hwnd_to_exclude
 
@@ -23,33 +24,45 @@ class InvisibleUI(QWidget):
         # Set up window properties
         self.setup_window()
 
-        # Create buttons
-        self.btn_btm_left = QPushButton("", self)
-        self.btn_btm_left.setObjectName("InvisibleButton")
-        # self.btn_btm_right = QPushButton("", self)
-        # self.btn_btm_right.setObjectName("InvisibleButton")
-        self.btn_btm_center = QPushButton("", self)
-        self.btn_btm_center.setObjectName("InvisibleButton")
-        self.btn_ctr_left = QPushButton("", self)
-        self.btn_ctr_left.setObjectName("InvisibleButton")
+        self.button_config = {
+            # "btn_btm_left": ((90, self.button_size), partial(open_start_menu, self, hide_parent=False)),
+            # "btn_btm_right": ((90, self.button_size), partial(open_action_center, self, hide_parent=False)),
+            "btn_btm_center": ((1000, self.button_size), lambda: toggle_taskbar()),
+            "btn_ctr_left": ((self.button_size, 600), partial(open_explorer_window, self, hide_parent=False)),
+        }
 
-        # Set button sizes
-        self.btn_btm_left.setFixedSize(90, self.button_size)
-        # self.btn_btm_right.setFixedSize(90, self.button_size)
-        self.btn_btm_center.setFixedSize(1000, self.button_size)
-        self.btn_ctr_left.setFixedSize(self.button_size, 600)
-
-        # Connect buttons to print functions
-        self.btn_btm_left.clicked.connect(lambda: open_start_menu(self, hide_parent=False))
-        # self.btn_btm_right.clicked.connect(lambda: open_action_center(self, hide_parent=False))
-        self.btn_btm_center.clicked.connect(lambda: toggle_taskbar())
-        self.btn_ctr_left.clicked.connect(lambda: open_explorer_window(self, hide_parent=False))
-
-        # Initial position of buttons
+        self.create_buttons()
         self.position_buttons()
 
         screen = QApplication.primaryScreen()
         screen.geometryChanged.connect(self.handle_geometry_change)
+
+    def create_buttons(self):
+        """Initialize buttons with properties."""
+        self.buttons = {}
+        for name, (size, callback) in self.button_config.items():
+            button = QPushButton("", self)
+            button.setObjectName("InvisibleButton")
+            button.setFixedSize(*size)
+
+            # Rename the callback inside the lambda to avoid conflict
+            button.clicked.connect(lambda _, cb=callback: cb())
+
+            setattr(self, name, button)
+            self.buttons[name] = button
+
+    def position_buttons(self):
+        """Position available buttons dynamically."""
+        if "btn_btm_left" in self.buttons:
+            self.buttons["btn_btm_left"].move(0, self.height() - self.buttons["btn_btm_left"].height())
+        if "btn_btm_right" in self.buttons:
+            self.buttons["btn_btm_right"].move(self.width() - self.buttons["btn_btm_right"].width(),
+                                               self.height() - self.buttons["btn_btm_right"].height())
+        if "btn_btm_center" in self.buttons:
+            self.buttons["btn_btm_center"].move(self.width() // 2 - self.buttons["btn_btm_center"].width() // 2,
+                                                self.height() - self.buttons["btn_btm_center"].height())
+        if "btn_ctr_left" in self.buttons:
+            self.buttons["btn_ctr_left"].move(0, self.height() // 2 - self.buttons["btn_ctr_left"].height() // 2)
 
     def handle_geometry_change(self):
         screen = QApplication.primaryScreen()
@@ -73,16 +86,6 @@ class InvisibleUI(QWidget):
         """Reposition buttons when the window is resized."""
         super().resizeEvent(event)
         self.position_buttons()
-
-    def position_buttons(self):
-        """Position the buttons at the bottom-left and bottom-right corners."""
-        # Move buttons to the bottom-left and bottom-right corners
-        self.btn_btm_left.move(0, self.height() - self.btn_btm_left.height())  # Align with the bottom-left corner
-        # self.btn_btm_right.move(self.width() - self.btn_btm_right.width(),
-        #                         self.height() - self.btn_btm_right.height())  # Align with the bottom-right corner
-        self.btn_btm_center.move(self.width() // 2 - self.btn_btm_center.width() // 2,
-                                 self.height() - self.btn_btm_center.height())  # Align with the bottom center
-        self.btn_ctr_left.move(0, self.height() // 2 - self.btn_ctr_left.height() // 2)  # Align with the center left edge
 
     def on_button_left_clicked(self):
         """Print message when the left button is clicked."""
