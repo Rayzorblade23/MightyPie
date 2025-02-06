@@ -24,8 +24,9 @@ class SpecialMenu(QWidget):
 
         super().__init__(parent)
         self.obj_name = obj_name
-
         self.main_window = main_window
+        self.ignore_next_focus_out = False
+        self.mouse_pressed_inside = False
 
         layout = QVBoxLayout(self)
 
@@ -205,8 +206,9 @@ class SpecialMenu(QWidget):
         # Set the widget to accept focus
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
-        # Install the event filter
+        # Install both application-wide and widget-specific event filters
         QApplication.instance().installEventFilter(self)
+        self.installEventFilter(self)
 
     def initialize_taskbar_toggle(self):
         """Initialize the taskbar toggle based on the current visibility state."""
@@ -339,13 +341,35 @@ class SpecialMenu(QWidget):
         self.hide()
         event.ignore()  # Prevent the default close behavior
 
+    def mousePressEvent(self, event):
+        """Track when mouse is pressed inside the window"""
+        self.mouse_pressed_inside = True
+        self.ignore_next_focus_out = True
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        """Reset mouse tracking flags"""
+        self.mouse_pressed_inside = False
+        self.ignore_next_focus_out = False
+        super().mouseReleaseEvent(event)
+
     def focusOutEvent(self, event):
-        """Hide the window when it loses focus, but not if the focus is from clicking inside the menu."""
-        # Check if the mouse is still inside the window when the event occurs
-        if not self.rect().contains(self.mapFromGlobal(QCursor.pos())):
+        """Improved focus out handling"""
+        if self.ignore_next_focus_out:
+            self.ignore_next_focus_out = False
+            event.ignore()
+            return
+
+        # Get the current mouse position relative to the window
+        mouse_pos = self.mapFromGlobal(QCursor.pos())
+
+        # Check if the mouse is inside any child widget
+        child_widget = self.childAt(mouse_pos)
+
+        if not self.rect().contains(mouse_pos) or not child_widget:
             self.hide()
         else:
-            event.ignore()  # Ignore the event so the menu doesn't hide
+            event.ignore()
 
     def keyPressEvent(self, event: QKeyEvent):
         """Hide the window when pressing the Escape key."""
@@ -355,11 +379,33 @@ class SpecialMenu(QWidget):
             super().keyPressEvent(event)  # Pass other key events to the parent
 
     def eventFilter(self, obj, event):
-        """Event filter to track mouse clicks outside the window."""
+        """Enhanced event filter for better click-outside detection"""
         if event.type() == QEvent.Type.MouseButtonPress:
-            if self.isVisible() and not self.rect().contains(event.pos()):
-                self.hide()  # Hide the window if clicked outside
+            # Get mouse position relative to this widget
+            mouse_pos = self.mapFromGlobal(QCursor.pos())
+
+            # If the window is visible and click is outside
+            if self.isVisible():
+                # Check if click is outside the window
+                if not self.rect().contains(mouse_pos):
+                    self.hide()
+                    return True  # Event handled
+                else:
+                    # Click is inside, set focus to the window
+                    self.setFocus()
+                    self.ignore_next_focus_out = True
+
+        elif event.type() == QEvent.Type.MouseButtonRelease:
+            self.ignore_next_focus_out = False
+
         return super().eventFilter(obj, event)
+
+    def showEvent(self, event):
+        """Ensure proper focus when showing the window"""
+        super().showEvent(event)
+        self.setFocus()
+        self.ignore_next_focus_out = False
+        self.mouse_pressed_inside = False
 
 
 if __name__ == "__main__":
