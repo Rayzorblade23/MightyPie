@@ -25,6 +25,7 @@ class BaseConfig:
     TASKBAR_OPACITY: int = 150
     HOTKEY_OPEN_TASKS: str = "F14"
     HOTKEY_OPEN_WINCON: str = "F13"
+    HIDE_WINDOW_WHEN_ALREADY_FOCUSED: bool = True
 
     # Monitor and display settings
     SHOW_MONITOR_SECTION: bool = True

@@ -74,12 +74,11 @@ def listen_for_hotkeys(main_window: QWidget):
         nonlocal can_open_window, initial_mouse_pos
         # Get current mouse position
         current_mouse_pos = QCursor.pos()
-        child_window = None
         # Check if the mouse has moved beyond a threshold (e.g., 10 pixels)
         if (initial_mouse_pos is not None and
                 (abs(current_mouse_pos.x() - initial_mouse_pos.x()) <= 35) and
                 (abs(current_mouse_pos.y() - initial_mouse_pos.y()) <= 35)):
-            print("Mouse released without movement.")
+            # print("Mouse released without movement.")
             can_open_window = True
 
         else:
