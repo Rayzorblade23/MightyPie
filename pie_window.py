@@ -8,6 +8,7 @@ from threading import Lock
 from typing import Dict, List, Tuple
 
 import psutil
+import pyautogui
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer, QPoint, QCoreApplication
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication
@@ -252,9 +253,15 @@ class PieWindow(QMainWindow):
             self.hide(),
             QTimer.singleShot(0, lambda: restore_last_minimized_window()),
         ))
+        self.pm_win_control.pie_buttons[1].update_icon(EXTERNAL_ICON_PATHS.get("change"), is_invert_icon=True)
 
-        self.pm_win_control.pie_buttons[2].set_label_1_text("")
-        self.pm_win_control.pie_buttons[2].setEnabled(False)  # Disable the button
+        self.pm_win_control.pie_buttons[2].set_label_1_text("Forward!")
+        self.pm_win_control.pie_buttons[2].set_left_click_action(lambda: (
+            self.hide(),
+            QTimer.singleShot(0, lambda: pyautogui.hotkey('alt', 'right')),
+        ))
+        self.pm_win_control.pie_buttons[2].setEnabled(True)  # Disable the button
+        self.pm_win_control.pie_buttons[2].update_icon(EXTERNAL_ICON_PATHS.get("arrow-right"), is_invert_icon=True)
 
         self.pm_win_control.pie_buttons[3].set_label_1_text("")
         self.pm_win_control.pie_buttons[3].setEnabled(False)  # Disable the button

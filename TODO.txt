@@ -15,8 +15,6 @@ Also: reverse buttons via Window Name, instead of App Name
 BUGS:
 - MightyPie sometimes starts with smaller Pie Menus
 
-- Special Menu doesn't hide every time when losing focus #############!!!!!!!!!!!!!
-
 - positioning not exactly right
 
 - Spotify text is cut off when title changes (maybe fixed?!)

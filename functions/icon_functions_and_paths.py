@@ -29,6 +29,8 @@ EXTERNAL_ICON_PATHS = {
     "circles": get_resource_path(os.path.join("external_icons", "circles.png")),
     "dots-circle": get_resource_path(os.path.join("external_icons", "dots-circle.png")),
     "palette": get_resource_path(os.path.join("external_icons", "palette.png")),
+    "arrow-right": get_resource_path(os.path.join("external_icons", "arrow-right.png")),
+    "change": get_resource_path(os.path.join("external_icons", "change.png")),
 }
 
 # Load the icon based on the inverted_icons flag
