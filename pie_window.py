@@ -103,7 +103,9 @@ class PieWindow(QMainWindow):
 
         self.auto_refresh()
 
-    def restart_program(self):
+
+    @staticmethod
+    def restart_program():
         current_pid = os.getpid()
         print(f"Restarting. Current PID: {current_pid}")
 

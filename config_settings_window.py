@@ -9,6 +9,12 @@ from functions.file_handling_functions import get_resource_path
 from functions.icon_functions_and_paths import get_icon
 
 
+class NoScrollSpinBox(QSpinBox):
+    """QComboBox that ignores mouse wheel scrolling."""
+
+    def wheelEvent(self, event):
+        event.ignore()  # Prevents the wheel from changing the selection
+
 class ConfigSettingsWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -41,12 +47,17 @@ class ConfigSettingsWindow(QMainWindow):
         save_button = QPushButton("Save Settings")
         save_button.clicked.connect(self.save_settings)
 
+        # Save and Restart button
+        save_and_restart_button = QPushButton("Save && Restart")
+        save_and_restart_button.clicked.connect(self.save_settings_and_restart)
+
         # Reset button
         reset_button = QPushButton("Reset to Defaults")
         reset_button.clicked.connect(self.reset_to_defaults)
 
         # Assemble button layout
         button_layout.addWidget(save_button)
+        button_layout.addWidget(save_and_restart_button)
         button_layout.addWidget(reset_button)
 
         # Assemble main layout
@@ -55,6 +66,8 @@ class ConfigSettingsWindow(QMainWindow):
 
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
+
+
 
     def _create_setting_input(self, setting):
         row_layout = QHBoxLayout()
@@ -70,7 +83,7 @@ class ConfigSettingsWindow(QMainWindow):
             input_widget.setChecked(setting['value'])
             row_layout.addWidget(input_widget)
         elif setting['type'] in ["<class 'int'>", "<class 'float'>"]:
-            input_widget = QSpinBox()
+            input_widget = NoScrollSpinBox()
             input_widget.setRange(1, 9999)  # Set appropriate min/max range
             input_widget.setValue(setting['value'])
             row_layout.addWidget(input_widget)
@@ -153,6 +166,14 @@ class ConfigSettingsWindow(QMainWindow):
             CONFIG.update_setting(name, value)
         self.close()
 
+    def save_settings_and_restart(self):
+        from pie_window import PieWindow
+
+        for name, widget in self.setting_widgets.items():
+            value = self._get_widget_value(widget)
+            CONFIG.update_setting(name, value)
+        PieWindow.restart_program()
+
     def reset_to_defaults(self):
         # Create a confirmation dialog
         reply = QMessageBox.question(
@@ -171,7 +192,7 @@ class ConfigSettingsWindow(QMainWindow):
 
                 if isinstance(widget, QCheckBox):
                     widget.setChecked(default_value)
-                elif isinstance(widget, QSpinBox):
+                elif isinstance(widget, NoScrollSpinBox):
                     widget.setValue(default_value)
                 elif isinstance(widget, QLineEdit):
                     widget.setText(str(default_value))
@@ -190,7 +211,7 @@ class ConfigSettingsWindow(QMainWindow):
 
         if isinstance(widget, QCheckBox):
             widget.setChecked(default_value)
-        elif isinstance(widget, QSpinBox):
+        elif isinstance(widget, NoScrollSpinBox):
             widget.setValue(default_value)
         elif isinstance(widget, QLineEdit):
             widget.setText(str(default_value))
@@ -202,7 +223,7 @@ class ConfigSettingsWindow(QMainWindow):
     def _get_widget_value(self, widget):
         if isinstance(widget, QCheckBox):
             return widget.isChecked()
-        elif isinstance(widget, QSpinBox):
+        elif isinstance(widget, NoScrollSpinBox):
             return widget.value()
         elif isinstance(widget, QLineEdit):
             return widget.text()
