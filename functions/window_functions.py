@@ -25,7 +25,6 @@ from window_manager import WindowManager
 
 cache_being_cleared = False
 last_minimized_hwnd = 0
-last_focused_hwnd = 0
 
 APP_NAME = CONFIG._PROGRAM_NAME
 CACHE_FILENAME = CONFIG._CACHE_FILENAME
@@ -258,19 +257,15 @@ def _get_pid_from_window_handle(hwnd):
 
 def focus_window_by_handle(hwnd):
     """Bring a main_window to the foreground and restore/maximize as needed."""
-    global last_focused_hwnd
-
     class_name = win32gui.GetClassName(hwnd)
 
     if class_name == "TaskManagerWindow":
         pyautogui.hotkey('ctrl', 'shift', 'esc')
         return
 
-    if hwnd == last_focused_hwnd and CONFIG.HIDE_WINDOW_WHEN_ALREADY_FOCUSED:
+    if hwnd == win32gui.GetForegroundWindow() and CONFIG.HIDE_WINDOW_WHEN_ALREADY_FOCUSED:
         minimize_window_by_hwnd(hwnd)
         return
-
-    last_focused_hwnd = hwnd
 
     try:
         # Get the current window placement
@@ -682,9 +677,7 @@ def minimize_window_by_hwnd(hwnd):
         win32gui.ShowWindow(root_handle, win32con.SW_MINIMIZE)
 
         global last_minimized_hwnd
-        global last_focused_hwnd
         last_minimized_hwnd = root_handle
-        last_focused_hwnd = 0
         print("Window minimized successfully")
     else:
         print("No valid window found under cursor")
