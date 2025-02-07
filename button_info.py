@@ -8,7 +8,19 @@ from json_utils import JSONManager
 
 
 class ButtonInfo:
+    _instance = None  # Class-level variable for the singleton instance
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.__initialized = False  # Prevent re-initialization
+        return cls._instance
+
     def __init__(self):
+        if self.__initialized:
+            return  # Skip re-initialization
+        self.__initialized = True
+
         self.button_info_dict: Dict[int, Dict[str, Any]] = {}
         self.has_unsaved_changes = False
 
@@ -41,6 +53,8 @@ class ButtonInfo:
         else:
             self.logger.error("Error saving configuration.")
             return False
+
+
 
     def update_button(self, index, update_dict):
         """Update a button's configuration (but don't save to file)"""
@@ -171,6 +185,7 @@ class ButtonInfo:
         self.button_info_dict[index] = value
         self.save_to_json()
 
+
     def __iter__(self):
         """Allow iteration over the keys of button_info_dict."""
         return iter(self.button_info_dict)
@@ -215,3 +230,8 @@ class ButtonInfo:
     def get_all_tasks(self):
         """Returns all tasks."""
         return self.button_info_dict
+
+    @classmethod
+    def get_instance(cls):
+        """Get the singleton instance of ButtonInfo."""
+        return cls()

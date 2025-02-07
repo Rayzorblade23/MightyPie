@@ -25,7 +25,7 @@ from pie_menu import PieMenu
 from special_menu import SpecialMenu
 from window_manager import WindowManager
 
-manager = WindowManager.get_instance()
+
 
 
 class PieWindow(QMainWindow):
@@ -61,6 +61,9 @@ class PieWindow(QMainWindow):
         self.scene.setSceneRect(0, 0, screen_width, screen_height)
 
         self.setup_window()
+
+        self.manager = WindowManager.get_instance()
+        self.button_info: ButtonInfo = ButtonInfo.get_instance()
 
         self.pie_menu_pos = QPoint()
         self.button_mapping_lock = Lock()
@@ -305,8 +308,7 @@ class PieWindow(QMainWindow):
                 print("DANGER! CACHE IS BEING CLEARED. SKIP.")
                 return
 
-            button_info = ButtonInfo()
-            all_open_windows_info_by_hwnd = manager.get_window_hwnd_mapping()
+            all_open_windows_info_by_hwnd = self.manager.get_window_hwnd_mapping()
             app_info_cache = load_cache()
             final_button_updates = []
             processed_handles = set()
@@ -337,19 +339,19 @@ class PieWindow(QMainWindow):
 
             def process_fixed_buttons() -> None:
                 """Ensure fixed buttons retain their assigned windows or remain empty."""
-                fixed_buttons = button_info.filter_buttons("task_type", "program_window_fixed")
+                fixed_buttons = self.button_info.filter_buttons("task_type", "program_window_fixed")
 
                 # Track which windows were originally assigned to fixed buttons
                 fixed_windows: Dict[int, int] = {}  # {button_index: hwnd}
                 for hwnd, button_index in self.windowHandles_To_buttonIndexes_map.items():
-                    if button_index in {index for index, btn in button_info.items() if btn.get("task_type") == "program_window_fixed"}:
+                    if button_index in {index for index, btn in self.button_info.items() if btn.get("task_type") == "program_window_fixed"}:
                         fixed_windows[button_index] = hwnd
 
                 # Track windows already assigned to fixed buttons
                 already_assigned_windows: Set[int] = set(fixed_windows.values())
 
                 for button in fixed_buttons:
-                    button_index = next((index for index, b in button_info.items() if b is button), None)
+                    button_index = next((index for index, b in self.button_info.items() if b is button), None)
                     if button_index is None:
                         continue
 
@@ -446,7 +448,7 @@ class PieWindow(QMainWindow):
 
             # Pre-calculate fixed button information
             self.fixed_button_indexes = {
-                index for index, btn in button_info.items()
+                index for index, btn in self.button_info.items()
                 if btn.get("task_type") == "program_window_fixed"
             }
 

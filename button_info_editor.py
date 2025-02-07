@@ -15,7 +15,7 @@ from json_utils import JSONManager
 class ButtonInfoEditor(QWidget):
     def __init__(self):
         super().__init__()
-        self.button_info = ButtonInfo()
+        self.button_info = ButtonInfo.get_instance()
 
         # Available options for dropdowns
         self.task_types = ["program_window_fixed", "program_window_any"]
