@@ -437,7 +437,6 @@ class PieWindow(QMainWindow):
                         if hwnd not in processed_handles and hwnd not in self.fixed_windows:
                             update = create_button_update(button_index, hwnd, title, exe_name, instance)
                             if update:
-                                print(f"{title} in  Pie Menu {pie_menu_index}")
                                 final_button_updates.append(update)
                                 processed_handles.add(hwnd)
                                 self.windowHandles_To_buttonIndexes_map[hwnd] = button_index
@@ -536,7 +535,7 @@ class PieWindow(QMainWindow):
             task_switcher.pie_buttons[index].set_middle_click_action(
                 lambda hwnd=window_handle: (
                     QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
-                    self.refresh(),
+                    QTimer.singleShot(10, lambda: self.auto_refresh()),
                 )
             )
             task_switcher.pie_buttons[index].setEnabled(True)
