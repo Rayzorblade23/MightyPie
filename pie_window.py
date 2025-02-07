@@ -535,7 +535,7 @@ class PieWindow(QMainWindow):
             task_switcher.pie_buttons[index].set_middle_click_action(
                 lambda hwnd=window_handle: (
                     QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
-                    QTimer.singleShot(10, lambda: self.auto_refresh()),
+                    QTimer.singleShot(100, lambda: self.auto_refresh()),
                 )
             )
             task_switcher.pie_buttons[index].setEnabled(True)
