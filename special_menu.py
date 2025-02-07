@@ -1,10 +1,13 @@
+import ctypes
 import os
+import subprocess
 import sys
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QEvent, QTimer, pyqtSignal, QProcess
 from PyQt6.QtGui import QPainter, QKeyEvent, QCursor
-from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QPushButton
+from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QPushButton, \
+    QMessageBox
 
 from GUI.toggle_switch import ToggleSwitch
 from config import CONFIG
@@ -45,7 +48,7 @@ class SpecialMenu(QWidget):
         # Taskbar toggle switch
         self.taskbar_toggle = ToggleSwitch(
             "TaskbarToggle",
-            label_text="Toggle Taskbar",
+            label_text="Toggle Taskbar Visibility",
             on_action=self.toggle_taskbar_action,
             off_action=self.toggle_taskbar_action,
             parent=self
@@ -96,29 +99,38 @@ class SpecialMenu(QWidget):
 
         # Settings for Startup
         self.startup_toggle = None
-
-        if getattr(sys, 'frozen', False):
-            self.startup_toggle = ToggleSwitch(
-                "StartupToggle",
-                label_text="Start with Windows",
-                on_action=SpecialMenu.add_to_startup,
-                off_action=SpecialMenu.remove_from_startup,
-                parent=self
-            )
-            self.startup_toggle.toggle.setCheckedWithoutAction(SpecialMenu.is_in_startup())
+        self.label_not_admin = None
 
         layout_startup = QHBoxLayout()
         layout_startup.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Ensure left alignment
 
+        # Check if running with admin privileges
+        if ctypes.windll.shell32.IsUserAnAdmin():
+            print("Running as admin. Making Startup Options available.")
+            # Check if this is the Build
+            if getattr(sys, 'frozen', False):
+                self.startup_toggle = ToggleSwitch(
+                    "StartupToggle",
+                    label_text="Start with Windows",
+                    on_action=SpecialMenu.add_to_startup,
+                    off_action=SpecialMenu.remove_from_startup,
+                    parent=self
+                )
+                self.startup_toggle.toggle.setCheckedWithoutAction(SpecialMenu.is_in_startup())
+        else:
+            self.label_not_admin = QLabel(" Run as admin to get 'Run At Startup' Toggle.")
+
         if self.startup_toggle:
             layout_startup.addWidget(self.startup_toggle)
+        if self.label_not_admin:
+            layout_startup.addWidget(self.label_not_admin)
         toggles_layout.addLayout(layout_startup)
 
         # Button to open Startup Folder
-        self.startup_folder_button = QPushButton(" Startup", self)
-        self.startup_folder_button.setToolTip("Open Startup Folder")
-        self.startup_folder_button.setIcon(get_icon("folder-up", is_inverted=True))
-        self.startup_folder_button.clicked.connect(self.open_startup_folder)
+        self.task_scheduler_button = QPushButton(" Task Scheduler", self)
+        self.task_scheduler_button.setToolTip("Open Task Scheduler")
+        self.task_scheduler_button.setIcon(get_icon("schedule-time", is_inverted=True))
+        self.task_scheduler_button.clicked.connect(self.open_task_scheduler)
 
         # Button to open App Data Folder
         self.app_config_folder_button = QPushButton(" App Data", self)
@@ -134,7 +146,7 @@ class SpecialMenu(QWidget):
 
         layout_app_folders = QHBoxLayout()
         layout_app_folders.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Ensure left alignment
-        layout_app_folders.addWidget(self.startup_folder_button)
+        layout_app_folders.addWidget(self.task_scheduler_button)
         layout_app_folders.addWidget(self.app_config_folder_button)
         layout_app_folders.addWidget(self.program_folder_button)
         toggles_layout.addLayout(layout_app_folders)
@@ -253,36 +265,54 @@ class SpecialMenu(QWidget):
         return os.path.join(os.getenv('APPDATA'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
 
     @staticmethod
+    def show_message(title: str, message: str, is_error: bool = False):
+        """Displays a message box using PyQt6."""
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Icon.Critical if is_error else QMessageBox.Icon.Information)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        msg_box.exec()
+
+    @staticmethod
     def add_to_startup():
-        if not getattr(sys, 'frozen', False):
+        """Adds the program to Windows startup using Task Scheduler."""
+        if not getattr(sys, 'frozen', False):  # Ensures this only runs for packaged executables
+            SpecialMenu.show_message("Error", "Program is not running in frozen state (PyInstaller bundle).", is_error=True)
             return
 
-        startup_path = os.path.join(SpecialMenu.get_startup_folder(), 'MightyPie.lnk')
+        exe_path = sys.executable
+        task_name = f"{CONFIG._PROGRAM_NAME}Startup"
+        create_task_cmd = f'schtasks /create /tn "{task_name}" /tr "{exe_path}" /sc ONLOGON /rl HIGHEST /f'
 
-        from win32com.client import Dispatch
-
-        shell = Dispatch('WScript.Shell')
-        shortcut = shell.CreateShortCut(startup_path)
-        shortcut.Targetpath = sys.executable
-        shortcut.WorkingDirectory = os.path.dirname(sys.executable)
-        shortcut.save()
+        try:
+            subprocess.run(create_task_cmd, shell=True, check=True)
+            SpecialMenu.show_message("Success", "The program has been added to startup successfully.")
+        except subprocess.CalledProcessError as e:
+            SpecialMenu.show_message("Error", f"Failed to create startup task:\n{e}", is_error=True)
 
     @staticmethod
     def remove_from_startup():
-        if not getattr(sys, 'frozen', False):
-            return
+        """Removes the scheduled task from Windows startup."""
+        task_name = f"{CONFIG._PROGRAM_NAME}Startup"
+        remove_task_cmd = f'schtasks /delete /tn "{task_name}" /f'
 
-        startup_path = os.path.join(SpecialMenu.get_startup_folder(), 'MightyPie.lnk')
         try:
-            os.remove(startup_path)
-        except (OSError, WindowsError):
-            pass
+            subprocess.run(remove_task_cmd, shell=True, check=True)
+            SpecialMenu.show_message("Success", "The program has been removed from startup successfully.")
+        except subprocess.CalledProcessError as e:
+            SpecialMenu.show_message("Error", f"Failed to remove startup task:\n{e}", is_error=True)
 
     @staticmethod
-    def is_in_startup():
-        if not getattr(sys, 'frozen', False):
-            return False
-        return os.path.exists(os.path.join(SpecialMenu.get_startup_folder(), 'MightyPie.lnk'))
+    def is_in_startup() -> bool:
+        """Checks if the scheduled task exists in Windows Task Scheduler."""
+        task_name = f"{CONFIG._PROGRAM_NAME}Startup"
+        check_task_cmd = f'schtasks /query /tn "{task_name}"'
+
+        try:
+            subprocess.run(check_task_cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return True  # Task exists
+        except subprocess.CalledProcessError:
+            return False  # Task does not exist
 
     @staticmethod
     def _get_os_open_command():
@@ -316,14 +346,12 @@ class SpecialMenu(QWidget):
         SpecialMenu._open_folder(program_dir)
 
     @staticmethod
-    def open_startup_folder():
-        """Opens the system startup folder."""
-        if os.name == "nt":
-            startup_folder = os.path.join(os.getenv("APPDATA"), "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
-        else:
-            # For macOS and Linux, you might want to implement their specific startup folder paths
-            startup_folder = os.path.expanduser("~")
-        SpecialMenu._open_folder(startup_folder)
+    def open_task_scheduler():
+        """Opens the Task Scheduler management console without freezing the program."""
+        try:
+            subprocess.Popen('taskschd.msc', shell=True)
+        except Exception as e:
+            SpecialMenu.show_message("Error", f"Failed to open Task Scheduler: {e}", is_error=True)
 
     @staticmethod
     def open_app_data_directory():
