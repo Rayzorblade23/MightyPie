@@ -13,6 +13,10 @@ Also: reverse buttons via Window Name, instead of App Name
 
 
 BUGS:
+- minimizing when no valid window is there does strange things
+
+- maximize/minimize sometimes works on wrong window
+
 - MightyPie sometimes starts with smaller Pie Menus
 
 - positioning not exactly right

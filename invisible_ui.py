@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QPushButton, QWidget
 
 from config import CONFIG
-from functions.shortcut_utils import open_start_menu, open_explorer_window, open_action_center
+from functions.shortcut_utils import open_explorer_window
 from functions.taskbar_hide_utils import toggle_taskbar
 from functions.window_functions import add_hwnd_to_exclude
 
@@ -61,6 +61,7 @@ class InvisibleUI(QWidget):
         if "btn_btm_center" in self.buttons:
             self.buttons["btn_btm_center"].move(self.width() // 2 - self.buttons["btn_btm_center"].width() // 2,
                                                 self.height() - self.buttons["btn_btm_center"].height())
+
         if "btn_ctr_left" in self.buttons:
             self.buttons["btn_ctr_left"].move(0, self.height() // 2 - self.buttons["btn_ctr_left"].height() // 2)
 
@@ -80,7 +81,7 @@ class InvisibleUI(QWidget):
 
         # Resize the window to half screen width (half of the screen width, full screen height)
         screen_geometry = QApplication.primaryScreen().geometry()
-        self.setGeometry(0, 0, screen_geometry.width(), screen_geometry.height())  # Full height, half width
+        self.setGeometry(0, 0, screen_geometry.width(), screen_geometry.height() + 1)  # Full height, half width
 
     def resizeEvent(self, event):
         """Reposition buttons when the window is resized."""
