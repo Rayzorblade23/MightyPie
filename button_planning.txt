@@ -13,3 +13,11 @@ LAYER 1 - RULES:
 
 - if Button has Window: just pass it along
 - if Button
+
+
+
+indexes: all
+
+look for indexes of fixed_buttons:
+ - look for already assigned buttons
+  - check

@@ -67,6 +67,8 @@ class PieWindow(QMainWindow):
         self.last_window_handles = []
         self.pie_button_texts = ["Empty" for _ in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS)]
         self.windowHandles_To_buttonIndexes_map = {}
+        self.fixed_button_indexes: Set[int] = set()
+        self.fixed_windows: Set[int] = set()
 
         self.active_child = 1
         self.is_window_open = False
@@ -304,10 +306,11 @@ class PieWindow(QMainWindow):
                 return
 
             button_info = ButtonInfo()
-            window_mapping = manager.get_window_hwnd_mapping()
+            all_open_windows_info_by_hwnd = manager.get_window_hwnd_mapping()
             app_info_cache = load_cache()
             final_button_updates = []
             processed_handles = set()
+
 
             def create_button_update(button_index, hwnd, title, exe_name, instance):
                 cache_entry = app_info_cache.get(exe_name)
@@ -331,13 +334,6 @@ class PieWindow(QMainWindow):
                         "exe_name": exe_name
                     }
                 }
-            def get_valid_windows():
-                """Return dict of all currently valid window handles and their info"""
-                return {
-                    hwnd: window_mapping[hwnd]
-                    for hwnd in self.windowHandles_To_buttonIndexes_map
-                    if hwnd in window_mapping
-                }
 
             def process_fixed_buttons() -> None:
                 """Ensure fixed buttons retain their assigned windows or remain empty."""
@@ -358,26 +354,29 @@ class PieWindow(QMainWindow):
                         continue
 
                     exe_name = button["properties"].get("exe_name", "")
-                    assigned_hwnd = fixed_windows.get(button_index, None)
-
-                    if assigned_hwnd and assigned_hwnd in window_mapping and window_mapping[assigned_hwnd][1] == exe_name:
+                    assigned_hwnd = fixed_windows.get(button_index, None) # grab the window assigned to the button
+                    # check if there is one assigned, if it exists all and then if it matches the Program
+                    if (assigned_hwnd
+                            and assigned_hwnd in all_open_windows_info_by_hwnd
+                            and all_open_windows_info_by_hwnd[assigned_hwnd][1] == exe_name
+                    ):
                         # Window still valid, keep it
-                        title, _, instance = window_mapping[assigned_hwnd]
+                        title, _, instance = all_open_windows_info_by_hwnd[assigned_hwnd]
                         update = create_button_update(button_index, assigned_hwnd, title, exe_name, instance)
                         if update:
                             final_button_updates.append(update)
                             processed_handles.add(assigned_hwnd)
                     else:
-                        # Fixed button lost its assigned window, remove it from mapping
+                        # If window exists but is not valid, remove it from mapping
                         self.windowHandles_To_buttonIndexes_map.pop(assigned_hwnd, None)
 
                         # Try to find a new window, but only if it was not already assigned to another fixed button
                         new_hwnd = None
-                        for hwnd, (title, window_exe, instance) in window_mapping.items():
+                        for hwnd, (title, window_exe, instance) in all_open_windows_info_by_hwnd.items():
                             if window_exe == exe_name and hwnd not in processed_handles and hwnd not in already_assigned_windows:
                                 new_hwnd = hwnd
                                 break
-
+                        # If a new window is found that matches the criteria
                         if new_hwnd:
                             # Assign the new window
                             update = create_button_update(button_index, new_hwnd, title, exe_name, instance)
@@ -392,71 +391,75 @@ class PieWindow(QMainWindow):
                             if update:
                                 final_button_updates.append(update)
 
-            def process_existing_mappings() -> None:
+            def process_existing_mappings(pie_menu_index: int) -> None:
                 """Process existing window mappings for non-fixed buttons, leaving fixed ones intact."""
-                valid_windows: Dict[int, Tuple[str, str, int]] = get_valid_windows()
-                menu_1_slots: Set[int] = set(range(CONFIG._MAX_BUTTONS))
-
-                # Get indexes of fixed buttons
-                fixed_button_indexes: Set[int] = {
-                    index for index, btn in button_info.items()
-                    if btn.get("task_type") == "program_window_fixed"
+                # Windows that are already assigned and still exist
+                previously_assigned_windows: Dict[int, Tuple[str, str, int]] = {
+                    hwnd: all_open_windows_info_by_hwnd[hwnd]
+                    for hwnd in self.windowHandles_To_buttonIndexes_map
+                    if hwnd in all_open_windows_info_by_hwnd
                 }
 
-                # Get windows assigned to fixed buttons
-                fixed_windows: Set[int] = {
-                    hwnd for hwnd, index in self.windowHandles_To_buttonIndexes_map.items()
-                    if index in fixed_button_indexes
-                }
+                # for hwnd, (title, exe_name, instance) in previously_assigned_windows.items():
+                #     print(f"Window Handle: {hwnd}, Title: {title}, Executable: {exe_name}, Instance: {instance}")
 
-                # Process non-fixed buttons
+                # Calculate the start and end of the Pie Menu range (8 buttons per menu)
+                menu_start = pie_menu_index * 8
+                menu_end = menu_start + 8
+                menu_slots = set(range(menu_start, menu_end))
+
+                # Pass on non-fixed already-assigned buttons in Pie Menu 1
                 for hwnd, mapped_index in list(self.windowHandles_To_buttonIndexes_map.items()):
-                    if mapped_index in fixed_button_indexes:
+                    if mapped_index in self.fixed_button_indexes:
                         continue  # Skip fixed buttons
-                    if (hwnd in valid_windows and
+                    if (hwnd in previously_assigned_windows and
                             hwnd not in processed_handles and
-                            hwnd not in fixed_windows and
-                            mapped_index in menu_1_slots):
-                        title, exe_name, instance = valid_windows[hwnd]
+                            hwnd not in self.fixed_windows and
+                            mapped_index in menu_slots):
+                        title, exe_name, instance = previously_assigned_windows[hwnd]
                         update = create_button_update(mapped_index, hwnd, title, exe_name, instance)
                         if update:
                             final_button_updates.append(update)
                             processed_handles.add(hwnd)
 
-            def fill_empty_buttons() -> None:
-                """Fill any remaining empty buttons with unprocessed windows, skipping fixed buttons."""
+            def fill_empty_buttons(pie_menu_index: int) -> None:
+                """Fill any remaining empty buttons in a specific Pie Menu with unprocessed windows, skipping fixed buttons."""
                 used_indexes: Set[int] = {update["index"] for update in final_button_updates}
-                all_empty_indexes: Set[int] = set(range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS)) - used_indexes
-
-                # Get indexes of fixed buttons
-                fixed_button_indexes: Set[int] = {
-                    index for index, btn in button_info.items()
-                    if btn.get("task_type") == "program_window_fixed"
-                }
-
-                # Get windows assigned to fixed buttons
-                fixed_windows: Set[int] = {
-                    hwnd for hwnd, index in self.windowHandles_To_buttonIndexes_map.items()
-                    if index in fixed_button_indexes
-                }
+                all_empty_indexes: Set[int] = set(range(pie_menu_index * 8, (pie_menu_index + 1) * 8)) - used_indexes
 
                 for button_index in sorted(all_empty_indexes):
-                    if button_index in fixed_button_indexes:
+                    if button_index in self.fixed_button_indexes:
                         continue  # Skip fixed buttons
 
-                    for hwnd, (title, exe_name, instance) in window_mapping.items():
-                        if hwnd not in processed_handles and hwnd not in fixed_windows:
+                    for hwnd, (title, exe_name, instance) in all_open_windows_info_by_hwnd.items():
+                        if hwnd not in processed_handles and hwnd not in self.fixed_windows:
                             update = create_button_update(button_index, hwnd, title, exe_name, instance)
                             if update:
+                                print(f"{title} in  Pie Menu {pie_menu_index}")
                                 final_button_updates.append(update)
                                 processed_handles.add(hwnd)
                                 self.windowHandles_To_buttonIndexes_map[hwnd] = button_index
                                 break
 
-            # Execute the process
+            # Execute the process starting with Fixed Buttons
             process_fixed_buttons()
-            process_existing_mappings()
-            fill_empty_buttons()
+
+            # Pre-calculate fixed button information
+            self.fixed_button_indexes = {
+                index for index, btn in button_info.items()
+                if btn.get("task_type") == "program_window_fixed"
+            }
+
+            # Get windows assigned to fixed buttons
+            self.fixed_windows = {
+                hwnd for hwnd, index in self.windowHandles_To_buttonIndexes_map.items()
+                if index in self.fixed_button_indexes
+            }
+
+            for pie_menu_index in range(CONFIG._NUM_PIE_TASK_SWITCHERS):
+                process_existing_mappings(pie_menu_index)
+                fill_empty_buttons(pie_menu_index)
+
             # print(self.windowHandles_To_buttonIndexes_map)
             # print("\n")
 
