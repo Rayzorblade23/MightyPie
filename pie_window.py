@@ -456,6 +456,9 @@ class PieWindow(QMainWindow):
                 if index in self.fixed_button_indexes
             }
 
+            # Process the rest, one Pie Menu at a time,
+            # so already-assigned Windows only jump
+            # if there is a free slot in the lower-index Pie Menu
             for pie_menu_index in range(CONFIG._NUM_PIE_TASK_SWITCHERS):
                 process_existing_mappings(pie_menu_index)
                 fill_empty_buttons(pie_menu_index)

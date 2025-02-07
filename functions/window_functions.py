@@ -329,6 +329,7 @@ def focus_window_by_handle(hwnd):
 
 def close_window_by_handle(hwnd):
     """Close a window given its handle."""
+    focus_window_by_handle(hwnd)
     try:
         win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
     except Exception as e:
