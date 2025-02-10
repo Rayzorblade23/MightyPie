@@ -6,7 +6,7 @@ import threading
 import time
 from enum import Enum
 from threading import Lock
-from typing import Dict, List, Tuple, Set
+from typing import Dict, Tuple, Set
 
 import psutil
 import pyautogui
@@ -260,69 +260,65 @@ class PieWindow(QMainWindow):
 
     def setup_window_control_buttons(self):
         actual_self = self
-        self.pm_win_controls: List[PieMenu]
+        app_info_cache = load_cache()
 
-        # N Button
-        self.pm_win_controls[0].pie_buttons[0].set_label_1_text("MAXIMIZE")
-        self.pm_win_controls[0].pie_buttons[0].set_left_click_action(lambda: (
-            self.hide(),
-            QTimer.singleShot(0, lambda: toggle_maximize_window_at_cursor(actual_self)),
-        ))
-        self.pm_win_controls[0].pie_buttons[0].update_icon(EXTERNAL_ICON_PATHS.get("window_maximize"), is_invert_icon=True)
+        button_config = [
+            {"index": (0, 0), "label": "MAXIMIZE",
+             "action": lambda: toggle_maximize_window_at_cursor(actual_self),
+             "icon": EXTERNAL_ICON_PATHS.get("window_maximize"), "is_inverted": True},
+            {"index": (0, 1), "label": "Restore Minimized",
+             "action": restore_last_minimized_window,
+             "icon": EXTERNAL_ICON_PATHS.get("change"), "is_inverted": True},
+            {"index": (0, 2), "label": "Forward!",
+             "action": lambda: pyautogui.hotkey('alt', 'right'),
+             "icon": EXTERNAL_ICON_PATHS.get("arrow-right"), "is_inverted": True},
+            {"index": (0, 3), "label": "Get All Expl. Win.",
+             "action": focus_all_explorer_windows,
+             "icon": EXTERNAL_ICON_PATHS.get("folders"), "is_inverted": True},
+            {"index": (0, 4), "label": "Minimize",
+             "action": lambda: minimize_window_at_cursor(actual_self),
+             "icon": EXTERNAL_ICON_PATHS.get("window_minimize"), "is_inverted": True},
+            {"index": (0, 5), "label": ""},
+            {"index": (0, 6), "label": ""},
+            {"index": (0, 7), "label": ""},
+            {"index": (1, 0), "label": "Launch",
+             "action": lambda: launch_app(app_info_cache.get("explorer.exe", {}).get("exe_path")),
+             "icon": app_info_cache.get("explorer.exe", {}).get("icon_path"), "is_inverted": False},
+            {"index": (1, 1), "label": "Launch",
+             "action": lambda: launch_app(app_info_cache.get("pycharm64.exe", {}).get("exe_path")),
+             "icon": app_info_cache.get("pycharm64.exe", {}).get("icon_path"), "is_inverted": False},
+            {"index": (1, 2), "label": "Launch",
+             "action": lambda: launch_app(app_info_cache.get("sourcetree.exe", {}).get("exe_path")),
+             "icon": app_info_cache.get("sourcetree.exe", {}).get("icon_path"), "is_inverted": False},
+            {"index": (1, 3), "label": ""},
+            {"index": (1, 4), "label": "Launch",
+             "action": lambda: launch_app(app_info_cache.get("blender.exe", {}).get("exe_path")),
+             "icon": app_info_cache.get("blender.exe", {}).get("icon_path"), "is_inverted": False},
+            {"index": (1, 5), "label": ""},
+            {"index": (1, 6), "label": "Launch",
+             "action": lambda: launch_app(app_info_cache.get("notepad.exe", {}).get("exe_path")),
+             "icon": app_info_cache.get("notepad.exe", {}).get("icon_path"), "is_inverted": False},
+            {"index": (1, 7), "label": ""},
+        ]
 
-        # N Button
-        self.pm_win_controls[1].pie_buttons[0].set_label_1_text("MAXIMIZE")
-        self.pm_win_controls[1].pie_buttons[0].set_left_click_action(lambda: (
-            self.hide(),
-            QTimer.singleShot(0, lambda: toggle_maximize_window_at_cursor(actual_self)),
-        ))
-        self.pm_win_controls[1].pie_buttons[0].update_icon(EXTERNAL_ICON_PATHS.get("window_maximize"), is_invert_icon=True)
+        for config in button_config:
+            i, j = config["index"]
+            button = self.pm_win_controls[i].pie_buttons[j]
 
-        # NE Button
-        self.pm_win_controls[0].pie_buttons[1].set_label_1_text("Restore Minimized")
-        self.pm_win_controls[0].pie_buttons[1].set_left_click_action(lambda: (
-            self.hide(),
-            QTimer.singleShot(0, lambda: restore_last_minimized_window()),
-        ))
-        self.pm_win_controls[0].pie_buttons[1].update_icon(EXTERNAL_ICON_PATHS.get("change"), is_invert_icon=True)
+            button.set_label_1_text(config.get("label", ""))
+            if config["label"]:
+                button.setEnabled(True)
+            else:
+                button.setEnabled(False)
 
-        # E Button
-        self.pm_win_controls[0].pie_buttons[2].set_label_1_text("Forward!")
-        self.pm_win_controls[0].pie_buttons[2].set_left_click_action(lambda: (
-            self.hide(),
-            QTimer.singleShot(0, lambda: pyautogui.hotkey('alt', 'right')),
-        ))
-        self.pm_win_controls[0].pie_buttons[2].setEnabled(True)  # Disable the button
-        self.pm_win_controls[0].pie_buttons[2].update_icon(EXTERNAL_ICON_PATHS.get("arrow-right"), is_invert_icon=True)
+            if "action" in config:
+                button.set_left_click_action(lambda c=config: (
+                    self.hide(),
+                    QTimer.singleShot(0, lambda: c["action"]()),
+                ))
 
-        # SE Button
-        self.pm_win_controls[0].pie_buttons[3].set_label_1_text("Get All Expl. Win.")
-        self.pm_win_controls[0].pie_buttons[3].set_left_click_action(lambda: (
-            self.hide(),
-            QTimer.singleShot(0, lambda: focus_all_explorer_windows()),
-        ))
-        self.pm_win_controls[0].pie_buttons[3].setEnabled(True)  # Disable the button
-        self.pm_win_controls[0].pie_buttons[3].update_icon(EXTERNAL_ICON_PATHS.get("folders"), is_invert_icon=True)
-
-        # S Button
-        self.pm_win_controls[0].pie_buttons[4].set_label_1_text("Minimize")
-        self.pm_win_controls[0].pie_buttons[4].set_left_click_action(lambda: (
-            self.hide(),
-            QTimer.singleShot(0, lambda: minimize_window_at_cursor(actual_self)),
-        ))
-        self.pm_win_controls[0].pie_buttons[4].update_icon(EXTERNAL_ICON_PATHS.get("window_minimize"), is_invert_icon=True)
-
-        # SW Button
-        self.pm_win_controls[0].pie_buttons[5].set_label_1_text("")
-        self.pm_win_controls[0].pie_buttons[5].setEnabled(False)  # Disable the button
-
-        # W Button
-        self.pm_win_controls[0].pie_buttons[6].set_label_1_text("")
-        self.pm_win_controls[0].pie_buttons[6].setEnabled(False)  # Disable the button
-
-        # NW Button
-        self.pm_win_controls[0].pie_buttons[7].set_label_1_text("")
-        self.pm_win_controls[0].pie_buttons[7].setEnabled(False)  # Disable the button
+            if "icon" and "icon_path" and "is_inverted" in config:
+                button.update_icon(config["icon"], is_invert_icon=config["is_inverted"])
 
     # Button Management
     def update_pm_task_buttons(self):
