@@ -7,7 +7,7 @@ from pynput.mouse import Controller, Button
 
 from GUI.area_button import AreaButton
 from config import CONFIG
-from GUI.donut_slice_button import DonutSliceButton
+from GUI.svg_indicator_button import SVGIndicatorButton
 from GUI.expanded_button import ExpandedButton
 from GUI.pie_button import PieButton
 from GUI.rings import SmoothCircle
@@ -51,51 +51,12 @@ class PieMenu(QWidget):
         self.view.setGeometry(0, 0, self.width(), self.height())
         self.view.setObjectName(self.obj_name)
 
-        # Use the subclass instead of QGraphicsEllipseItem
-        self.inner_circle_main = SmoothCircle(
-            QRectF(
-                self.rect().center().x() - CONFIG._INNER_RADIUS,  # Adjust for radius
-                self.rect().center().y() - CONFIG._INNER_RADIUS,  # Adjust for radius
-                CONFIG._INNER_RADIUS * 2,  # Diameter
-                CONFIG._INNER_RADIUS * 2  # Diameter
-            )
-        )
-        self.inner_circle_main.setBrush(QBrush(Qt.BrushStyle.NoBrush))
-        self.inner_circle_main.setPen(QPen(QColor(30, 30, 30), 7))
-        self.scene.addItem(self.inner_circle_main)
-
-        # Create another circle for the outline (slightly thicker)
-        self.outline_circle = SmoothCircle(
-            QRectF(
-                self.rect().center().x() - CONFIG._INNER_RADIUS,  # Adjust for radius
-                self.rect().center().y() - CONFIG._INNER_RADIUS,  # Adjust for radius
-                CONFIG._INNER_RADIUS * 2,  # Diameter
-                CONFIG._INNER_RADIUS * 2  # Diameter
-            )
-        )
-        self.outline_circle.setBrush(QBrush(Qt.BrushStyle.NoBrush))
-        self.outline_circle.setPen(QPen(QColor(50, 50, 50), 9))
-
-        self.outline_circle.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
-        self.inner_circle_main.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
-
-        # Add the circles to the scene
-        self.scene.addItem(self.outline_circle)
-        self.scene.addItem(self.inner_circle_main)
-
-        # Ensure the inner circle is on top by setting its Z-index higher than the outline circle
-        self.inner_circle_main.setZValue(1)  # Higher Z-value to be in front
-        self.outline_circle.setZValue(0)  # Lower Z-value to be behind
-
     def setup_buttons(self):
         """Create and position all buttons."""
 
-        self.donut_button = DonutSliceButton(
-            object_name="DonutSlice",
-            outer_radius=CONFIG._INNER_RADIUS + 30,
-            inner_radius=CONFIG._INNER_RADIUS + 10,
-            start_angle=-22.5,
-            span_angle=45,
+        self.donut_button = SVGIndicatorButton(
+            object_name="Indicator",
+            size=300,
             action=None,
             pos=(self.rect().center().x(), self.rect().center().y()),
             parent=self
