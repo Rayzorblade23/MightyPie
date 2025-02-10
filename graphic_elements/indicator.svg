@@ -3,7 +3,7 @@
   <defs>
     <style>
       .cls-1 {
-        fill: blue;
+        fill: {indicator};
       }
 
       .cls-1, .cls-2, .cls-3, .cls-4, .cls-5 {
@@ -20,11 +20,11 @@
       }
 
       .cls-4 {
-        fill: red;
+        fill: {ring_stroke};
       }
 
       .cls-5 {
-        fill: lime;
+        fill: {ring_fill};
       }
     </style>
   </defs>

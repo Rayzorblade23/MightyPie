@@ -52,6 +52,8 @@ class BaseConfig:
     # Color configurations
     ACCENT_COLOR: str = "#5a14b7"
     BG_COLOR: str = "#3b3b3b"
+    RING_FILL: str = "#202020"
+    RING_STROKE: str = "#303030"
 
 
 @dataclass

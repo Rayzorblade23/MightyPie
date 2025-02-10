@@ -25,9 +25,9 @@ class SVGIndicatorButton(QPushButton):
         # Load the SVG
         svg_path = Path(__file__).parent.parent / "graphic_elements" / "indicator.svg"
         svg = Path(svg_path).read_text()
-        svg = (svg.replace("blue", CONFIG.ACCENT_COLOR_MUTED).
-               replace("lime", "#202020").
-               replace("red", "#303030"))
+        svg = (svg.replace("{indicator}", CONFIG.ACCENT_COLOR_MUTED).
+               replace("{ring_fill}", CONFIG.RING_FILL).
+               replace("{ring_stroke}", CONFIG.RING_STROKE))
 
 
         # self.svg_renderer = QSvgRenderer(str(svg_path))
