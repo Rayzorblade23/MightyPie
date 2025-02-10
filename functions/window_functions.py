@@ -645,10 +645,16 @@ def minimize_window_at_cursor(pie_window: QWidget):
 
     window_handle = win32gui.WindowFromPoint(cursor_pos)
 
+    valid_hwnds = set(manager.get_window_hwnd_mapping().keys())
+
+
     if window_handle and window_handle != win32gui.GetDesktopWindow():
         print("Valid window found")
         root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
         print(f"Root window handle: {root_handle}")
+        if root_handle not in valid_hwnds:
+            print(f"Hwnd is not among valid windows")
+            return 
 
         window_title = win32gui.GetWindowText(root_handle)
         print(f"Window title: {window_title}")
