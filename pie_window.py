@@ -21,7 +21,7 @@ from events import ShowWindowEvent, HotkeyReleaseEvent
 from functions.icon_functions_and_paths import EXTERNAL_ICON_PATHS
 from functions.window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
     close_window_by_handle, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app, \
-    cache_being_cleared, restore_last_minimized_window, focus_all_explorer_windows
+    cache_being_cleared, restore_last_minimized_window, focus_all_explorer_windows, center_window_at_cursor
 from pie_menu import PieMenu
 from special_menu import SpecialMenu
 from window_manager import WindowManager
@@ -278,7 +278,9 @@ class PieWindow(QMainWindow):
             {"index": (0, 4), "label": "Minimize",
              "action": lambda: minimize_window_at_cursor(actual_self),
              "icon": EXTERNAL_ICON_PATHS.get("window_minimize"), "is_inverted": True},
-            {"index": (0, 5), "label": ""},
+            {"index": (0, 5), "label": "Center Window",
+             "action": lambda: center_window_at_cursor(actual_self),
+             "icon": EXTERNAL_ICON_PATHS.get("window_minimize"), "is_inverted": True},
             {"index": (0, 6), "label": ""},
             {"index": (0, 7), "label": ""},
             {"index": (1, 0), "label": "Launch",

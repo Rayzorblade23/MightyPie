@@ -564,6 +564,38 @@ def show_pie_window(pie_window: QMainWindow, pie_menu: PieMenu):
         print(f"Error showing the main main_window: {e}")
 
 
+def center_window_at_cursor(pie_window: QWidget):
+    """Centers the window under the cursor to the middle of its current monitor at 50% size."""
+    if not hasattr(pie_window, 'pie_menu_pos'):
+        return
+
+    cursor_pos = (pie_window.pie_menu_pos.x(), pie_window.pie_menu_pos.y())
+    window_handle = win32gui.WindowFromPoint(cursor_pos)
+
+    if not window_handle or window_handle == win32gui.GetDesktopWindow():
+        print("No valid window found under cursor")
+        return
+
+    root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
+    if not win32gui.IsWindowVisible(root_handle):
+        print("Window is not visible")
+        return
+
+    monitor_info = win32api.MonitorFromPoint(cursor_pos, win32con.MONITOR_DEFAULTTONEAREST)
+    monitor = win32api.GetMonitorInfo(monitor_info)
+    monitor_rect = monitor['Monitor']
+
+    screen_width = monitor_rect[2] - monitor_rect[0]
+    screen_height = monitor_rect[3] - monitor_rect[1]
+    new_width = screen_width // 2
+    new_height = screen_height // 2
+    new_x = monitor_rect[0] + (screen_width - new_width) // 2
+    new_y = monitor_rect[1] + (screen_height - new_height) // 2
+
+    win32gui.ShowWindow(root_handle, win32con.SW_RESTORE)
+    win32gui.SetWindowPos(root_handle, None, new_x, new_y, new_width, new_height, win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE)
+    print("Window centered successfully on the correct monitor")
+
 def toggle_maximize_window_at_cursor(pie_window: QWidget):
     if not hasattr(pie_window, 'pie_menu_pos'):
         return
@@ -647,14 +679,13 @@ def minimize_window_at_cursor(pie_window: QWidget):
 
     valid_hwnds = set(manager.get_window_hwnd_mapping().keys())
 
-
     if window_handle and window_handle != win32gui.GetDesktopWindow():
         print("Valid window found")
         root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
         print(f"Root window handle: {root_handle}")
         if root_handle not in valid_hwnds:
             print(f"Hwnd is not among valid windows")
-            return 
+            return
 
         window_title = win32gui.GetWindowText(root_handle)
         print(f"Window title: {window_title}")
