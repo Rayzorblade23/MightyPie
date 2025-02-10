@@ -21,6 +21,8 @@ from functions.taskbar_hide_utils import set_taskbar_opacity, show_taskbar
 from global_mouse_filter import GlobalMouseFilter
 from pie_window import PieWindow
 
+import ctypes
+
 
 def listen_for_hotkeys(main_window: QWidget):
     """Listen for global hotkeys."""
@@ -185,11 +187,15 @@ class SingleInstance:
     def release_for_restart(self):
         self.cleanup()
 
+
 if __name__ == "__main__":
     # Store instance in sys for global access
     sys._instance = SingleInstance()
 
-    os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)  # Per-monitor DPI awareness
+    except AttributeError:
+        pass  # Windows version does not support this API
 
     # Register signal handler for SIGINT (Ctrl+C) and SIGTERM (termination signals)
     signal.signal(signal.SIGINT, signal_handler)

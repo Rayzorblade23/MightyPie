@@ -6,9 +6,9 @@ from PyQt6.QtGui import QPixmap, QCursor
 from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
 
 from GUI.font_styles import FontStyle
-from functions.icon_functions_and_paths import invert_icon
 from GUI.scrolling_text_label import ScrollingLabel
 from config import CONFIG
+from functions.icon_functions_and_paths import invert_icon
 
 
 class PieButton(QPushButton):
@@ -154,9 +154,13 @@ class PieButton(QPushButton):
                     icon = invert_icon(icon, return_pixmap=True)
 
                 icon_label = QLabel()
-                icon_label.setPixmap(icon.scaled(16, 16, Qt.AspectRatioMode.KeepAspectRatio,
-                                                 Qt.TransformationMode.SmoothTransformation))  # Adjust size as needed
-                icon_label.setFixedSize(16, CONFIG._BUTTON_HEIGHT)  # Adjust size to match your icon dimensions
+                # Set DPI-aware scaling
+                icon.setDevicePixelRatio(2)  # Adjust for high-DPI displays (1.5x, 2x, etc.)
+                icon_label.setPixmap(icon)
+
+                # Keep logical size at 16x16, but allow Qt to scale it for high-DPI screens
+                icon_label.setFixedSize(16, CONFIG._BUTTON_HEIGHT)
+
                 icon_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
                 icon_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
 
