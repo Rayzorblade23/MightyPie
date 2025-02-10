@@ -30,11 +30,11 @@ def listen_for_hotkeys(main_window: QWidget):
     initial_mouse_pos = None  # Store initial mouse position on press
 
     # Assign variables at the start
-    pm_win_control = getattr(main_window, 'pm_win_control', None)
+    pm_win_controls = getattr(main_window, 'pm_win_controls', None)
     pm_task_switchers = getattr(main_window, 'pm_task_switchers', None)
 
     # Check if any of the necessary windows are None (not instantiated)
-    if not pm_win_control or not pm_task_switchers or not isinstance(pm_task_switchers, list) or not pm_task_switchers:
+    if not pm_win_controls or not pm_task_switchers or not isinstance(pm_task_switchers, list) or not isinstance(pm_win_controls, list):
         print("Warning: Task switchers or window control are not instantiated.")
         return
 
@@ -43,8 +43,6 @@ def listen_for_hotkeys(main_window: QWidget):
         if can_open_window:  # Only show if not already open
             print(f"{hotkey_name} pressed!")
             initial_mouse_pos = QCursor.pos()  # Store initial mouse position using QCursor
-
-            child_window = None  # Default to no child window
 
             if hotkey_name == CONFIG.HOTKEY_OPEN_TASKS:
                 # Find the first task switcher to toggle or open the next one
@@ -61,8 +59,19 @@ def listen_for_hotkeys(main_window: QWidget):
                     main_window.active_child = 1
 
             elif hotkey_name == CONFIG.HOTKEY_OPEN_WINCON:
-                child_window = pm_win_control
-                main_window.active_child = 4
+                # Find the first task switcher to toggle or open the next one
+                for index, win_control in enumerate(pm_win_controls):
+
+                    if win_control.isVisible():
+                        # Toggle to the next task switcher or back to the first
+                        next_index = (index + 1) % len(pm_win_controls)
+                        child_window = pm_win_controls[next_index]
+                        main_window.active_child = len(pm_task_switchers) + next_index + 1
+                        break
+                else:
+                    # If none are visible, open the first task switcher
+                    child_window = pm_win_controls[0]
+                    main_window.active_child = len(pm_task_switchers) + 1
             else:
                 print("Hotkey not found.")
                 return
@@ -87,14 +96,23 @@ def listen_for_hotkeys(main_window: QWidget):
 
             # print("Mouse released WITH movement.")
             if hotkey_name == CONFIG.HOTKEY_OPEN_TASKS:
-                if 1 <= main_window.active_child <= len(pm_task_switchers):
-                    # Select the task switcher based on the active_child value
-                    child_window = pm_task_switchers[main_window.active_child - 1]
+                # Select the task switcher based on the active_child value
+                index = main_window.active_child - 1
+                # Check if in range for Task Switchers
+                if 0 <= index <= len(pm_task_switchers) - 1:
+                    child_window = pm_task_switchers[index]
                 else:
                     print("Active child index is out of range for task switchers.")
                     return
             elif hotkey_name == CONFIG.HOTKEY_OPEN_WINCON:
-                child_window = pm_win_control
+                # Select the task switcher based on the active_child value
+                index = main_window.active_child - 1 - len(pm_task_switchers)
+                # Check if in range for WinControls
+                if 0 <= index <= len(pm_task_switchers) -1:
+                    child_window = pm_win_controls[index]
+                else:
+                    print("Active child index is out of range for task switchers.")
+                    return
             else:
                 print("Hotkey not found.")
                 return
@@ -196,7 +214,6 @@ if __name__ == "__main__":
         ctypes.windll.shcore.SetProcessDpiAwareness(2)  # Per-monitor DPI awareness
     except AttributeError:
         pass  # Windows version does not support this API
-
 
     # Register signal handler for SIGINT (Ctrl+C) and SIGTERM (termination signals)
     signal.signal(signal.SIGINT, signal_handler)

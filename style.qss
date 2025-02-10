@@ -10,26 +10,15 @@ QWidget {
     border:none;              /* No border */
 }
 
-#PieMenuTaskSwitcher_1 {
+#PieMenuTaskSwitcher {
     background-color: transparent;
     border:none;
 }
 
-#PieMenuTaskSwitcher_2 {
-    background-color: rgba(0, 255, 0, 0.0);
-    border:none;              /* No border */
+#PieMenuWinControl {
+    background-color: transparent;
+    border:none;
 }
-
-#PieMenuTaskSwitcher_3 {
-    background-color: rgba(0, 0, 255, 0.0);
-    border:none;              /* No border */
-}
-
-#PieMenuWindowControl {
-    background-color: rgba(0, 255, 255, 0.0);
-    border:none;              /* No border */
-}
-
 
 /* Style the Title Bar Button Widget */
 #controlButtonWidget {

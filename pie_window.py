@@ -4,6 +4,7 @@ import subprocess
 import sys
 import threading
 import time
+from enum import Enum
 from threading import Lock
 from typing import Dict, List, Tuple, Set
 
@@ -26,6 +27,9 @@ from special_menu import SpecialMenu
 from window_manager import WindowManager
 
 
+class PieMenuType(Enum):
+    TASK_SWITCHER = "TaskSwitcher"
+    WIN_CONTROL = "WinControl"
 
 
 class PieWindow(QMainWindow):
@@ -79,22 +83,27 @@ class PieWindow(QMainWindow):
         # Create Pie Menus with this main_window as parent
         self.pm_task_switchers: list[PieMenu] = []  # List to hold the task switchers
         for i in range(1, CONFIG._NUM_PIE_TASK_SWITCHERS + 1):  # Adjust the range if the number of task switchers changes
-            task_switcher = PieMenu(obj_name=f"PieMenuTaskSwitcher_{i}", parent=self)
+            task_switcher = PieMenu(obj_name="PieMenuTaskSwitcher", parent=self)
             if i > 1:  # Hide task switchers 2 and 3 initially
                 task_switcher.hide()
             self.pm_task_switchers.append(task_switcher)
 
-        self.pm_win_control = PieMenu(obj_name="PieMenuWindowControl", parent=self)
-        self.pm_win_control.hide()
+        self.pm_win_controls: list[PieMenu] = []
+        for i in range(1, CONFIG._NUM_PIE_WIN_CONTROLS + 1):  # Adjust the range if the number of task switchers changes
+            win_control = PieMenu(obj_name="PieMenuWinControl", parent=self)
+            win_control.hide()  # Hide all at first
+            self.pm_win_controls.append(win_control)
+
         self.setup_window_control_buttons()
 
         # For now, right-click should always just hide
         for i in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS):
-            task_switcher, index = self.get_task_switcher_and_index(i)
+            task_switcher, index = self.get_pie_menu_and_index(i, PieMenuType.TASK_SWITCHER)
             task_switcher.pie_buttons[index].set_right_click_action(action=lambda: self.hide())
 
-        for i in range(CONFIG._MAX_BUTTONS):
-            self.pm_win_control.pie_buttons[i].set_right_click_action(action=lambda: self.hide())
+        for i in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_WIN_CONTROLS):
+            win_control, index = self.get_pie_menu_and_index(i, PieMenuType.WIN_CONTROL)
+            win_control.pie_buttons[index].set_right_click_action(action=lambda: self.hide())
 
         self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None, main_window=self)
         self.special_menu.hide()
@@ -226,78 +235,94 @@ class PieWindow(QMainWindow):
     def refresh(self):
         self.update_pm_task_buttons()
 
-    def get_task_switcher_and_index(self, button_index: int) -> Tuple[PieMenu, int]:
-        """Helper function to calculate the task switcher and index dynamically."""
-        task_switchers = self.pm_task_switchers  # Assuming this is a list of task switchers
+    def get_pie_menu_and_index(self, button_index: int, pie_menu_type: PieMenuType) -> Tuple[PieMenu, int]:
+        """Helper function to calculate the Pie Menu and index dynamically."""
+        # Use the Enum to determine which list to use
+        pie_menus = {
+            PieMenuType.TASK_SWITCHER: self.pm_task_switchers,
+            PieMenuType.WIN_CONTROL: self.pm_win_controls
+        }.get(pie_menu_type)
+
+        if pie_menus is None:
+            raise ValueError(f"Invalid pie menu type: {pie_menu_type}.")
+
         max_buttons = CONFIG._MAX_BUTTONS
 
-        task_switcher_index = button_index // max_buttons  # Determine the task switcher index
+        pie_menu_index = button_index // max_buttons  # Determine the task switcher index
         index = button_index % max_buttons  # Calculate the index within the task switcher
 
-        if task_switcher_index < len(task_switchers):
-            task_switcher = task_switchers[task_switcher_index]
+        if pie_menu_index < len(pie_menus):
+            pie_menu = pie_menus[pie_menu_index]
         else:
             raise ValueError(f"Invalid button index {index}: exceeds available task switchers.")
 
-        return task_switcher, index
+        return pie_menu, index
 
     def setup_window_control_buttons(self):
         actual_self = self
-        self.pm_win_control.pie_buttons: List[PieButton]
+        self.pm_win_controls: List[PieMenu]
 
         # N Button
-        self.pm_win_control.pie_buttons[0].set_label_1_text("MAXIMIZE")
-        self.pm_win_control.pie_buttons[0].set_left_click_action(lambda: (
+        self.pm_win_controls[0].pie_buttons[0].set_label_1_text("MAXIMIZE")
+        self.pm_win_controls[0].pie_buttons[0].set_left_click_action(lambda: (
             self.hide(),
             QTimer.singleShot(0, lambda: toggle_maximize_window_at_cursor(actual_self)),
         ))
-        self.pm_win_control.pie_buttons[0].update_icon(EXTERNAL_ICON_PATHS.get("window_maximize"), is_invert_icon=True)
+        self.pm_win_controls[0].pie_buttons[0].update_icon(EXTERNAL_ICON_PATHS.get("window_maximize"), is_invert_icon=True)
+
+        # N Button
+        self.pm_win_controls[1].pie_buttons[0].set_label_1_text("MAXIMIZE")
+        self.pm_win_controls[1].pie_buttons[0].set_left_click_action(lambda: (
+            self.hide(),
+            QTimer.singleShot(0, lambda: toggle_maximize_window_at_cursor(actual_self)),
+        ))
+        self.pm_win_controls[1].pie_buttons[0].update_icon(EXTERNAL_ICON_PATHS.get("window_maximize"), is_invert_icon=True)
 
         # NE Button
-        self.pm_win_control.pie_buttons[1].set_label_1_text("Restore Minimized")
-        self.pm_win_control.pie_buttons[1].set_left_click_action(lambda: (
+        self.pm_win_controls[0].pie_buttons[1].set_label_1_text("Restore Minimized")
+        self.pm_win_controls[0].pie_buttons[1].set_left_click_action(lambda: (
             self.hide(),
             QTimer.singleShot(0, lambda: restore_last_minimized_window()),
         ))
-        self.pm_win_control.pie_buttons[1].update_icon(EXTERNAL_ICON_PATHS.get("change"), is_invert_icon=True)
+        self.pm_win_controls[0].pie_buttons[1].update_icon(EXTERNAL_ICON_PATHS.get("change"), is_invert_icon=True)
 
         # E Button
-        self.pm_win_control.pie_buttons[2].set_label_1_text("Forward!")
-        self.pm_win_control.pie_buttons[2].set_left_click_action(lambda: (
+        self.pm_win_controls[0].pie_buttons[2].set_label_1_text("Forward!")
+        self.pm_win_controls[0].pie_buttons[2].set_left_click_action(lambda: (
             self.hide(),
             QTimer.singleShot(0, lambda: pyautogui.hotkey('alt', 'right')),
         ))
-        self.pm_win_control.pie_buttons[2].setEnabled(True)  # Disable the button
-        self.pm_win_control.pie_buttons[2].update_icon(EXTERNAL_ICON_PATHS.get("arrow-right"), is_invert_icon=True)
+        self.pm_win_controls[0].pie_buttons[2].setEnabled(True)  # Disable the button
+        self.pm_win_controls[0].pie_buttons[2].update_icon(EXTERNAL_ICON_PATHS.get("arrow-right"), is_invert_icon=True)
 
         # SE Button
-        self.pm_win_control.pie_buttons[3].set_label_1_text("Get All Expl. Win.")
-        self.pm_win_control.pie_buttons[3].set_left_click_action(lambda: (
+        self.pm_win_controls[0].pie_buttons[3].set_label_1_text("Get All Expl. Win.")
+        self.pm_win_controls[0].pie_buttons[3].set_left_click_action(lambda: (
             self.hide(),
             QTimer.singleShot(0, lambda: focus_all_explorer_windows()),
         ))
-        self.pm_win_control.pie_buttons[3].setEnabled(True)  # Disable the button
-        self.pm_win_control.pie_buttons[3].update_icon(EXTERNAL_ICON_PATHS.get("folders"), is_invert_icon=True)
+        self.pm_win_controls[0].pie_buttons[3].setEnabled(True)  # Disable the button
+        self.pm_win_controls[0].pie_buttons[3].update_icon(EXTERNAL_ICON_PATHS.get("folders"), is_invert_icon=True)
 
         # S Button
-        self.pm_win_control.pie_buttons[4].set_label_1_text("Minimize")
-        self.pm_win_control.pie_buttons[4].set_left_click_action(lambda: (
+        self.pm_win_controls[0].pie_buttons[4].set_label_1_text("Minimize")
+        self.pm_win_controls[0].pie_buttons[4].set_left_click_action(lambda: (
             self.hide(),
             QTimer.singleShot(0, lambda: minimize_window_at_cursor(actual_self)),
         ))
-        self.pm_win_control.pie_buttons[4].update_icon(EXTERNAL_ICON_PATHS.get("window_minimize"), is_invert_icon=True)
+        self.pm_win_controls[0].pie_buttons[4].update_icon(EXTERNAL_ICON_PATHS.get("window_minimize"), is_invert_icon=True)
 
         # SW Button
-        self.pm_win_control.pie_buttons[5].set_label_1_text("")
-        self.pm_win_control.pie_buttons[5].setEnabled(False)  # Disable the button
+        self.pm_win_controls[0].pie_buttons[5].set_label_1_text("")
+        self.pm_win_controls[0].pie_buttons[5].setEnabled(False)  # Disable the button
 
         # W Button
-        self.pm_win_control.pie_buttons[6].set_label_1_text("")
-        self.pm_win_control.pie_buttons[6].setEnabled(False)  # Disable the button
+        self.pm_win_controls[0].pie_buttons[6].set_label_1_text("")
+        self.pm_win_controls[0].pie_buttons[6].setEnabled(False)  # Disable the button
 
         # NW Button
-        self.pm_win_control.pie_buttons[7].set_label_1_text("")
-        self.pm_win_control.pie_buttons[7].setEnabled(False)  # Disable the button
+        self.pm_win_controls[0].pie_buttons[7].set_label_1_text("")
+        self.pm_win_controls[0].pie_buttons[7].setEnabled(False)  # Disable the button
 
     # Button Management
     def update_pm_task_buttons(self):
@@ -312,7 +337,6 @@ class PieWindow(QMainWindow):
             app_info_cache = load_cache()
             final_button_updates = []
             processed_handles = set()
-
 
             def create_button_update(button_index, hwnd, title, exe_name, instance):
                 cache_entry = app_info_cache.get(exe_name)
@@ -356,7 +380,7 @@ class PieWindow(QMainWindow):
                         continue
 
                     exe_name = button["properties"].get("exe_name", "")
-                    assigned_hwnd = fixed_windows.get(button_index, None) # grab the window assigned to the button
+                    assigned_hwnd = fixed_windows.get(button_index, None)  # grab the window assigned to the button
                     # check if there is one assigned, if it exists all and then if it matches the Program
                     if (assigned_hwnd
                             and assigned_hwnd in all_open_windows_info_by_hwnd
@@ -499,7 +523,7 @@ class PieWindow(QMainWindow):
             exe_name = update["properties"]["exe_name"]
 
             # Determine task switcher and index using the helper function
-            task_switcher, index = self.get_task_switcher_and_index(button_index)
+            task_switcher, index = self.get_pie_menu_and_index(button_index, PieMenuType.TASK_SWITCHER)
 
             # Update button text and icon
             self.pie_button_texts[index] = button_text_1
@@ -543,7 +567,7 @@ class PieWindow(QMainWindow):
         # Clear button attributes when button index not among updates
         for i in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS):
             if i not in [update["index"] for update in button_updates]:
-                task_switcher, index = self.get_task_switcher_and_index(i)
+                task_switcher, index = self.get_pie_menu_and_index(i, PieMenuType.TASK_SWITCHER)
 
                 # Disable the button
                 self.pie_button_texts[index] = "Empty"

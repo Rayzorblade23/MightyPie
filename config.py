@@ -36,6 +36,7 @@ class BaseConfig:
     # UI and layout configurations
     _MAX_BUTTONS: int = 8
     _NUM_PIE_TASK_SWITCHERS: int = 3
+    _NUM_PIE_WIN_CONTROLS: int = 2
     _BUTTON_WIDTH: int = 140
     _BUTTON_HEIGHT: int = 34
     _CONTROL_BUTTON_SIZE: int = 30
