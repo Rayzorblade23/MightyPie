@@ -7,9 +7,13 @@
 
 IDEA:
 
+Implement Task Types as Buttons inherited from Pie Button instead
+
 We could run PWAs like Youtube Music via custom run commands. Would need a new type of pie menu button.
 
 Also: reverse buttons via Window Name, instead of App Name
+
+Collect multiple windows on one button
 
 
 BUGS:

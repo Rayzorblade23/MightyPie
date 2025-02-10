@@ -35,6 +35,7 @@ EXTERNAL_ICON_PATHS = {
     "change": get_resource_path(os.path.join("external_icons", "change.png")),
     "cake": get_resource_path(os.path.join("external_icons", "cake.png")),
     "schedule-time": get_resource_path(os.path.join("external_icons", "schedule-time.png")),
+    "center": get_resource_path(os.path.join("external_icons", "center.png")),
 }
 
 # Load the icon based on the inverted_icons flag
