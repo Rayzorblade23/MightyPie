@@ -197,6 +197,7 @@ if __name__ == "__main__":
     except AttributeError:
         pass  # Windows version does not support this API
 
+
     # Register signal handler for SIGINT (Ctrl+C) and SIGTERM (termination signals)
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)

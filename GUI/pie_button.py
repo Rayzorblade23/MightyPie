@@ -154,8 +154,13 @@ class PieButton(QPushButton):
                     icon = invert_icon(icon, return_pixmap=True)
 
                 icon_label = QLabel()
-                # Set DPI-aware scaling
-                icon.setDevicePixelRatio(2)  # Adjust for high-DPI displays (1.5x, 2x, etc.)
+                # Determine scale factor dynamically
+                logical_size = 16  # Default logical size (adjust based on use case)
+                actual_size = icon.width()  # Use the actual image width
+
+                scale_factor = actual_size / logical_size  # Compute scale factor
+                icon.setDevicePixelRatio(scale_factor)  # Apply dynamic scaling
+
                 icon_label.setPixmap(icon)
 
                 # Keep logical size at 16x16, but allow Qt to scale it for high-DPI screens

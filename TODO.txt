@@ -1,3 +1,7 @@
+- fix desktop shouldn't be able to be minimized
+
+- put in more logging to text file. maybe only in window functions
+
 - window control pie menu: implement restart window
 
 - context menu for programs?
