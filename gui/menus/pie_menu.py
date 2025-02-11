@@ -1,16 +1,15 @@
 import math
 
-from PyQt6.QtCore import QRectF, Qt, QPropertyAnimation, QRect, QEasingCurve, QSize
-from PyQt6.QtGui import QPainter, QBrush, QPen, QColor
+from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize
+from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QPushButton, QGraphicsOpacityEffect
 from pynput.mouse import Controller, Button
 
-from GUI.area_button import AreaButton
-from config import CONFIG
-from GUI.svg_indicator_button import SVGIndicatorButton
-from GUI.expanded_button import ExpandedButton
-from GUI.pie_button import PieButton
-from GUI.rings import SmoothCircle
+from gui.buttons.area_button import AreaButton
+from data.config import CONFIG
+from gui.elements.svg_indicator_button import SVGIndicatorButton
+from gui.buttons.expanded_button import ExpandedButton
+from gui.buttons.pie_button import PieButton
 
 
 class PieMenu(QWidget):

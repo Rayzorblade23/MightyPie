@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt, QTimer, QTime, QDate
 from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QApplication, QLabel, QGraphicsScene, QGraphicsView, QVBoxLayout, QHBoxLayout, QWidget
 
-from config import CONFIG
+from data.config import CONFIG
 
 
 class Clock(QWidget):
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # Load the QSS template
-    with open("style.qss", "r") as file:
+    with open("../../style.qss", "r") as file:
         qss_template = file.read()
 
     qss = (qss_template

@@ -1,16 +1,15 @@
 import sys
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication, QMainWindow
+from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
 
-from button_info_editor import ButtonInfoEditor
-from config import CONFIG
-from config_settings_window import ConfigSettingsWindow
+from data.config import CONFIG
 from functions.icon_functions_and_paths import get_icon
-from functions.window_functions import clear_cache
+from functions.shortcut_utils import open_audio_settings, open_network_settings, open_projection_settings, \
+    open_explorer_window, open_task_manager
 
 
-class AppSettingsMenu(QWidget):
+class WindowsSettingsMenu(QWidget):
     # noinspection PyUnresolvedReferences
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -22,12 +21,7 @@ class AppSettingsMenu(QWidget):
         self.icon_size = (20, 20)
         self.inverted_icons = True
 
-        self.button_config = ButtonInfoEditor()
-
-        self.app_settings = ConfigSettingsWindow()
-
-        if CONFIG.SHOW_SETTINGS_AT_STARTUP:
-            self.app_settings.show()
+        self.button_config = None
 
         def create_button(parent, icon_name, tooltip, click_action, icon_size, button_height):
             button = QPushButton(parent)
@@ -44,11 +38,11 @@ class AppSettingsMenu(QWidget):
         # Define buttons and their properties
         # (icon_name, tooltip, click_action)
         buttons_data = [
-            ("shredder", "Clear App Info Cache", lambda: clear_cache(self)),
-            ("cake", "Open the Button Config", lambda: self.open_button_info_editor()),
-            ("settings", "Open the App Settings", lambda: self.open_settings_window()),
-            ("restart", "Restart Program", lambda: self.parent().main_window.restart_program()),
-            ("quit", "Quit Program", lambda: self.parent().main_window.quit_program()),
+            ("taskman", "Open Task Manager", lambda: open_task_manager(self, hide_parent=True)),
+            ("audio", "Open Audio Settings", lambda: open_audio_settings(self, hide_parent=True)),
+            ("network", "Open Network Settings", lambda: open_network_settings(self, hide_parent=True)),
+            ("projection", "Open Projection Settings", lambda: open_projection_settings(self, hide_parent=True)),
+            ("folder", "Open File Explorer", lambda: open_explorer_window(self, hide_parent=True)),
         ]
 
         # Create and store buttons
@@ -62,12 +56,7 @@ class AppSettingsMenu(QWidget):
         layout.setSpacing(default_spacing)
 
         # Add buttons to layout
-        for button in buttons[:1]:  # Add the first set of buttons
-            layout.addWidget(button)
-
-        layout.addSpacerItem(spacer)
-
-        for button in buttons[1:]:  # Add the middle set of buttons
+        for button in buttons:
             layout.addWidget(button)
 
         # Remove spacing between buttons and margins around layout
@@ -76,20 +65,10 @@ class AppSettingsMenu(QWidget):
         # Set the layout for the window
         self.setLayout(layout)
 
-    def open_button_info_editor(self):
-        if self.button_config is None:
-            self.button_config = ButtonInfoEditor()
-        self.button_config.show()
-
-    def open_settings_window(self):
-        if self.app_settings is None:
-            self.app_settings = ConfigSettingsWindow()
-        self.app_settings.show()
-
 
 # Main entry point
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = AppSettingsMenu()
+    window = WindowsSettingsMenu()
     window.show()
     sys.exit(app.exec())

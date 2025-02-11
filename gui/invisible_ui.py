@@ -4,7 +4,7 @@ from functools import partial
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QPushButton, QWidget
 
-from config import CONFIG
+from data.config import CONFIG
 from functions.shortcut_utils import open_explorer_window
 from functions.taskbar_hide_utils import toggle_taskbar
 from functions.window_functions import add_hwnd_to_exclude
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # Load the QSS template
-    with open("style.qss", "r") as file:
+    with open("../style.qss", "r") as file:
         qss_template = file.read()
 
     qss = (qss_template

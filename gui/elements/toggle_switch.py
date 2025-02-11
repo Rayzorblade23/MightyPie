@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt, QPropertyAnimation, QPoint, QEasingCurve, pyqtPrope
 from PyQt6.QtGui import QPainter, QColor, QBrush, QPen, QFont
 from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QHBoxLayout, QPushButton, QVBoxLayout
 
-from config import CONFIG
+from data.config import CONFIG
 
 
 class Toggle(QPushButton):

@@ -14,12 +14,12 @@ from PyQt6.QtWidgets import (
     QApplication,
     QWidget, QMessageBox, )
 
-from config import CONFIG
+from data.config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
-from functions.file_handling_functions import get_resource_path
+from functions.file_handling_utils import get_resource_path
 from functions.taskbar_hide_utils import set_taskbar_opacity, show_taskbar
 from global_mouse_filter import GlobalMouseFilter
-from pie_window import PieWindow
+from gui.pie_window import PieWindow
 
 import ctypes
 

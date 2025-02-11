@@ -2,8 +2,8 @@ from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtWidgets import QLabel, QHBoxLayout, QSizePolicy, QWidget
 
-from config import CONFIG
-from GUI.font_styles import FontStyle
+from data.config import CONFIG
+from data.font_styles import FontStyle
 
 
 class ScrollingLabel(QWidget):
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # Load the stylesheet
-    with open("../style.qss", "r") as file:
+    with open("../../style.qss", "r") as file:
         app.setStyleSheet(file.read())
 
     window = QWidget()

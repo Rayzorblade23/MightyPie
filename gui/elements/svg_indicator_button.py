@@ -1,13 +1,15 @@
+import os
 from typing import *
 import math
 from pathlib import Path
 
 from PyQt6.QtCore import QPointF, QSize, Qt, QRectF, QPoint, QByteArray
-from PyQt6.QtGui import QPainter, QTransform, QColor
+from PyQt6.QtGui import QPainter, QTransform
 from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import QPushButton
 
-from config import CONFIG
+from data.config import CONFIG
+from functions.file_handling_utils import get_resource_path
 
 
 class SVGIndicatorButton(QPushButton):
@@ -23,7 +25,8 @@ class SVGIndicatorButton(QPushButton):
         self.button_size = size
 
         # Load the SVG
-        svg_path = Path(__file__).parent.parent / "graphic_elements" / "indicator.svg"
+        svg_path = get_resource_path(os.path.join("graphic_elements", "indicator.svg"))
+
         svg = Path(svg_path).read_text()
         svg = (svg.replace("{indicator}", CONFIG.ACCENT_COLOR_MUTED).
                replace("{ring_fill}", CONFIG.RING_FILL).

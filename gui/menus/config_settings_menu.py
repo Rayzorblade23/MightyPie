@@ -4,8 +4,8 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
                              QLabel, QLineEdit, QCheckBox, QSpinBox, QWidget,
                              QPushButton, QScrollArea, QMessageBox, QSizePolicy, QColorDialog)
 
-from config import CONFIG, DefaultConfig
-from functions.file_handling_functions import get_resource_path
+from data.config import CONFIG, DefaultConfig
+from functions.file_handling_utils import get_resource_path
 from functions.icon_functions_and_paths import get_icon
 
 
@@ -167,7 +167,7 @@ class ConfigSettingsWindow(QMainWindow):
         self.close()
 
     def save_settings_and_restart(self):
-        from pie_window import PieWindow
+        from gui.pie_window import PieWindow
 
         for name, widget in self.setting_widgets.items():
             value = self._get_widget_value(widget)
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
     # Load the QSS template
-    with open(get_resource_path("style.qss"), "r") as file:
+    with open(get_resource_path("../../style.qss"), "r") as file:
         qss_template = file.read()
 
     # inserting style attributes from the config.py file

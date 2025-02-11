@@ -1,5 +1,4 @@
 import os
-import os
 import subprocess
 import sys
 import threading
@@ -16,17 +15,17 @@ from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QPoint, QCoreApplication, QTi
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor, QGuiApplication
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
 
-from GUI.pie_button import PieButton
-from button_info import ButtonInfo
-from config import CONFIG
+from gui.buttons.pie_button import PieButton
+from data.button_info import ButtonInfo
+from data.config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
-from functions.icon_functions_and_paths import EXTERNAL_ICON_PATHS
+from data.icon_paths import EXTERNAL_ICON_PATHS
 from functions.window_functions import get_filtered_list_of_windows, focus_window_by_handle, \
     close_window_by_handle, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app, \
     cache_being_cleared, restore_last_minimized_window, focus_all_explorer_windows, center_window_at_cursor
-from pie_menu import PieMenu
-from special_menu import SpecialMenu
-from window_manager import WindowManager
+from gui.menus.pie_menu import PieMenu
+from gui.menus.special_menu import SpecialMenu
+from data.window_manager import WindowManager
 
 
 class PieMenuType(Enum):

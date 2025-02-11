@@ -5,11 +5,11 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea, \
     QPushButton, QFrame
 
-from button_info import ButtonInfo
-from config import CONFIG
-from functions.file_handling_functions import get_resource_path
+from data.button_info import ButtonInfo
+from data.config import CONFIG
+from functions.file_handling_utils import get_resource_path
 from functions.icon_functions_and_paths import get_icon
-from json_utils import JSONManager
+from functions.json_utils import JSONManager
 
 
 class ButtonInfoEditor(QWidget):
@@ -459,7 +459,7 @@ def main():
     import sys
     app = QApplication(sys.argv)
     # Load the QSS template
-    with open(get_resource_path("style.qss"), "r") as file:
+    with open(get_resource_path("../../style.qss"), "r") as file:
         qss_template = file.read()
 
     # inserting style attributes from the config.py file

@@ -18,9 +18,9 @@ from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget, QMessageBox
 
-from config import CONFIG
-from json_utils import JSONManager
-from window_manager import WindowManager
+from data.config import CONFIG
+from functions.json_utils import JSONManager
+from data.window_manager import WindowManager
 
 cache_being_cleared = False
 last_minimized_hwnd = 0

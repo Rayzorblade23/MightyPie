@@ -18,7 +18,7 @@ class JSONManager:
             else:  # Linux and other Unix
                 base_dir = os.path.join(str(Path.home()), ".config" if config_type == 'config' else ".cache")
         else:  # Running as script
-            base_dir = os.path.abspath(".")
+            base_dir = os.path.abspath("..")
 
         config_path = os.path.join(base_dir, app_name)
         os.makedirs(config_path, exist_ok=True)

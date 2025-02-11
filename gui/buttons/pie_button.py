@@ -5,9 +5,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap, QCursor
 from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
 
-from GUI.font_styles import FontStyle
-from GUI.scrolling_text_label import ScrollingLabel
-from config import CONFIG
+from data.font_styles import FontStyle
+from gui.elements.scrolling_text_label import ScrollingLabel
+from data.config import CONFIG
 from functions.icon_functions_and_paths import invert_icon
 
 
@@ -233,7 +233,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # Load the stylesheet
-    with open("../style.qss", "r") as file:
+    with open("../../style.qss", "r") as file:
         app.setStyleSheet(file.read())
 
     window = QWidget()

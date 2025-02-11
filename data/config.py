@@ -1,11 +1,11 @@
 import ast
 import json
 import os
-from dataclasses import dataclass, fields
-from typing import Any, Tuple, List
+from dataclasses import fields
+from typing import Any, List
 
-from functions.color_functions import adjust_saturation
-from json_utils import JSONManager  # Assuming the previous JSONManager is saved as json_utils.py
+from functions.color_utils import adjust_saturation
+from functions.json_utils import JSONManager  # Assuming the previous JSONManager is saved as json_utils.py
 
 from dataclasses import dataclass
 from typing import Tuple

@@ -2,9 +2,9 @@ import sys
 
 import pyautogui
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
+from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QApplication
 
-from config import CONFIG
+from data.config import CONFIG
 from functions.icon_functions_and_paths import get_icon
 
 

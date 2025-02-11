@@ -3,8 +3,8 @@
 import logging
 from typing import Dict, Any
 
-from config import CONFIG
-from json_utils import JSONManager
+from data.config import CONFIG
+from functions.json_utils import JSONManager
 
 
 class ButtonInfo:

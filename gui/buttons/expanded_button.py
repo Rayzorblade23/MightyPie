@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtWidgets import QPushButton, QSizePolicy
-from config import CONFIG
+from data.config import CONFIG
 
 class ExpandedButton(QPushButton):
     """Class for creating a QPushButton with customizable properties."""

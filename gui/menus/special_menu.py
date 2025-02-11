@@ -9,15 +9,15 @@ from PyQt6.QtGui import QPainter, QKeyEvent, QCursor
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QPushButton, \
     QMessageBox
 
-from GUI.toggle_switch import ToggleSwitch
-from config import CONFIG
+from gui.elements.toggle_switch import ToggleSwitch
+from data.config import CONFIG
 from events import taskbar_event
 from functions.icon_functions_and_paths import get_icon
 from functions.taskbar_hide_utils import toggle_taskbar, is_taskbar_visible
-from invisible_ui import InvisibleUI
-from special_menu_DF_monitor_selector import MonitorSetupMenu
-from special_menu_app_shortcuts import AppSettingsMenu
-from special_menu_windows_shortcuts import WindowsSettingsMenu
+from gui.invisible_ui import InvisibleUI
+from gui.menus.special_menu_DF_monitor_selector import MonitorSetupMenu
+from gui.menus.special_menu_app_shortcuts import AppSettingsMenu
+from gui.menus.special_menu_windows_shortcuts import WindowsSettingsMenu
 
 
 class SpecialMenu(QWidget):
@@ -361,7 +361,7 @@ class SpecialMenu(QWidget):
             "darwin": os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', CONFIG._PROGRAM_NAME),
             "linux": os.path.join(os.path.expanduser('~'), '.config', CONFIG._PROGRAM_NAME)
         }
-        config_dir = base_dirs.get(os.name, os.path.abspath('.'))
+        config_dir = base_dirs.get(os.name, os.path.abspath('../..'))
         SpecialMenu._open_folder(config_dir)
 
     def closeEvent(self, event):
@@ -440,7 +440,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # Load the QSS template
-    with open("style.qss", "r") as file:
+    with open("../../style.qss", "r") as file:
         qss_template = file.read()
 
     qss = (qss_template
