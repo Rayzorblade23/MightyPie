@@ -16,11 +16,10 @@ import win32ui
 from PIL import Image
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor, QGuiApplication
-from PyQt6.QtWidgets import QMainWindow, QWidget, QMessageBox
+from PyQt6.QtWidgets import QWidget, QMessageBox
 
 from config import CONFIG
 from json_utils import JSONManager
-from pie_menu import PieMenu
 from window_manager import WindowManager
 
 cache_being_cleared = False
@@ -507,63 +506,6 @@ def show_special_menu(menu: QWidget):
     menu.setFocus()  # This should focus the menu
 
 
-def show_pie_window(pie_window: QMainWindow, pie_menu: PieMenu):
-    """Display the main main_window and bring it to the foreground."""
-    try:
-        # Get the main_window handle
-        hwnd = int(pie_window.winId())
-
-        # Get the current mouse position
-        cursor_pos = QCursor.pos()
-
-        screen = QGuiApplication.screenAt(cursor_pos)  # Detect screen at cursor position
-        screen_geometry = screen.availableGeometry()  # Get the screen geometry
-
-        # Get screen dimensions
-        screen_left = screen_geometry.left()
-        screen_top = screen_geometry.top()
-        screen_right = screen_geometry.right()
-        screen_bottom = screen_geometry.bottom()
-
-        # Calculate initial new_x and new_y
-        new_x = cursor_pos.x() - (pie_menu.width() // 2)
-        new_y = cursor_pos.y() - (pie_menu.height() // 2)
-
-        # Ensure main_window position stays within screen bounds
-        corrected_x = max(screen_left, min(new_x, screen_right - pie_menu.width()))
-        corrected_y = max(screen_top, min(new_y, screen_bottom - pie_menu.height()))
-
-        # Normalize top left for other monitors
-        corrected_x -= screen_left
-        corrected_y -= screen_top
-
-        if pie_menu is not None:
-            pie_menu.move(corrected_x, corrected_y)
-
-        # Set geometry for pie_window on the current screen
-        pie_window.move(screen_geometry.topLeft())  # Move to the top-left of the screen
-        pie_window.setFixedSize(screen_geometry.width(), screen_geometry.height())  # Ensure the window size matches screen size
-        pie_window.view.setFixedSize(screen_geometry.width(), screen_geometry.height())  # Ensure view size matches screen size
-        pie_window.scene.setSceneRect(0, 0, screen_geometry.width(), screen_geometry.height())
-
-        # Prevents flashing a frame of the last window position when calling show()
-        pie_window.setWindowOpacity(0)  # Make the window fully transparent
-        pie_window.show()
-        QTimer.singleShot(1, lambda: pie_window.setWindowOpacity(1))  # Restore opacity after a short delay
-
-        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
-        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
-        win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
-                              win32con.SWP_SHOWWINDOW + win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
-
-        return cursor_pos
-
-
-    except Exception as e:
-        print(f"Error showing the main main_window: {e}")
-
-
 def center_window_at_cursor(pie_window: QWidget):
     """Centers the window under the cursor to the middle of its current monitor at 50% size."""
     if not hasattr(pie_window, 'pie_menu_pos'):
@@ -595,6 +537,7 @@ def center_window_at_cursor(pie_window: QWidget):
     win32gui.ShowWindow(root_handle, win32con.SW_RESTORE)
     win32gui.SetWindowPos(root_handle, None, new_x, new_y, new_width, new_height, win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE)
     print("Window centered successfully on the correct monitor")
+
 
 def toggle_maximize_window_at_cursor(pie_window: QWidget):
     if not hasattr(pie_window, 'pie_menu_pos'):

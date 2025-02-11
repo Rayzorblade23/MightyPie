@@ -6,20 +6,22 @@ import threading
 import time
 from enum import Enum
 from threading import Lock
-from typing import Dict, Tuple, Set, List, Optional
+from typing import Dict, Tuple, Set, Optional
 
 import psutil
 import pyautogui
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer, QPoint, QCoreApplication
-from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor
-from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView, QApplication
+import win32con
+import win32gui
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QPoint, QCoreApplication, QTimer
+from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor, QGuiApplication
+from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
 
 from GUI.pie_button import PieButton
 from button_info import ButtonInfo
 from config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
 from functions.icon_functions_and_paths import EXTERNAL_ICON_PATHS
-from functions.window_functions import show_pie_window, get_filtered_list_of_windows, focus_window_by_handle, \
+from functions.window_functions import get_filtered_list_of_windows, focus_window_by_handle, \
     close_window_by_handle, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app, \
     cache_being_cleared, restore_last_minimized_window, focus_all_explorer_windows, center_window_at_cursor
 from pie_menu import PieMenu
@@ -201,7 +203,7 @@ class PieWindow(QMainWindow):
                 pie_menu.show()
                 if "Task" in pie_menu.view.objectName():
                     self.refresh()
-                self.pie_menu_pos = show_pie_window(event.window, pie_menu)  # Safely call show_pie_window when the filtered_event is posted
+                self.pie_menu_pos = self.show_pie_window(pie_menu)  # Safely call show_pie_window when the filtered_event is posted
             return True
         elif isinstance(event, HotkeyReleaseEvent):
             pie_menu = event.child_window
@@ -235,6 +237,61 @@ class PieWindow(QMainWindow):
     def refresh(self):
         # Start the background task
         threading.Thread(target=self.update_pm_task_buttons, daemon=True).start()
+
+    def show_pie_window(self, pie_menu):
+        """Display the main window and bring it to the foreground."""
+        try:
+            # Get the main window handle
+            hwnd = int(self.winId())
+
+            # Get the current mouse position
+            cursor_pos = QCursor.pos()
+
+            screen = QGuiApplication.screenAt(cursor_pos)  # Detect screen at cursor position
+            screen_geometry = screen.availableGeometry()  # Get the screen geometry
+
+            # Get screen dimensions
+            screen_left = screen_geometry.left()
+            screen_top = screen_geometry.top()
+            screen_right = screen_geometry.right()
+            screen_bottom = screen_geometry.bottom()
+
+            # Calculate initial new_x and new_y
+            new_x = cursor_pos.x() - (pie_menu.width() // 2)
+            new_y = cursor_pos.y() - (pie_menu.height() // 2)
+
+            # Ensure window position stays within screen bounds
+            corrected_x = max(screen_left, min(new_x, screen_right - pie_menu.width()))
+            corrected_y = max(screen_top, min(new_y, screen_bottom - pie_menu.height()))
+
+            # Normalize top left for other monitors
+            corrected_x -= screen_left
+            corrected_y -= screen_top
+
+            if pie_menu is not None:
+                pie_menu.move(corrected_x, corrected_y)
+
+            # Set geometry for pie_window on the current screen
+            self.move(screen_geometry.topLeft())  # Move to the top-left of the screen
+            self.setFixedSize(screen_geometry.width(), screen_geometry.height())  # Ensure the window size matches screen size
+            self.view.setFixedSize(screen_geometry.width(), screen_geometry.height())  # Ensure view size matches screen size
+            self.scene.setSceneRect(0, 0, screen_geometry.width(), screen_geometry.height())
+
+            # Prevents flashing a frame of the last window position when calling show()
+            self.setWindowOpacity(0)  # Make the window fully transparent
+            self.show()
+            QTimer.singleShot(1, lambda: self.setWindowOpacity(1))  # Restore opacity after a short delay
+
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+            win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
+            win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
+            win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
+                                  win32con.SWP_SHOWWINDOW + win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
+
+            return cursor_pos
+
+        except Exception as e:
+            print(f"Error showing the main window: {e}")
 
     def get_pie_menu_and_index(self, button_index: int, pie_menu_type: PieMenuType) -> Tuple[PieMenu, int]:
         """Helper function to calculate the Pie Menu and index dynamically."""
