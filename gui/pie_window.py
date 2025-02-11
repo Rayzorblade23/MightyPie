@@ -3,7 +3,6 @@ import subprocess
 import sys
 import threading
 import time
-from enum import Enum
 from threading import Lock
 from typing import Dict, Tuple, Set, Optional
 
@@ -11,39 +10,32 @@ import psutil
 import pyautogui
 import win32con
 import win32gui
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QPoint, QCoreApplication, QTimer
+from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QCoreApplication, QTimer, QObject
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor, QGuiApplication
-from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
+from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView, QWidget
 
 from gui.buttons.pie_button import PieButton
 from data.button_info import ButtonInfo
 from data.config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
 from data.icon_paths import EXTERNAL_ICON_PATHS
-from functions.window_functions import get_filtered_list_of_windows, focus_window_by_handle, \
-    close_window_by_handle, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app, \
+from functions.window_functions import get_filtered_list_of_windows, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app, \
     cache_being_cleared, restore_last_minimized_window, focus_all_explorer_windows, center_window_at_cursor
-from gui.menus.pie_menu import PieMenu
+from gui.menus.pie_menu import PieMenu, PieMenuType
 from gui.menus.special_menu import SpecialMenu
 from data.window_manager import WindowManager
-
-
-class PieMenuType(Enum):
-    TASK_SWITCHER = "TaskSwitcher"
-    WIN_CONTROL = "WinControl"
+from helper.pie_button_updater import PieButtonUpdater
 
 
 class PieWindow(QMainWindow):
     EXIT_CODE_REBOOT = 122
 
     # Add a custom signal for thread-safe updates
-    update_buttons_signal = pyqtSignal(list)
+    update_buttons_signal = pyqtSignal(QObject, list)  # Expect QWidget and list
 
     def __init__(self):
         super().__init__()
-
-        # Connect the custom signal to the update method
-        self.update_buttons_signal.connect(self.update_button_ui)
+        self.pie_button_updater = PieButtonUpdater()
 
         # Set the default cursor (normal arrow cursor)
         self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Set the normal cursor
@@ -377,7 +369,6 @@ class PieWindow(QMainWindow):
                 ))
 
             if "icon" and "icon_path" and "is_inverted" in config:
-                print(config["icon"])
                 button.update_icon(config["icon"], is_invert_icon=config["is_inverted"])
 
     # Button Management
@@ -575,7 +566,7 @@ class PieWindow(QMainWindow):
         self.clean_up_stale_window_mappings(final_button_updates)
 
         # Emit updates
-        self.update_buttons_signal.emit(final_button_updates)
+        self.pie_button_updater.update_buttons_signal.emit(self, final_button_updates)
 
     def clean_up_stale_window_mappings(self, final_button_updates):
         # Clean up stale window mappings
@@ -586,77 +577,3 @@ class PieWindow(QMainWindow):
                 for handle, button_id in self.windowHandles_To_buttonIndexes_map.items()
                 if handle in valid_handles
             }
-
-    @pyqtSlot(list)
-    def update_button_ui(self, button_updates):
-        """Update button UI in the main thread."""
-        app_info_cache = load_cache()
-
-        for update in button_updates:
-            # Extract 'index' directly from the update (not from 'properties')
-            button_index = update["index"]
-
-            # Extract the rest of the button info from 'properties'
-            button_text_1 = update["properties"]["text_1"]
-            button_text_2 = update["properties"]["text_2"]
-            window_handle = update["properties"]["window_handle"]
-            app_icon_path = update["properties"]["app_icon_path"]
-            exe_name = update["properties"]["exe_name"]
-
-            # Determine task switcher and index using the helper function
-            task_switcher, index = self.get_pie_menu_and_index(button_index, PieMenuType.TASK_SWITCHER)
-
-            # Update button text and icon
-            self.pie_button_texts[index] = button_text_1
-            task_switcher.pie_buttons[index].set_label_1_text(button_text_1)
-            task_switcher.pie_buttons[index].set_label_2_text(button_text_2)
-            task_switcher.pie_buttons[index].update_icon(app_icon_path)
-
-            # Disconnect any previous connections first
-            try:
-                task_switcher.pie_buttons[index].clicked.disconnect()
-            except TypeError:
-                pass  # No connections to disconnect
-
-            # Set action for empty reserved buttons
-            if window_handle == 0:
-                exe_path = app_info_cache.get(exe_name, {}).get("exe_path")
-                if exe_path:
-                    task_switcher.pie_buttons[index].set_left_click_action(
-                        lambda captured_exe_path=exe_path: (
-                            self.hide(),
-                            QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
-                        )
-                    )
-                continue
-
-            # Set the clicking actions for windows
-            task_switcher.pie_buttons[index].set_left_click_action(
-                lambda hwnd=window_handle: (
-                    self.hide(),
-                    QTimer.singleShot(0, lambda: focus_window_by_handle(hwnd)),
-                )
-            )
-            task_switcher.pie_buttons[index].set_middle_click_action(
-                lambda hwnd=window_handle: (
-                    QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
-                    QTimer.singleShot(100, lambda: self.auto_refresh()),
-                )
-            )
-            task_switcher.pie_buttons[index].setEnabled(True)
-
-        # Clear button attributes when button index not among updates
-        for i in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS):
-            if i not in [update["index"] for update in button_updates]:
-                task_switcher, index = self.get_pie_menu_and_index(i, PieMenuType.TASK_SWITCHER)
-
-                # Disable the button
-                self.pie_button_texts[index] = "Empty"
-                task_switcher.pie_buttons[index].set_left_click_action(action=None)
-                # task_switcher.pie_buttons[index].set_right_click_action(action=None)
-                task_switcher.pie_buttons[index].set_middle_click_action(action=None)
-                task_switcher.pie_buttons[index].setEnabled(False)  # Disable the button
-
-                task_switcher.pie_buttons[index].set_label_1_text("Empty")
-                task_switcher.pie_buttons[index].set_label_2_text("")
-                task_switcher.pie_buttons[index].update_icon("")

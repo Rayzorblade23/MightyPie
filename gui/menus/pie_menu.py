@@ -1,4 +1,5 @@
 import math
+from enum import Enum
 
 from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize
 from PyQt6.QtGui import QPainter
@@ -199,3 +200,8 @@ class PieMenu(QWidget):
         pos_animation.start()
         size_animation.start()
         opacity_animation.start()
+
+
+class PieMenuType(Enum):
+    TASK_SWITCHER = "TaskSwitcher"
+    WIN_CONTROL = "WinControl"
