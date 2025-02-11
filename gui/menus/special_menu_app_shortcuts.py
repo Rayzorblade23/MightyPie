@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSiz
 from gui.menus.button_info_editor import ButtonInfoEditor
 from data.config import CONFIG
 from gui.menus.config_settings_menu import ConfigSettingsWindow
-from functions.icon_functions_and_paths import get_icon
+from functions.icon_utils import get_icon
 from functions.window_functions import clear_cache
 
 

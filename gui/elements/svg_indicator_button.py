@@ -25,7 +25,7 @@ class SVGIndicatorButton(QPushButton):
         self.button_size = size
 
         # Load the SVG
-        svg_path = get_resource_path(os.path.join("graphic_elements", "indicator.svg"))
+        svg_path = get_resource_path(CONFIG._INDICATOR_SVG_PATH)
 
         svg = Path(svg_path).read_text()
         svg = (svg.replace("{indicator}", CONFIG.ACCENT_COLOR_MUTED).

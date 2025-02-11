@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QPushButton, QHB
 from data.font_styles import FontStyle
 from gui.elements.scrolling_text_label import ScrollingLabel
 from data.config import CONFIG
-from functions.icon_functions_and_paths import invert_icon
+from functions.icon_utils import invert_icon
 
 
 class PieButton(QPushButton):

@@ -377,6 +377,7 @@ class PieWindow(QMainWindow):
                 ))
 
             if "icon" and "icon_path" and "is_inverted" in config:
+                print(config["icon"])
                 button.update_icon(config["icon"], is_invert_icon=config["is_inverted"])
 
     # Button Management

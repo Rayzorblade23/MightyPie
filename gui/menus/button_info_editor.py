@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget, QVBoxLayout, QHB
 from data.button_info import ButtonInfo
 from data.config import CONFIG
 from functions.file_handling_utils import get_resource_path
-from functions.icon_functions_and_paths import get_icon
+from functions.icon_utils import get_icon
 from functions.json_utils import JSONManager
 
 

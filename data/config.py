@@ -18,6 +18,7 @@ class BaseConfig:
     _PROGRAM_NAME: str = "MightyPie"
     _CACHE_FILENAME: str = "apps_info_cache.json"
     _BUTTON_CONFIG_FILENAME: str = "button_config.json"
+    _INDICATOR_SVG_PATH: str = "graphic_elements/indicator.svg"
 
     # Runtime configuration fields
     SHOW_SETTINGS_AT_STARTUP: bool = True

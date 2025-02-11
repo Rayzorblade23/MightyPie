@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
 
 from data.config import CONFIG, DefaultConfig
 from functions.file_handling_utils import get_resource_path
-from functions.icon_functions_and_paths import get_icon
+from functions.icon_utils import get_icon
 
 
 class NoScrollSpinBox(QSpinBox):

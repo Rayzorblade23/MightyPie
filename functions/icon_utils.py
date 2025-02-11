@@ -47,4 +47,3 @@ def invert_icon(icon_path, return_pixmap=False):
     return QIcon(inverted_pixmap)
 
 
-
