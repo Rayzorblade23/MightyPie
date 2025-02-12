@@ -82,8 +82,7 @@ class PieButton(QPushButton):
 
     def update_content(self, text_1: str, text_2: str, app_icon_path=None, is_invert_icon=False) -> None:
         self.set_label_1_text(text_1)
-        if text_2 != "":
-            self.set_label_2_text(text_2)
+        self.set_label_2_text(text_2)
         self.update_icon(app_icon_path, is_invert_icon)
 
     def set_label_1_text(self, text: str):

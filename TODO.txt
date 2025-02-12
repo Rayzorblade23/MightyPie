@@ -18,6 +18,7 @@ Collect multiple windows on one button
 
 BUGS:
 - Scrolling not working on Labels of Window Control Pie Menus
+
 - first mouse click in Button Config doesn't do anything except closing Special Menu
 
 - maximize/minimize sometimes works on wrong window
