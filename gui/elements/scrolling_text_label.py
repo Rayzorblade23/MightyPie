@@ -18,9 +18,9 @@ class ScrollingLabel(QWidget):
         self.text_scroll_pos = 0
         self.text_scroll_active = False
         self.timer = QTimer(self)
-        self.label_margins = CONFIG._PIE_TEXT_LABEL_MARGINS
-        self.scroll_speed = CONFIG._PIE_TEXT_LABEL_SCROLL_SPEED
-        self.scroll_update_interval = CONFIG._PIE_TEXT_LABEL_SCROLL_INTERVAL  # in ms
+        self.label_margins = CONFIG.INTERNAL_PIE_TEXT_LABEL_MARGINS
+        self.scroll_speed = CONFIG.INTERNAL_PIE_TEXT_LABEL_SCROLL_SPEED
+        self.scroll_update_interval = CONFIG.INTERNAL_PIE_TEXT_LABEL_SCROLL_INTERVAL  # in ms
         self.h_align = h_align
         self.v_offset = v_offset
         self.font_size = font_size

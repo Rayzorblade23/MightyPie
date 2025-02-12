@@ -25,8 +25,8 @@ from data.window_manager import WindowManager
 cache_being_cleared = False
 last_minimized_hwnd = 0
 
-APP_NAME = CONFIG._PROGRAM_NAME
-CACHE_FILENAME = CONFIG._CACHE_FILENAME
+APP_NAME = CONFIG.INTERNAL_PROGRAM_NAME
+CACHE_FILENAME = CONFIG.INTERNAL_CACHE_FILENAME
 
 
 def load_cache():
@@ -56,6 +56,7 @@ def clear_cache(self):
 
         cache_dir = JSONManager.get_config_directory(APP_NAME, config_type='cache')
         cache_file = os.path.join(cache_dir, CACHE_FILENAME)
+        print(cache_file)
 
         if os.path.exists(cache_file):
             try:
@@ -740,7 +741,7 @@ def launch_app(exe_path):
     :param exe_path: The path to the executable file.
     """
     try:
-        # Check if exe_path contains 'spotify' (case insensitive)
+        # Check if exe_path contains 'spotify' (case-insensitive)
         if "spotify" in exe_path.lower():
             print("Detected Spotify. Using Start Menu simulation...")
 

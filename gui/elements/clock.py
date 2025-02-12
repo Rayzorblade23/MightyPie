@@ -27,7 +27,7 @@ class Clock(QWidget):
 
         self.view.setObjectName(self.obj_name)
         self.setObjectName(self.obj_name)
-        self.setWindowTitle(f"{CONFIG._PROGRAM_NAME} - Clock")  # Set the window title
+        self.setWindowTitle(f"{CONFIG.INTERNAL_PROGRAM_NAME} - Clock")  # Set the window title
         self.setup_window()
 
         # Create a QWidget to hold the labels

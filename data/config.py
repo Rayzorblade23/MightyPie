@@ -15,10 +15,10 @@ class BaseConfig:
     """Base class with core, runtime, and UI configuration fields."""
 
     # Core configuration fields
-    _PROGRAM_NAME: str = "MightyPie"
-    _CACHE_FILENAME: str = "apps_info_cache.json"
-    _BUTTON_CONFIG_FILENAME: str = "button_config.json"
-    _INDICATOR_SVG_PATH: str = "graphic_elements/indicator.svg"
+    INTERNAL_PROGRAM_NAME: str = "MightyPie"
+    INTERNAL_CACHE_FILENAME: str = "apps_info_cache.json"
+    INTERNAL_BUTTON_CONFIG_FILENAME: str = "button_config.json"
+    INTERNAL_INDICATOR_SVG_PATH: str = "graphic_elements/indicator.svg"
 
     # Runtime configuration fields
     SHOW_SETTINGS_AT_STARTUP: bool = True
@@ -35,20 +35,20 @@ class BaseConfig:
     MONITOR_SHORTCUT_3: Tuple[str, str] = ("win", "num3")
 
     # UI and layout configurations
-    _MAX_BUTTONS: int = 8
-    _NUM_PIE_TASK_SWITCHERS: int = 3
-    _NUM_PIE_WIN_CONTROLS: int = 2
-    _BUTTON_WIDTH: int = 140
-    _BUTTON_HEIGHT: int = 34
-    _CONTROL_BUTTON_SIZE: int = 30
-    _CANVAS_SIZE: Tuple[int, int] = (800, 600)
-    _RADIUS: int = 150
-    _INNER_RADIUS: int = 18
+    INTERNAL_MAX_BUTTONS: int = 8
+    INTERNAL_NUM_PIE_TASK_SWITCHERS: int = 3
+    INTERNAL_NUM_PIE_WIN_CONTROLS: int = 2
+    INTERNAL_BUTTON_WIDTH: int = 140
+    INTERNAL_BUTTON_HEIGHT: int = 34
+    INTERNAL_CONTROL_BUTTON_SIZE: int = 30
+    INTERNAL_CANVAS_SIZE: Tuple[int, int] = (800, 600)
+    INTERNAL_RADIUS: int = 150
+    INTERNAL_INNER_RADIUS: int = 18
 
     # Text and animation settings
-    _PIE_TEXT_LABEL_MARGINS: int = 10
-    _PIE_TEXT_LABEL_SCROLL_SPEED: int = 1
-    _PIE_TEXT_LABEL_SCROLL_INTERVAL: int = 25
+    INTERNAL_PIE_TEXT_LABEL_MARGINS: int = 10
+    INTERNAL_PIE_TEXT_LABEL_SCROLL_SPEED: int = 1
+    INTERNAL_PIE_TEXT_LABEL_SCROLL_INTERVAL: int = 25
 
     # Color configurations
     ACCENT_COLOR: str = "#5a14b7"
@@ -65,7 +65,7 @@ class ConfigManager(BaseConfig):
         """Initialize configuration with JSON management."""
         # Load configuration using JSONManager
         loaded_config = JSONManager.load(
-            app_name=self._PROGRAM_NAME,
+            app_name=self.INTERNAL_PROGRAM_NAME,
             filename='app_settings.json',
             default=self._get_default_config()
         )
@@ -79,9 +79,9 @@ class ConfigManager(BaseConfig):
     # def _get_config_directory(self) -> str:
     #     """Determine the appropriate configuration directory."""
     #     base_dirs = {
-    #         "win32": os.path.join(os.environ.get('APPDATA', ''), self._PROGRAM_NAME),
-    #         "darwin": os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', self._PROGRAM_NAME),
-    #         "linux": os.path.join(os.path.expanduser('~'), '.config', self._PROGRAM_NAME)
+    #         "win32": os.path.join(os.environ.get('APPDATA', ''), self.INTERNAL_PROGRAM_NAME),
+    #         "darwin": os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', self.INTERNAL_PROGRAM_NAME),
+    #         "linux": os.path.join(os.path.expanduser('~'), '.config', self.INTERNAL_PROGRAM_NAME)
     #     }
     #     return base_dirs.get(os.name, os.path.abspath('.'))
 
@@ -91,19 +91,6 @@ class ConfigManager(BaseConfig):
             f.name: getattr(self, f.name)
             for f in fields(self)
         }
-
-    def _load_config(self):
-        """Load configuration from JSON, with fallback to default values."""
-        os.makedirs(self.config_dir, exist_ok=True)
-
-        try:
-            if os.path.exists(self.config_path):
-                with open(self.config_path, 'r') as f:
-                    loaded_config = json.load(f)
-                    self._update_from_dict(loaded_config)
-        except Exception as e:
-            print(f"Error loading config: {e}. Using defaults.")
-
 
     def _update_from_dict(self, config_dict: dict):
         """Update configuration from a dictionary, handling type conversions."""
@@ -135,7 +122,7 @@ class ConfigManager(BaseConfig):
         }
 
         JSONManager.save(
-            app_name=self._PROGRAM_NAME,
+            app_name=self.INTERNAL_PROGRAM_NAME,
             filename='app_settings.json',
             data=config_dict
         )
@@ -162,7 +149,7 @@ class ConfigManager(BaseConfig):
                 "value": getattr(self, f.name),
                 "type": str(f.type)
             }
-            for f in fields(self) if not f.name.startswith('_')
+            for f in fields(self) if not f.name.startswith('INTERNAL_')
         ]
 
 

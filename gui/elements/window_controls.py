@@ -11,13 +11,13 @@ def create_window_controls(main_window):
         "_",
         "minimizeButton",
         fixed_size=True,
-        size=(CONFIG._CONTROL_BUTTON_SIZE, CONFIG._CONTROL_BUTTON_SIZE),
+        size=(CONFIG.INTERNAL_CONTROL_BUTTON_SIZE, CONFIG.INTERNAL_CONTROL_BUTTON_SIZE),
     )
     close_button = ExpandedButton(
         "X",
         "closeButton",
         fixed_size=True,
-        size=(CONFIG._CONTROL_BUTTON_SIZE, CONFIG._CONTROL_BUTTON_SIZE),
+        size=(CONFIG.INTERNAL_CONTROL_BUTTON_SIZE, CONFIG.INTERNAL_CONTROL_BUTTON_SIZE),
     )
 
     minimize_button.left_clicked.connect(main_window.showMinimized)

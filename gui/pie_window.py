@@ -61,7 +61,7 @@ class PieWindow(QMainWindow):
         self.pie_menu_pos = QPoint()
         self.button_mapping_lock = Lock()
         self.last_window_handles = []
-        self.pie_button_texts = ["Empty" for _ in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS)]
+        self.pie_button_texts = ["Empty" for _ in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_TASK_SWITCHERS)]
         self.windowHandles_To_buttonIndexes_map = {}
         self.fixed_button_indexes: Set[int] = set()
         self.fixed_windows: Set[int] = set()
@@ -71,7 +71,7 @@ class PieWindow(QMainWindow):
 
         # Create Pie Menus with this main_window as parent
         self.pm_task_switchers: list[PieMenu] = []  # List to hold the task switchers
-        for i in range(1, CONFIG._NUM_PIE_TASK_SWITCHERS + 1):  # Adjust the range if the number of task switchers changes
+        for i in range(1, CONFIG.INTERNAL_NUM_PIE_TASK_SWITCHERS + 1):  # Adjust the range if the number of task switchers changes
             task_switcher = PieMenu(i, "PieMenuTaskSwitcher", parent=self)
             if i > 1:  # Hide task switchers 2 and 3 initially
                 task_switcher.hide()
@@ -79,7 +79,7 @@ class PieWindow(QMainWindow):
 
         # TODO: Make the Types of PieMenu children of PieMenu, they have their own shortcut value then
         self.pm_win_controls: list[PieMenu] = []
-        for i in range(1, CONFIG._NUM_PIE_WIN_CONTROLS + 1):  # Adjust the range if the number of task switchers changes
+        for i in range(1, CONFIG.INTERNAL_NUM_PIE_WIN_CONTROLS + 1):  # Adjust the range if the number of task switchers changes
             win_control = PieMenu(i, "PieMenuWinControl", parent=self)
             win_control.hide()  # Hide all at first
             self.pm_win_controls.append(win_control)
@@ -87,11 +87,11 @@ class PieWindow(QMainWindow):
         self.setup_window_control_buttons()
 
         # For now, right-click should always just hide
-        for i in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS):
+        for i in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_TASK_SWITCHERS):
             task_switcher, index = self.get_pie_menu_and_index(i, PieMenuType.TASK_SWITCHER)
             task_switcher.pie_buttons[index].set_right_click_action(action=lambda: self.hide())
 
-        for i in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_WIN_CONTROLS):
+        for i in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_WIN_CONTROLS):
             win_control, index = self.get_pie_menu_and_index(i, PieMenuType.WIN_CONTROL)
             win_control.pie_buttons[index].set_right_click_action(action=lambda: self.hide())
 
@@ -166,7 +166,7 @@ class PieWindow(QMainWindow):
 
     def setup_window(self):
         """Set up the main main_window properties."""
-        self.setWindowTitle(f"{CONFIG._PROGRAM_NAME} - Main")
+        self.setWindowTitle(f"{CONFIG.INTERNAL_PROGRAM_NAME} - Main")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
@@ -292,7 +292,7 @@ class PieWindow(QMainWindow):
         if pie_menus is None:
             raise ValueError(f"Invalid pie menu type: {pie_menu_type}.")
 
-        max_buttons = CONFIG._MAX_BUTTONS
+        max_buttons = CONFIG.INTERNAL_MAX_BUTTONS
 
         pie_menu_index = button_index // max_buttons  # Determine the task switcher index
         index = button_index % max_buttons  # Calculate the index within the task switcher
@@ -389,7 +389,7 @@ class PieWindow(QMainWindow):
             app_name = cache_entry.get("app_name", "")
             app_icon_path = cache_entry.get("icon_path")
             button_text = f"{title} ({instance})" if instance != 0 else title
-            # sends "fixed" for task_type but it's not used for now so doesn't matter
+            # sends "fixed" for task_type, but it's not used for now so doesn't matter
             return {
                 "index": button_index,
                 "task_type": "program_window_fixed",
@@ -553,7 +553,7 @@ class PieWindow(QMainWindow):
         # Process the rest, one Pie Menu at a time,
         # so already-assigned Windows only jump
         # if there is a free slot in the lower-index Pie Menu
-        for pie_menu_index in range(CONFIG._NUM_PIE_TASK_SWITCHERS):
+        for pie_menu_index in range(CONFIG.INTERNAL_NUM_PIE_TASK_SWITCHERS):
             process_existing_mappings(pie_menu_index)
             fill_empty_buttons(pie_menu_index)
 

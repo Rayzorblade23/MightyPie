@@ -37,7 +37,7 @@ class PieMenu(QWidget):
         self.scene = None
         self.view = None
         self.btn = None
-        self.pie_button_texts: List[str] = ["Empty" for _ in range(CONFIG._MAX_BUTTONS)]
+        self.pie_button_texts: List[str] = ["Empty" for _ in range(CONFIG.INTERNAL_MAX_BUTTONS)]
         self.pie_buttons: list[PieButton] = []
         self.animations = []
 
@@ -55,7 +55,7 @@ class PieMenu(QWidget):
     def setup_window(self):
         """Set up the main main_window properties."""
         # Non-resizable main_window
-        self.setFixedSize(CONFIG._RADIUS * 2 + CONFIG._BUTTON_WIDTH * 2, CONFIG._RADIUS * 2 + CONFIG._BUTTON_HEIGHT * 2)
+        self.setFixedSize(CONFIG.INTERNAL_RADIUS * 2 + CONFIG.INTERNAL_BUTTON_WIDTH * 2, CONFIG.INTERNAL_RADIUS * 2 + CONFIG.INTERNAL_BUTTON_HEIGHT * 2)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
@@ -85,8 +85,8 @@ class PieMenu(QWidget):
             object_name="middleButton",
             fixed_size=True,
             # Using size instead of geometry
-            size=(CONFIG._INNER_RADIUS * 2, CONFIG._INNER_RADIUS * 2),
-            pos=(self.width() // 2 - CONFIG._INNER_RADIUS, self.height() // 2 - CONFIG._INNER_RADIUS)  # Using position for x and y
+            size=(CONFIG.INTERNAL_INNER_RADIUS * 2, CONFIG.INTERNAL_INNER_RADIUS * 2),
+            pos=(self.width() // 2 - CONFIG.INTERNAL_INNER_RADIUS, self.height() // 2 - CONFIG.INTERNAL_INNER_RADIUS)  # Using position for x and y
         )
         self.middle_button.left_clicked.connect(
             lambda: [self.parent().hide(), Controller().press(Button.x2), Controller().release(Button.x2)])
@@ -114,15 +114,15 @@ class PieMenu(QWidget):
             )  # Calculate button's position using angle_in_radians
 
             # the base offset here moves the anchor point from top left to center
-            offset_x = -CONFIG._BUTTON_WIDTH / 2
-            offset_y = CONFIG._BUTTON_HEIGHT / 2
+            offset_x = -CONFIG.INTERNAL_BUTTON_WIDTH / 2
+            offset_y = CONFIG.INTERNAL_BUTTON_HEIGHT / 2
 
             # the standard anchor position is the middle of a square area at the side of the button
             # the top and bottom buttons don't need it, they should remain centered
-            nudge_x = CONFIG._BUTTON_WIDTH / 2 - CONFIG._BUTTON_HEIGHT / 2
+            nudge_x = CONFIG.INTERNAL_BUTTON_WIDTH / 2 - CONFIG.INTERNAL_BUTTON_HEIGHT / 2
             # some buttons need to be nudged so the distribution looks more circular
             # so we nudge the buttons at 45 degrees closer to the x-axis
-            nudge_y = CONFIG._BUTTON_HEIGHT / 2
+            nudge_y = CONFIG.INTERNAL_BUTTON_HEIGHT / 2
 
             if i == 1:  # 45 degrees
                 offset_x += nudge_x
@@ -146,8 +146,8 @@ class PieMenu(QWidget):
                 pass
 
             # distribute the buttons in a circle
-            button_pos_x = int(self.width() / 2 + offset_x + CONFIG._RADIUS * math.sin(math.radians(angle_in_degrees)))
-            button_pos_y = int(self.height() / 2 - offset_y - CONFIG._RADIUS * math.cos(math.radians(angle_in_degrees)))
+            button_pos_x = int(self.width() / 2 + offset_x + CONFIG.INTERNAL_RADIUS * math.sin(math.radians(angle_in_degrees)))
+            button_pos_y = int(self.height() / 2 - offset_y - CONFIG.INTERNAL_RADIUS * math.cos(math.radians(angle_in_degrees)))
 
             button_name = "Pie_Button" + str(i)  # name of the button not used
             # self.btn = create_button(name, button_name, pos=(button_pos_x, button_pos_y))
@@ -187,8 +187,8 @@ class PieMenu(QWidget):
         # Size animation
         size_animation = QPropertyAnimation(button, b"size")
         size_animation.setDuration(duration)  # Duration in milliseconds
-        size_animation.setStartValue(QSize(CONFIG._BUTTON_WIDTH // 4, CONFIG._BUTTON_HEIGHT // 4))  # Initial size (small)
-        size_animation.setEndValue(QSize(CONFIG._BUTTON_WIDTH, CONFIG._BUTTON_HEIGHT))  # Final size (target size)
+        size_animation.setStartValue(QSize(CONFIG.INTERNAL_BUTTON_WIDTH // 4, CONFIG.INTERNAL_BUTTON_HEIGHT // 4))  # Initial size (small)
+        size_animation.setEndValue(QSize(CONFIG.INTERNAL_BUTTON_WIDTH, CONFIG.INTERNAL_BUTTON_HEIGHT))  # Final size (target size)
         size_animation.setEasingCurve(QEasingCurve.Type.OutCurve)  # Easing curve for size
 
         # Opacity animation to fade in/out the button
@@ -263,7 +263,7 @@ class PieMenu(QWidget):
             task_switcher.pie_buttons[index].setEnabled(True)
 
         # Clear attributes when button index not among updates
-        for i in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS):
+        for i in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_TASK_SWITCHERS):
             if i not in [update["index"] for update in button_updates]:
                 task_switcher, index = self.pie_window.get_pie_menu_and_index(i, PieMenuType.TASK_SWITCHER)
 

@@ -33,7 +33,7 @@ class WindowsSettingsMenu(QWidget):
             return button
 
         default_spacing = 6
-        spacer = QSpacerItem(CONFIG._BUTTON_HEIGHT + default_spacing, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        spacer = QSpacerItem(CONFIG.INTERNAL_BUTTON_HEIGHT + default_spacing, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         # Define buttons and their properties
         # (icon_name, tooltip, click_action)
@@ -47,7 +47,7 @@ class WindowsSettingsMenu(QWidget):
 
         # Create and store buttons
         buttons = [
-            create_button(self, icon_name, tooltip, click_action, self.icon_size, CONFIG._BUTTON_HEIGHT)
+            create_button(self, icon_name, tooltip, click_action, self.icon_size, CONFIG.INTERNAL_BUTTON_HEIGHT)
             for icon_name, tooltip, click_action in buttons_data
         ]
 

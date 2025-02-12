@@ -45,7 +45,7 @@ class MonitorSetupMenu(QWidget):
 
         # Create and store buttons
         buttons = [
-            create_button(self, icon_name, tooltip, click_action, self.icon_size, CONFIG._BUTTON_HEIGHT, text)
+            create_button(self, icon_name, tooltip, click_action, self.icon_size, CONFIG.INTERNAL_BUTTON_HEIGHT, text)
             for icon_name, tooltip, click_action, text in buttons_data
         ]
 

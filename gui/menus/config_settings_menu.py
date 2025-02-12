@@ -18,7 +18,7 @@ class NoScrollSpinBox(QSpinBox):
 class ConfigSettingsWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle(f"{CONFIG._PROGRAM_NAME} Settings")
+        self.setWindowTitle(f"{CONFIG.INTERNAL_PROGRAM_NAME} Settings")
         self.setMinimumWidth(400)
 
         # Central widget and main layout

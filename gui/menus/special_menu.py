@@ -134,13 +134,13 @@ class SpecialMenu(QWidget):
 
         # Button to open App Data Folder
         self.app_config_folder_button = QPushButton(" App Data", self)
-        self.app_config_folder_button.setToolTip(f"Open {CONFIG._PROGRAM_NAME} App Data Folder")
+        self.app_config_folder_button.setToolTip(f"Open {CONFIG.INTERNAL_PROGRAM_NAME} App Data Folder")
         self.app_config_folder_button.setIcon(get_icon("folder-settings", is_inverted=True))
         self.app_config_folder_button.clicked.connect(self.open_app_data_directory)
 
         # Button to open the Program Folder
         self.program_folder_button = QPushButton(" Program", self)
-        self.program_folder_button.setToolTip(f"Open {CONFIG._PROGRAM_NAME} Program Folder")
+        self.program_folder_button.setToolTip(f"Open {CONFIG.INTERNAL_PROGRAM_NAME} Program Folder")
         self.program_folder_button.setIcon(get_icon("folder-star", is_inverted=True))
         self.program_folder_button.clicked.connect(self.open_program_folder)
 
@@ -281,7 +281,7 @@ class SpecialMenu(QWidget):
             return
 
         exe_path = sys.executable
-        task_name = f"{CONFIG._PROGRAM_NAME}Startup"
+        task_name = f"{CONFIG.INTERNAL_PROGRAM_NAME}Startup"
         create_task_cmd = f'schtasks /create /tn "{task_name}" /tr "{exe_path}" /sc ONLOGON /rl HIGHEST /f'
 
         try:
@@ -293,7 +293,7 @@ class SpecialMenu(QWidget):
     @staticmethod
     def remove_from_startup():
         """Removes the scheduled task from Windows startup."""
-        task_name = f"{CONFIG._PROGRAM_NAME}Startup"
+        task_name = f"{CONFIG.INTERNAL_PROGRAM_NAME}Startup"
         remove_task_cmd = f'schtasks /delete /tn "{task_name}" /f'
 
         try:
@@ -305,7 +305,7 @@ class SpecialMenu(QWidget):
     @staticmethod
     def is_in_startup() -> bool:
         """Checks if the scheduled task exists in Windows Task Scheduler."""
-        task_name = f"{CONFIG._PROGRAM_NAME}Startup"
+        task_name = f"{CONFIG.INTERNAL_PROGRAM_NAME}Startup"
         check_task_cmd = f'schtasks /query /tn "{task_name}"'
 
         try:
@@ -357,9 +357,9 @@ class SpecialMenu(QWidget):
     def open_app_data_directory():
         """Opens the application data directory where configs are saved."""
         base_dirs = {
-            "nt": os.path.join(os.environ.get('APPDATA', ''), CONFIG._PROGRAM_NAME),
-            "darwin": os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', CONFIG._PROGRAM_NAME),
-            "linux": os.path.join(os.path.expanduser('~'), '.config', CONFIG._PROGRAM_NAME)
+            "nt": os.path.join(os.environ.get('APPDATA', ''), CONFIG.INTERNAL_PROGRAM_NAME),
+            "darwin": os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', CONFIG.INTERNAL_PROGRAM_NAME),
+            "linux": os.path.join(os.path.expanduser('~'), '.config', CONFIG.INTERNAL_PROGRAM_NAME)
         }
         config_dir = base_dirs.get(os.name, os.path.abspath('../..'))
         SpecialMenu._open_folder(config_dir)

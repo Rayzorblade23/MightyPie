@@ -202,7 +202,7 @@ def trigger_tray_icon_left_click(hwnd, uCallbackMessage, uID):
     user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONUP)  # Simulating Left Mouse Button Up
 
     print(f"Sending WM_LBUTTONDBLCLK to hwnd {hwnd}.")
-    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONDBLCLK)  # Simulating Left Mouse Button Double Click
+    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONDBLCLK)  # Simulating Left Mouse Button Double-Click
 
     print(f"Sending WM_LBUTTONUP to hwnd {hwnd}.")
     user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_LBUTTONUP)  # Simulating Left Mouse Button Up
@@ -234,7 +234,7 @@ def trigger_tray_icon_right_click(hwnd, uCallbackMessage, uID):
     user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_RBUTTONUP)  # Simulating Right Mouse Button Up
 
     print(f"Sending WM_RBUTTONDBLCLK to hwnd {hwnd}.")
-    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_RBUTTONDBLCLK)  # Simulating Right Mouse Button Double Click
+    user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_RBUTTONDBLCLK)  # Simulating Right Mouse Button Double-Click
 
     print(f"Sending WM_RBUTTONUP to hwnd {hwnd}.")
     user32.PostMessageW(hwnd, uCallbackMessage, uID, WM_RBUTTONUP)  # Simulating Right Mouse Button Up
@@ -345,7 +345,7 @@ class TrayIconButtonsWindow(QWidget):
             button = ExpandedButton(
                 text="",
                 object_name="TrayButton",
-                size=(CONFIG._BUTTON_HEIGHT, CONFIG._BUTTON_HEIGHT)
+                size=(CONFIG.INTERNAL_BUTTON_HEIGHT, CONFIG.INTERNAL_BUTTON_HEIGHT)
             )
 
             # Connect the specific signals to their respective actions

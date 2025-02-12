@@ -20,7 +20,7 @@ class ButtonInfoEditor(QWidget):
         # Available options for dropdowns
         self.task_types = ["program_window_fixed", "program_window_any"]
 
-        self.apps_info =  JSONManager.load(CONFIG._PROGRAM_NAME, "apps_info_cache.json", default={})
+        self.apps_info =  JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
 
         # Extract exe names (keys in the JSON)
         self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in self.apps_info.items()])
@@ -39,8 +39,8 @@ class ButtonInfoEditor(QWidget):
         main_layout.addWidget(scroll)
 
         # Calculate number of columns needed
-        num_columns = CONFIG._NUM_PIE_TASK_SWITCHERS
-        buttons_per_column = CONFIG._MAX_BUTTONS
+        num_columns = CONFIG.INTERNAL_NUM_PIE_TASK_SWITCHERS
+        buttons_per_column = CONFIG.INTERNAL_MAX_BUTTONS
 
         # Create columns
         for col in range(num_columns):
@@ -291,7 +291,7 @@ class ButtonInfoEditor(QWidget):
     def update_apps_info(self) -> None:
         """Reload apps_info from cache and update exe name dropdowns."""
         # Reload the apps_info cache and update self.exe_names
-        self.apps_info = JSONManager.load(CONFIG._PROGRAM_NAME, "apps_info_cache.json", default={})
+        self.apps_info = JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
         self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in self.apps_info.items()])
 
         # Find all QComboBox widgets that are used for exe names.
