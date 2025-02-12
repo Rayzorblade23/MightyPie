@@ -76,14 +76,15 @@ class PieWindow(QMainWindow):
         # Create Pie Menus with this main_window as parent
         self.pm_task_switchers: list[PieMenu] = []  # List to hold the task switchers
         for i in range(1, CONFIG._NUM_PIE_TASK_SWITCHERS + 1):  # Adjust the range if the number of task switchers changes
-            task_switcher = PieMenu(obj_name="PieMenuTaskSwitcher", parent=self)
+            task_switcher = PieMenu(i, "PieMenuTaskSwitcher", parent=self)
             if i > 1:  # Hide task switchers 2 and 3 initially
                 task_switcher.hide()
             self.pm_task_switchers.append(task_switcher)
 
+        # TODO: Make the Types of PieMenu children of PieMenu, they have their own shortcut value then
         self.pm_win_controls: list[PieMenu] = []
         for i in range(1, CONFIG._NUM_PIE_WIN_CONTROLS + 1):  # Adjust the range if the number of task switchers changes
-            win_control = PieMenu(obj_name="PieMenuWinControl", parent=self)
+            win_control = PieMenu(i, "PieMenuWinControl", parent=self)
             win_control.hide()  # Hide all at first
             self.pm_win_controls.append(win_control)
 

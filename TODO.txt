@@ -2,7 +2,7 @@
 
 - window control pie menu: implement restart window
 
-- disable for fullscreen applications?
+- clear for fullscreen applications?
 
 
 IDEA:

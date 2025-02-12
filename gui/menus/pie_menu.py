@@ -6,19 +6,20 @@ from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QPushButton, QGraphicsOpacityEffect
 from pynput.mouse import Controller, Button
 
-from gui.buttons.area_button import AreaButton
 from data.config import CONFIG
-from gui.elements.svg_indicator_button import SVGIndicatorButton
+from gui.buttons.area_button import AreaButton
 from gui.buttons.expanded_button import ExpandedButton
 from gui.buttons.pie_button import PieButton
+from gui.elements.svg_indicator_button import SVGIndicatorButton
 
 
 class PieMenu(QWidget):
 
-    def __init__(self, obj_name: str = "", parent=None):
+    def __init__(self, pie_menu_index: int, obj_name: str = "", parent=None):
         super().__init__(parent)
 
         # Initialize these attributes BEFORE calling setup methods
+        self.pie_menu_index = pie_menu_index
         self.donut_button = None
         self.inner_circle_main = None
         self.scene = None
@@ -98,6 +99,9 @@ class PieMenu(QWidget):
         # Make the actual button click-through
         self.area_button.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
+        self.create_pie_buttons()
+
+    def create_pie_buttons(self):
         # Create 8 buttons in a circular pattern, starting with top middle
         for i, pie_button_text in enumerate(self.pie_button_texts):
             angle_in_degrees = (
@@ -145,6 +149,7 @@ class PieMenu(QWidget):
 
             self.btn = PieButton(
                 object_name=button_name,
+                index=i,
                 text_1=pie_button_text,
                 text_2="",
                 icon_path="",

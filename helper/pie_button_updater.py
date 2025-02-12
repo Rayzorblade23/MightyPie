@@ -26,6 +26,9 @@ class PieButtonUpdater(QObject):  # Inherit from QObject
         """Update button UI in the main thread."""
         app_info_cache = load_cache()
 
+        # TODO: Give all the Pie Menus the update, which give the buttons their updates
+        #       This can then probably go into PieMenu instead
+
         for update in button_updates:
             button_index = update["index"]
             button_text_1 = update["properties"]["text_1"]
@@ -39,9 +42,8 @@ class PieButtonUpdater(QObject):  # Inherit from QObject
 
             # Update button text and icon
             pie_window.pie_button_texts[index] = button_text_1
-            task_switcher.pie_buttons[index].set_label_1_text(button_text_1)
-            task_switcher.pie_buttons[index].set_label_2_text(button_text_2)
-            task_switcher.pie_buttons[index].update_icon(app_icon_path)
+            task_switcher.pie_buttons[index].update_content(button_text_1, button_text_2, app_icon_path)
+
 
             # Disconnect any previous connections
             try:
@@ -83,10 +85,5 @@ class PieButtonUpdater(QObject):  # Inherit from QObject
 
                 # Disable the button
                 pie_window.pie_button_texts[index] = "Empty"
-                task_switcher.pie_buttons[index].set_left_click_action(action=None)
-                task_switcher.pie_buttons[index].set_middle_click_action(action=None)
-                task_switcher.pie_buttons[index].setEnabled(False)  # Disable the button
+                task_switcher.pie_buttons[index].clear()
 
-                task_switcher.pie_buttons[index].set_label_1_text("Empty")
-                task_switcher.pie_buttons[index].set_label_2_text("")
-                task_switcher.pie_buttons[index].update_icon("")

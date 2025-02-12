@@ -5,10 +5,10 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap, QCursor
 from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
 
-from data.font_styles import FontStyle
-from gui.elements.scrolling_text_label import ScrollingLabel
 from data.config import CONFIG
+from data.font_styles import FontStyle
 from functions.icon_utils import invert_icon
+from gui.elements.scrolling_text_label import ScrollingLabel
 
 
 class PieButton(QPushButton):
@@ -16,6 +16,7 @@ class PieButton(QPushButton):
 
     def __init__(self,
                  object_name: str,
+                 index: int,
                  text_1: str = "",
                  text_2: str = "",
                  icon_path: str = "",
@@ -28,6 +29,7 @@ class PieButton(QPushButton):
         super().__init__(parent)
 
         self.setObjectName(object_name)
+        self.index = index
 
         # Store actions for each mouse button
         self.left_click_action = None
@@ -51,6 +53,7 @@ class PieButton(QPushButton):
 
         # Create the main layout for the button (HBoxLayout)
         self.setLayout(QHBoxLayout())
+
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)  # Set minimal spacing between widgets
 
@@ -58,26 +61,6 @@ class PieButton(QPushButton):
 
         # Add the VBoxLayout as a pie_menu of the HBoxLayout
         self.layout().addLayout(self.label_layout)
-
-        # if fixed_size:
-        #     # Use fixed size if requested or fallback to default size
-        #     self.setFixedSize(QSize(size[0], size[1]))
-        # else:
-        #     # If no fixed size, button will size to its content
-        #     self.setSizePolicy(
-        #         QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum
-        #     )
-
-        # try:
-        #     self.clicked.disconnect()
-        # except TypeError:
-        #     pass  # No existing connections to disconnect
-        #
-        # # Check if action is provided and is callable
-        # if callable(action):
-        #     self.clicked.connect(action)
-        # else:
-        #     self.clicked.connect(self.default_action)
 
         # Set position if provided
         x, y = pos
@@ -87,6 +70,21 @@ class PieButton(QPushButton):
     def default_action(self):
         """Default action when no external action is provided."""
         print(f"There was only the default action assigned for {self.objectName()}")
+
+    def clear(self):
+        # Disable the button
+        self.set_left_click_action(action=None)
+        self.set_middle_click_action(action=None)
+        self.setEnabled(False)  # Disable the button
+
+        self.update_content("Empty", "", "")
+
+
+    def update_content(self, text_1: str, text_2: str, app_icon_path=None, is_invert_icon=False) -> None:
+        self.set_label_1_text(text_1)
+        if text_2 != "":
+            self.set_label_2_text(text_2)
+        self.update_icon(app_icon_path, is_invert_icon)
 
     def set_label_1_text(self, text: str):
         """Change the text of label_1 from outside."""
@@ -170,19 +168,6 @@ class PieButton(QPushButton):
                 icon_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
 
                 self.layout().insertWidget(1, icon_label)
-
-    # def mousePressEvent(self, event):
-    #     if event.button() == Qt.MouseButton.LeftButton:
-    #         print("MIDDDLE CLICKKEKD")
-    #
-    #         self.left_click_action()
-    #     elif event.button() == Qt.MouseButton.MiddleButton:
-    #         print("MIDDDLE CLICKKEKD")
-    #         self.middle_click_action()
-    #     elif event.button() == Qt.MouseButton.RightButton:
-    #         self.right_click_action()
-    #     # We do NOT call the base class method (super) here
-    #     # to prevent the default action (like emitting the clicked signal).
 
     def set_left_click_action(self, action):
         """Set the action for left-click."""

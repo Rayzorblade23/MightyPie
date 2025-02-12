@@ -79,7 +79,7 @@ class Toggle(QPushButton):
 
         # Set the button to non-clickable (cooldown state)
         self._is_clickable = False
-        self.setDisabled(True)  # Optionally disable the button to prevent further clicks
+        self.setDisabled(True)  # Optionally clear the button to prevent further clicks
 
         # Start the taskbar_toggle animation
         if self.isChecked():
