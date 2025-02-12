@@ -55,7 +55,8 @@ class PieMenu(QWidget):
     def setup_window(self):
         """Set up the main main_window properties."""
         # Non-resizable main_window
-        self.setFixedSize(CONFIG.INTERNAL_RADIUS * 2 + CONFIG.INTERNAL_BUTTON_WIDTH * 2, CONFIG.INTERNAL_RADIUS * 2 + CONFIG.INTERNAL_BUTTON_HEIGHT * 2)
+        self.setFixedSize(CONFIG.INTERNAL_RADIUS * 2 + CONFIG.INTERNAL_BUTTON_WIDTH * 2,
+                          CONFIG.INTERNAL_RADIUS * 2 + CONFIG.INTERNAL_BUTTON_HEIGHT * 2)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
@@ -86,7 +87,8 @@ class PieMenu(QWidget):
             fixed_size=True,
             # Using size instead of geometry
             size=(CONFIG.INTERNAL_INNER_RADIUS * 2, CONFIG.INTERNAL_INNER_RADIUS * 2),
-            pos=(self.width() // 2 - CONFIG.INTERNAL_INNER_RADIUS, self.height() // 2 - CONFIG.INTERNAL_INNER_RADIUS)  # Using position for x and y
+            pos=(self.width() // 2 - CONFIG.INTERNAL_INNER_RADIUS, self.height() // 2 - CONFIG.INTERNAL_INNER_RADIUS)
+            # Using position for x and y
         )
         self.middle_button.left_clicked.connect(
             lambda: [self.parent().hide(), Controller().press(Button.x2), Controller().release(Button.x2)])
@@ -154,7 +156,7 @@ class PieMenu(QWidget):
 
             self.btn = PieButton(
                 object_name=button_name,
-                index=i,
+                index=self.pie_menu_index * CONFIG.INTERNAL_MAX_BUTTONS + i,
                 text_1=pie_button_text,
                 text_2="",
                 icon_path="",
@@ -211,27 +213,39 @@ class PieMenu(QWidget):
         """Update button UI in the main thread."""
         app_info_cache = load_cache()
 
+        if self.pie_menu_index > 2:
+            return
+
+        print(f"PM: {self.pie_menu_index}")
+
         # TODO: Give all the Pie Menus the update, which give the buttons their updates
         #       This can then probably go into PieMenu instead
 
-        for update in button_updates:
-            button_index = update["index"]
-            button_text_1 = update["properties"]["text_1"]
-            button_text_2 = update["properties"]["text_2"]
-            window_handle = update["properties"]["window_handle"]
-            app_icon_path = update["properties"]["app_icon_path"]
-            exe_name = update["properties"]["exe_name"]
+        pie_menu_updates = [update for update in button_updates if update["index"] // CONFIG.INTERNAL_MAX_BUTTONS == self.pie_menu_index]
 
-            # Determine task switcher and index
-            task_switcher, index = self.pie_window.get_pie_menu_and_index(button_index, PieMenuType.TASK_SWITCHER)
+        for pie_button in self.pie_buttons:
+            if not any(update["index"] == pie_button.index for update in pie_menu_updates):
+                # Clear the button
+                pie_button.clear()
+                # print(f"Clearing button {pie_button.index}")
+                continue
 
+            try:
+                pie_button_update = next(update for update in pie_menu_updates if update["index"] == pie_button.index)
+            except StopIteration:
+                raise ValueError("No update found for the specified pie button index.")
+
+            button_text_1 = pie_button_update["properties"]["text_1"]
+            button_text_2 = pie_button_update["properties"]["text_2"]
+            window_handle = pie_button_update["properties"]["window_handle"]
+            app_icon_path = pie_button_update["properties"]["app_icon_path"]
+            exe_name = pie_button_update["properties"]["exe_name"]
             # Update button text and icon
-            self.pie_window.pie_button_texts[index] = button_text_1
-            task_switcher.pie_buttons[index].update_content(button_text_1, button_text_2, app_icon_path)
+            pie_button.update_content(button_text_1, button_text_2, app_icon_path)
 
             # Disconnect any previous connections
             try:
-                task_switcher.pie_buttons[index].clicked.disconnect()
+                pie_button.clicked.disconnect()
             except TypeError:
                 pass  # No connections to disconnect
 
@@ -239,7 +253,7 @@ class PieMenu(QWidget):
             if window_handle == 0:
                 exe_path = app_info_cache.get(exe_name, {}).get("exe_path")
                 if exe_path:
-                    task_switcher.pie_buttons[index].set_left_click_action(
+                    pie_button.set_left_click_action(
                         lambda captured_exe_path=exe_path: (
                             self.pie_window.hide(),
                             QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
@@ -248,25 +262,16 @@ class PieMenu(QWidget):
                 continue
 
             # Handle window actions
-            task_switcher.pie_buttons[index].set_left_click_action(
+            pie_button.set_left_click_action(
                 lambda hwnd=window_handle: (
                     self.pie_window.hide(),
                     QTimer.singleShot(0, lambda: focus_window_by_handle(hwnd)),
                 )
             )
-            task_switcher.pie_buttons[index].set_middle_click_action(
+            pie_button.set_middle_click_action(
                 lambda hwnd=window_handle: (
                     QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
                     QTimer.singleShot(100, lambda: self.pie_window.auto_refresh()),
                 )
             )
-            task_switcher.pie_buttons[index].setEnabled(True)
-
-        # Clear attributes when button index not among updates
-        for i in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_TASK_SWITCHERS):
-            if i not in [update["index"] for update in button_updates]:
-                task_switcher, index = self.pie_window.get_pie_menu_and_index(i, PieMenuType.TASK_SWITCHER)
-
-                # Disable the button
-                self.pie_window.pie_button_texts[index] = "Empty"
-                task_switcher.pie_buttons[index].clear()
+            pie_button.setEnabled(True)
