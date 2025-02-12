@@ -1,35 +1,50 @@
 import math
 from enum import Enum
+from typing import TYPE_CHECKING, List, Optional
 
-from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize
+from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize, pyqtSignal, pyqtSlot, QTimer
 from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QPushButton, QGraphicsOpacityEffect
 from pynput.mouse import Controller, Button
 
 from data.config import CONFIG
+from functions.window_functions import load_cache, launch_app, focus_window_by_handle, close_window_by_handle
 from gui.buttons.area_button import AreaButton
 from gui.buttons.expanded_button import ExpandedButton
 from gui.buttons.pie_button import PieButton
 from gui.elements.svg_indicator_button import SVGIndicatorButton
 
+if TYPE_CHECKING:
+    from gui.pie_window import PieWindow
+
+
+class PieMenuType(Enum):
+    TASK_SWITCHER = "TaskSwitcher"
+    WIN_CONTROL = "WinControl"
+
 
 class PieMenu(QWidget):
+    update_buttons_signal = pyqtSignal(list)  # Expect QWidget and list
 
-    def __init__(self, pie_menu_index: int, obj_name: str = "", parent=None):
+    def __init__(self, pie_menu_index: int, obj_name: str = "", parent: 'PieWindow' = None):
         super().__init__(parent)
 
         # Initialize these attributes BEFORE calling setup methods
-        self.pie_menu_index = pie_menu_index
-        self.donut_button = None
-        self.inner_circle_main = None
+        self.pie_menu_index: int = pie_menu_index
+        self.obj_name: str = obj_name
+        self.pie_window: 'PieWindow' = parent
+        self.indicator: Optional[SVGIndicatorButton] = None
         self.scene = None
         self.view = None
         self.btn = None
-        self.pie_button_texts = ["Empty" for _ in range(CONFIG._MAX_BUTTONS)]
+        self.pie_button_texts: List[str] = ["Empty" for _ in range(CONFIG._MAX_BUTTONS)]
         self.pie_buttons: list[PieButton] = []
         self.animations = []
 
-        self.obj_name = obj_name
+        self.middle_button: Optional[ExpandedButton] = None
+        self.area_button: Optional[AreaButton] = None
+
+        self.update_buttons_signal.connect(self.update_button_ui)
 
         self.setup_window()  # Configure main_window properties
         # Create scene and graphical elements
@@ -55,24 +70,14 @@ class PieMenu(QWidget):
     def setup_buttons(self):
         """Create and position all buttons."""
 
-        self.donut_button = SVGIndicatorButton(
+        self.indicator = SVGIndicatorButton(
             object_name="Indicator",
             size=300,
             action=None,
             pos=(self.rect().center().x(), self.rect().center().y()),
             parent=self
         )
-        self.donut_button.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-
-        # self.outer_ring = GradientCircle(
-        #     object_name="GradientCircle",
-        #     outer_radius=CONFIG._INNER_RADIUS + 30,
-        #     inner_radius=CONFIG._INNER_RADIUS + 10,
-        #     pos=(self.rect().center().x(), self.rect().center().y()),
-        #     parent=self
-        # )
-        # self.outer_ring.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        # self.outer_ring.lower()
+        self.indicator.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         # Create and configure the refresh button
         self.middle_button = ExpandedButton(
@@ -85,8 +90,8 @@ class PieMenu(QWidget):
         )
         self.middle_button.left_clicked.connect(
             lambda: [self.parent().hide(), Controller().press(Button.x2), Controller().release(Button.x2)])
-        self.middle_button.right_clicked.connect(lambda: self.parent().hide())
-        self.middle_button.middle_clicked.connect(lambda: self.parent().open_special_menu())
+        self.middle_button.right_clicked.connect(lambda: self.pie_window.hide())
+        self.middle_button.middle_clicked.connect(lambda: self.pie_window.open_special_menu())
         self.middle_button.setParent(self)
         self.middle_button.lower()
         self.view.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
@@ -159,11 +164,6 @@ class PieMenu(QWidget):
 
             self.pie_buttons.append(self.btn)
 
-    def update_child_button_hover_state(self, button, hovered):
-        button.setProperty("hovered", hovered)
-        button.style().unpolish(button)
-        button.style().polish(button)
-
     def showEvent(self, event):
         super().showEvent(event)  # Call the parent class's method
         for button in self.pie_buttons:
@@ -206,7 +206,67 @@ class PieMenu(QWidget):
         size_animation.start()
         opacity_animation.start()
 
+    @pyqtSlot(list)
+    def update_button_ui(self, button_updates):
+        """Update button UI in the main thread."""
+        app_info_cache = load_cache()
 
-class PieMenuType(Enum):
-    TASK_SWITCHER = "TaskSwitcher"
-    WIN_CONTROL = "WinControl"
+        # TODO: Give all the Pie Menus the update, which give the buttons their updates
+        #       This can then probably go into PieMenu instead
+
+        for update in button_updates:
+            button_index = update["index"]
+            button_text_1 = update["properties"]["text_1"]
+            button_text_2 = update["properties"]["text_2"]
+            window_handle = update["properties"]["window_handle"]
+            app_icon_path = update["properties"]["app_icon_path"]
+            exe_name = update["properties"]["exe_name"]
+
+            # Determine task switcher and index
+            task_switcher, index = self.pie_window.get_pie_menu_and_index(button_index, PieMenuType.TASK_SWITCHER)
+
+            # Update button text and icon
+            self.pie_window.pie_button_texts[index] = button_text_1
+            task_switcher.pie_buttons[index].update_content(button_text_1, button_text_2, app_icon_path)
+
+            # Disconnect any previous connections
+            try:
+                task_switcher.pie_buttons[index].clicked.disconnect()
+            except TypeError:
+                pass  # No connections to disconnect
+
+            # Handle reserved button actions
+            if window_handle == 0:
+                exe_path = app_info_cache.get(exe_name, {}).get("exe_path")
+                if exe_path:
+                    task_switcher.pie_buttons[index].set_left_click_action(
+                        lambda captured_exe_path=exe_path: (
+                            self.pie_window.hide(),
+                            QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
+                        )
+                    )
+                continue
+
+            # Handle window actions
+            task_switcher.pie_buttons[index].set_left_click_action(
+                lambda hwnd=window_handle: (
+                    self.pie_window.hide(),
+                    QTimer.singleShot(0, lambda: focus_window_by_handle(hwnd)),
+                )
+            )
+            task_switcher.pie_buttons[index].set_middle_click_action(
+                lambda hwnd=window_handle: (
+                    QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
+                    QTimer.singleShot(100, lambda: self.pie_window.auto_refresh()),
+                )
+            )
+            task_switcher.pie_buttons[index].setEnabled(True)
+
+        # Clear attributes when button index not among updates
+        for i in range(CONFIG._MAX_BUTTONS * CONFIG._NUM_PIE_TASK_SWITCHERS):
+            if i not in [update["index"] for update in button_updates]:
+                task_switcher, index = self.pie_window.get_pie_menu_and_index(i, PieMenuType.TASK_SWITCHER)
+
+                # Disable the button
+                self.pie_window.pie_button_texts[index] = "Empty"
+                task_switcher.pie_buttons[index].clear()

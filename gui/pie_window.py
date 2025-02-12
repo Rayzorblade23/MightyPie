@@ -24,19 +24,15 @@ from functions.window_functions import get_filtered_list_of_windows, load_cache,
 from gui.menus.pie_menu import PieMenu, PieMenuType
 from gui.menus.special_menu import SpecialMenu
 from data.window_manager import WindowManager
-from helper.pie_button_updater import PieButtonUpdater
-
 
 class PieWindow(QMainWindow):
     EXIT_CODE_REBOOT = 122
 
     # Add a custom signal for thread-safe updates
-    update_buttons_signal = pyqtSignal(QObject, list)  # Expect QWidget and list
+    update_buttons_signal = pyqtSignal(list)  # Expect QWidget and list
 
     def __init__(self):
         super().__init__()
-        self.pie_button_updater = PieButtonUpdater()
-
         # Set the default cursor (normal arrow cursor)
         self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Set the normal cursor
 
@@ -567,7 +563,10 @@ class PieWindow(QMainWindow):
         self.clean_up_stale_window_mappings(final_button_updates)
 
         # Emit updates
-        self.pie_button_updater.update_buttons_signal.emit(self, final_button_updates)
+        for pie_menu in self.pm_task_switchers:
+            pie_menu.update_buttons_signal.emit(final_button_updates)
+        for pie_menu in self.pm_win_controls:
+            pie_menu.update_buttons_signal.emit(final_button_updates)
 
     def clean_up_stale_window_mappings(self, final_button_updates):
         # Clean up stale window mappings

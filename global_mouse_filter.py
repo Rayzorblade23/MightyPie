@@ -50,13 +50,13 @@ class GlobalMouseFilter(QObject):
         if isinstance(filtered_event, QMouseEvent):
             global_pos = filtered_event.globalPosition().toPoint()
 
-            # Navigate the hierarchy to find the donut_button
-            if self.pie_menu and hasattr(self.pie_menu, 'donut_button'):
-                donut_button = self.pie_menu.donut_button
+            # Navigate the hierarchy to find the indicator
+            if self.pie_menu and hasattr(self.pie_menu, 'indicator'):
+                indicator = self.pie_menu.indicator
                 if filtered_event.type() == QEvent.Type.MouseMove:
-                    local_pos = donut_button.mapFromGlobal(global_pos)
-                    # print(f"Local position on donut_button: {local_pos}")
-                    donut_button.turn_towards_cursor(local_pos)
+                    local_pos = indicator.mapFromGlobal(global_pos)
+                    # print(f"Local position on indicator: {local_pos}")
+                    indicator.turn_towards_cursor(local_pos)
 
             if self.pie_menu and hasattr(self.pie_menu, 'area_button'):
                 self.area_button = self.pie_menu.area_button
@@ -78,14 +78,13 @@ class GlobalMouseFilter(QObject):
             # Reset previous button's hover state if there was one
             prev_section = getattr(self.area_button, 'current_active_section', -1)
             if prev_section != -1:
-                self.pie_menu.update_child_button_hover_state(
-                    self.pie_menu.pie_buttons[prev_section], False)
+                self.pie_menu.pie_buttons[prev_section].update_hover_state(False)
 
             # Update for new section
             self.area_button.current_active_section = active_section
             if active_section != -1:
-                self.pie_menu.update_child_button_hover_state(
-                    self.pie_menu.pie_buttons[active_section], True)
+                self.pie_menu.pie_buttons[active_section].update_hover_state(True)
+
 
             self.area_button.set_hover_pos(global_pos)
 

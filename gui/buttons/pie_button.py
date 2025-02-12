@@ -209,6 +209,12 @@ class PieButton(QPushButton):
         self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Restore default cursor
 
 
+
+    def update_hover_state(self, hovered):
+        self.setProperty("hovered", hovered)
+        self.style().unpolish(self)
+        self.style().polish(self)
+
 def example_function():
     print("Button pressed!")
 
