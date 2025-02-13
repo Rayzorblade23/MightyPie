@@ -1,13 +1,18 @@
 from typing import *
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPixmap, QCursor
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
+from PyQt6.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
 
 from data.config import CONFIG
 from data.font_styles import FontStyle
 from gui.elements.scrolling_text_label import ScrollingLabel
 from utils.icon_utils import invert_icon
+from utils.window_utils import load_cache, launch_app, focus_window_by_handle, close_window_by_handle
+
+if TYPE_CHECKING:
+    from gui.pie_window import PieWindow
+    from gui.menus.pie_menu import PieMenu
 
 
 class PieButton(QPushButton):
@@ -20,7 +25,7 @@ class PieButton(QPushButton):
                  text_2: str = "",
                  icon_path: str = "",
                  pos: Tuple[int, int] = (0, 0),
-                 parent: Optional[QWidget] = None
+                 parent: Optional["PieMenu"] = None
                  ):
         super().__init__(parent)
 
@@ -28,6 +33,9 @@ class PieButton(QPushButton):
         self.index = index
         self.text_1 = text_1
         self.text_2 = text_2
+
+        self.pie_menu_parent: "PieMenu" = parent
+        self.main_window: "PieWindow" = cast("PieWindow", self.pie_menu_parent.parent())
 
         # Store actions for each mouse button
         self.left_click_action = None
@@ -47,7 +55,7 @@ class PieButton(QPushButton):
         self.label_layout.setContentsMargins(0, 0, 0, 0)
 
         # Create a second bottom label if text_2 is set
-        self.set_label_2_text("")
+        self._set_label_2_text("")
 
         # Create the main layout for the button (HBoxLayout)
         self.setLayout(QHBoxLayout())
@@ -69,24 +77,71 @@ class PieButton(QPushButton):
         """Default action when no external action is provided."""
         print(f"There was only the default action assigned for {self.objectName()}")
 
+    def update_button(self, properties: dict) -> None:
+        app_info_cache = load_cache()
+
+        button_text_1 = properties["text_1"]
+        button_text_2 = properties["text_2"]
+        window_handle = properties["window_handle"]
+        app_icon_path = properties["app_icon_path"]
+        exe_name = properties["exe_name"]
+
+        # Update button text and icon
+        self._update_ui(button_text_1, button_text_2, app_icon_path)
+
+        # Disconnect any previous connections
+        try:
+            self.clicked.disconnect()
+        except TypeError:
+            pass  # No connections to disconnect
+
+        # Handle reserved button actions that have no open window
+        if window_handle == 0:
+            exe_path = app_info_cache.get(exe_name, {}).get("exe_path")
+            if exe_path:
+                self.set_left_click_action(
+                    lambda captured_exe_path=exe_path: (
+                        self.main_window.hide(),
+                        QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
+                    )
+                )
+            return
+
+        # Handle window actions
+        self.set_left_click_action(
+            lambda hwnd=window_handle: (
+                self.main_window.hide(),
+                QTimer.singleShot(0, lambda: focus_window_by_handle(hwnd)),
+            )
+        )
+        self.set_middle_click_action(
+            lambda hwnd=window_handle: (
+                QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
+                QTimer.singleShot(100, lambda: self.main_window.auto_refresh()),
+            )
+        )
+        self.setEnabled(True)
+
+
+
     def clear(self):
         # Disable the button
         self.set_left_click_action(action=None)
         self.set_middle_click_action(action=None)
         self.setEnabled(False)  # Disable the button
 
-        self.update_content("Empty", "", "")
+        self._update_ui("Empty", "", "")
 
-    def update_content(self, text_1: str, text_2: str, app_icon_path=None, is_invert_icon=False) -> None:
-        self.set_label_1_text(text_1)
-        self.set_label_2_text(text_2)
+    def _update_ui(self, text_1: str, text_2: str, app_icon_path=None, is_invert_icon=False) -> None:
+        self._set_label_1_text(text_1)
+        self._set_label_2_text(text_2)
         self.update_icon(app_icon_path, is_invert_icon)
 
-    def set_label_1_text(self, text: str):
+    def _set_label_1_text(self, text: str):
         """Change the text of label_1 from outside."""
         self.label_1.update_text(text)
 
-    def set_label_2_text(self, text: str):
+    def _set_label_2_text(self, text: str):
         """Change the text of label_2 from outside."""
         if text:  # If text is not empty or None
             if hasattr(self, 'label_2'):  # Check if label_2 already exists

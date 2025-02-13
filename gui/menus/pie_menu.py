@@ -1,17 +1,15 @@
 import math
 from typing import TYPE_CHECKING, Optional
 
-from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize, pyqtSignal, pyqtSlot, QTimer
+from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QPushButton, QGraphicsOpacityEffect
 
 from data.config import CONFIG
 from gui.buttons.area_button import AreaButton
-from gui.buttons.expanded_button import ExpandedButton
 from gui.buttons.pie_button import PieButton
 from gui.buttons.pie_menu_middle_button import PieMenuMiddleButton
 from gui.elements.svg_indicator_button import SVGIndicatorButton
-from utils.window_utils import load_cache, launch_app, focus_window_by_handle, close_window_by_handle
 
 if TYPE_CHECKING:
     from gui.pie_window import PieWindow
@@ -36,7 +34,7 @@ class PieMenu(QWidget):
 
         self.hotkey = CONFIG.HOTKEY_PRIMARY
 
-        self.middle_button: Optional[ExpandedButton] = None
+        self.middle_button: Optional[PieMenuMiddleButton] = None
         self.area_button: Optional[AreaButton] = None
 
         self.update_buttons_signal.connect(self.update_button_ui)
@@ -185,8 +183,6 @@ class PieMenu(QWidget):
     @pyqtSlot(list)
     def update_button_ui(self, button_updates):
         """Update button UI in the main thread."""
-        app_info_cache = load_cache()
-
         if isinstance(self, SecondaryPieMenu):
             return
 
@@ -194,7 +190,6 @@ class PieMenu(QWidget):
                             update["index"] // CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU == self.pie_menu_index]
 
         for pie_button in self.pie_buttons.values():
-            print(pie_button.index)
             if not any(update["index"] == pie_button.index for update in pie_menu_updates):
                 # Clear the button
                 pie_button.clear()
@@ -206,46 +201,7 @@ class PieMenu(QWidget):
             except StopIteration:
                 raise ValueError("No update found for the specified pie button index.")
 
-            button_text_1 = pie_button_update["properties"]["text_1"]
-            button_text_2 = pie_button_update["properties"]["text_2"]
-            window_handle = pie_button_update["properties"]["window_handle"]
-            app_icon_path = pie_button_update["properties"]["app_icon_path"]
-            exe_name = pie_button_update["properties"]["exe_name"]
-            # Update button text and icon
-            pie_button.update_content(button_text_1, button_text_2, app_icon_path)
-
-            # Disconnect any previous connections
-            try:
-                pie_button.clicked.disconnect()
-            except TypeError:
-                pass  # No connections to disconnect
-
-            # Handle reserved button actions
-            if window_handle == 0:
-                exe_path = app_info_cache.get(exe_name, {}).get("exe_path")
-                if exe_path:
-                    pie_button.set_left_click_action(
-                        lambda captured_exe_path=exe_path: (
-                            self.pie_window.hide(),
-                            QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
-                        )
-                    )
-                continue
-
-            # Handle window actions
-            pie_button.set_left_click_action(
-                lambda hwnd=window_handle: (
-                    self.pie_window.hide(),
-                    QTimer.singleShot(0, lambda: focus_window_by_handle(hwnd)),
-                )
-            )
-            pie_button.set_middle_click_action(
-                lambda hwnd=window_handle: (
-                    QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
-                    QTimer.singleShot(100, lambda: self.pie_window.auto_refresh()),
-                )
-            )
-            pie_button.setEnabled(True)
+            pie_button.update_button(pie_button_update["properties"])
 
 
 class PrimaryPieMenu(PieMenu):

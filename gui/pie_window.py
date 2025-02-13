@@ -8,19 +8,18 @@ import win32gui
 from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QTimer
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor, QGuiApplication
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
-from pyscreeze import pixel
 
 from data.button_info import ButtonInfo
 from data.config import CONFIG
 from data.icon_paths import EXTERNAL_ICON_PATHS
 from data.window_manager import WindowManager
 from events import ShowWindowEvent, HotkeyReleaseEvent
-from utils.window_utils import get_filtered_list_of_windows, load_cache, show_special_menu, toggle_maximize_window_at_cursor, \
-    minimize_window_at_cursor, launch_app, \
-    cache_being_cleared, restore_last_minimized_window, focus_all_explorer_windows, center_window_at_cursor
 from gui.buttons.pie_button import PieButton
 from gui.menus.pie_menu import PieMenu, PrimaryPieMenu, SecondaryPieMenu
 from gui.menus.special_menu import SpecialMenu
+from utils.window_utils import get_filtered_list_of_windows, load_cache, show_special_menu, toggle_maximize_window_at_cursor, \
+    minimize_window_at_cursor, launch_app, \
+    cache_being_cleared, restore_last_minimized_window, focus_all_explorer_windows, center_window_at_cursor
 
 
 class PieWindow(QMainWindow):
@@ -70,7 +69,7 @@ class PieWindow(QMainWindow):
         self.is_window_open = False
 
         num_primary_pie_menus = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
-        num_secondary_pie_menus = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
+        num_secondary_pie_menus = CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY
 
         # Create Pie Menus with this main_window as parent
         self.create_pie_menus(num_primary_pie_menus, num_secondary_pie_menus)
@@ -114,9 +113,8 @@ class PieWindow(QMainWindow):
     def make_right_click_hide_for_all_buttons_in_pie_menu(self, menus: list) -> None:
         """Disables right-click by setting action to hide for all pie buttons in given menus."""
         for pie_menu in menus:
-            for button_index, pie_button in pie_menu.pie_buttons.items(): # type: int, PieButton
+            for button_index, pie_button in pie_menu.pie_buttons.items():  # type: int, PieButton
                 pie_button.set_right_click_action(action=lambda: self.hide())
-
 
     def handle_geometry_change(self):
         screen = QApplication.primaryScreen()
@@ -167,7 +165,7 @@ class PieWindow(QMainWindow):
         if isinstance(event, ShowWindowEvent):
             pie_menu: PieMenu = event.child_window
             if pie_menu is not None:
-                print(f"Showing switcher {pie_menu.view.objectName()}")
+                print(f"Showing Pie Menu {pie_menu.pie_menu_index} - {pie_menu.view.objectName()}")
                 # Hide siblings of class PieMenuTaskSwitcher
                 for sibling in self.children():
                     if sibling is not pie_menu and isinstance(sibling, PieMenu):
@@ -175,7 +173,8 @@ class PieWindow(QMainWindow):
                 pie_menu.show()
                 if "Task" in pie_menu.view.objectName():
                     self.refresh()
-                self.pie_menu_pos = self.show_pie_window_at_mouse_pos(pie_menu)  # Safely call show_pie_window_at_mouse_pos when the filtered_event is posted
+                self.pie_menu_pos = self.show_pie_window_at_mouse_pos(
+                    pie_menu)  # Safely call show_pie_window_at_mouse_pos when the filtered_event is posted
             return True
         elif isinstance(event, HotkeyReleaseEvent):
             pie_menu = event.child_window
@@ -377,7 +376,7 @@ class PieWindow(QMainWindow):
             pie_menu = self.pie_menus_secondary[i]
             button = pie_menu.pie_buttons.get(j)
 
-            button.set_label_1_text(config.get("label", ""))
+            button._set_label_1_text(config.get("label", ""))
             if config["label"]:
                 button.setEnabled(True)
             else:
