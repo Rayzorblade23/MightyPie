@@ -1,16 +1,11 @@
-import os
-import subprocess
-import sys
 import threading
-import time
 from threading import Lock
-from typing import Dict, Tuple, Set, Optional, Type
+from typing import Dict, Tuple, Set, Optional, Type, List
 
-import psutil
 import pyautogui
 import win32con
 import win32gui
-from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QCoreApplication, QTimer
+from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QTimer
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor, QGuiApplication
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
 
@@ -19,11 +14,11 @@ from data.config import CONFIG
 from data.icon_paths import EXTERNAL_ICON_PATHS
 from data.window_manager import WindowManager
 from events import ShowWindowEvent, HotkeyReleaseEvent
-from functions.window_functions import get_filtered_list_of_windows, load_cache, show_special_menu, toggle_maximize_window_at_cursor, \
+from utils.window_utils import get_filtered_list_of_windows, load_cache, show_special_menu, toggle_maximize_window_at_cursor, \
     minimize_window_at_cursor, launch_app, \
     cache_being_cleared, restore_last_minimized_window, focus_all_explorer_windows, center_window_at_cursor
 from gui.buttons.pie_button import PieButton
-from gui.menus.pie_menu import PieMenu, PieMenuType, PrimaryPieMenu, SecondaryPieMenu
+from gui.menus.pie_menu import PieMenu, PrimaryPieMenu, SecondaryPieMenu
 from gui.menus.special_menu import SpecialMenu
 
 
@@ -60,6 +55,9 @@ class PieWindow(QMainWindow):
         self.manager = WindowManager.get_instance()
         self.button_info: ButtonInfo = ButtonInfo.get_instance()
 
+        self.pie_menus_primary: Optional[List[PieMenu]] = None
+        self.pie_menus_secondary: Optional[List[PieMenu]] = None
+
         self.pie_menu_pos = QPoint()
         self.button_mapping_lock = Lock()
         self.last_window_handles = []
@@ -75,29 +73,13 @@ class PieWindow(QMainWindow):
         num_secondary_pie_menus = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
 
         # Create Pie Menus with this main_window as parent
-        self.pie_menus_primary: list[PieMenu] = []  # List to hold the task switchers
-        for i in range(0, num_primary_pie_menus):  # Adjust the range if the number of task switchers changes
-            pie_menu = PrimaryPieMenu(i, "PrimaryPieMenu", parent=self)
-            if i > 1:  # Hide task switchers 2 and 3 initially
-                pie_menu.hide()
-            self.pie_menus_primary.append(pie_menu)
-
-        self.pie_menus_secondary: list[PieMenu] = []
-        for i in range(0, num_secondary_pie_menus):  # Adjust the range if the number of task switchers changes
-            win_control = SecondaryPieMenu(num_primary_pie_menus + i, "SecondaryPieMenu", parent=self)
-            win_control.hide()  # Hide all at first
-            self.pie_menus_secondary.append(win_control)
+        self.create_pie_menus(num_primary_pie_menus, num_secondary_pie_menus)
 
         self.setup_window_control_buttons()
 
         # For now, right-click should always just hide
-        for i in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY):
-            pie_menu, index = self.get_pie_menu_and_index(i, PieMenuType.TASK_SWITCHER)
-            pie_menu.pie_buttons[index].set_right_click_action(action=lambda: self.hide())
-
-        for i in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY):
-            win_control, index = self.get_pie_menu_and_index(i, PieMenuType.WIN_CONTROL)
-            win_control.pie_buttons[index].set_right_click_action(action=lambda: self.hide())
+        self.make_right_click_hide_for_all_buttons_in_pie_menu(self.pie_menus_primary)
+        self.make_right_click_hide_for_all_buttons_in_pie_menu(self.pie_menus_secondary)
 
         self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None, main_window=self)
         self.special_menu.hide()
@@ -112,31 +94,28 @@ class PieWindow(QMainWindow):
 
         self.auto_refresh()
 
-    @staticmethod
-    def restart_program():
-        current_pid = os.getpid()
-        print(f"Restarting. Current PID: {current_pid}")
+    def create_pie_menus(self, num_primary: int, num_secondary: int) -> None:
+        """Creates primary and secondary pie menus and appends them to respective lists."""
+        self.pie_menus_primary = [
+            PrimaryPieMenu(i, "PrimaryPieMenu", parent=self)
+            for i in range(num_primary)
+        ]
+        for i, pie_menu in enumerate(self.pie_menus_primary):
+            if i > 1:  # Hide task switchers 2 and 3 initially
+                pie_menu.hide()
 
-        if hasattr(sys, '_instance'):
-            sys._instance.release_for_restart()
+        self.pie_menus_secondary = [
+            SecondaryPieMenu(num_primary + i, "SecondaryPieMenu", parent=self)
+            for i in range(num_secondary)
+        ]
+        for win_control in self.pie_menus_secondary:
+            win_control.hide()  # Hide all at first
 
-        for proc in psutil.process_iter(attrs=['pid', 'name', 'cmdline']):
-            try:
-                if proc.info['pid'] != current_pid and proc.info['cmdline']:
-                    if sys.argv[0] in proc.info['cmdline']:
-                        print(f"Killing old instance: PID {proc.info['pid']}")
-                        proc.terminate()
-            except psutil.NoSuchProcess:
-                pass
-
-        new_process = subprocess.Popen([sys.executable] + sys.argv)
-        print(f"New process started with PID: {new_process.pid}")
-
-        time.sleep(1)
-        os._exit(0)
-
-    def quit_program(self):
-        QCoreApplication.exit()
+    def make_right_click_hide_for_all_buttons_in_pie_menu(self, menus: list) -> None:
+        """Disables right-click by setting action to hide for all pie buttons in given menus."""
+        for pie_menu in menus:
+            for pie_button in pie_menu.pie_buttons:
+                pie_button.set_right_click_action(action=lambda: self.hide())
 
     def handle_geometry_change(self):
         screen = QApplication.primaryScreen()
@@ -195,7 +174,7 @@ class PieWindow(QMainWindow):
                 pie_menu.show()
                 if "Task" in pie_menu.view.objectName():
                     self.refresh()
-                self.pie_menu_pos = self.show_pie_window(pie_menu)  # Safely call show_pie_window when the filtered_event is posted
+                self.pie_menu_pos = self.show_pie_window_at_mouse_pos(pie_menu)  # Safely call show_pie_window_at_mouse_pos when the filtered_event is posted
             return True
         elif isinstance(event, HotkeyReleaseEvent):
             pie_menu = event.child_window
@@ -292,7 +271,7 @@ class PieWindow(QMainWindow):
         print("Active child index is out of range for task switchers.")
         return None
 
-    def show_pie_window(self, pie_menu):
+    def show_pie_window_at_mouse_pos(self, pie_menu):
         """Display the main window and bring it to the foreground."""
         try:
             # Get the main window handle
@@ -346,29 +325,6 @@ class PieWindow(QMainWindow):
 
         except Exception as e:
             print(f"Error showing the main window: {e}")
-
-    def get_pie_menu_and_index(self, button_index: int, pie_menu_type: PieMenuType) -> Tuple[PieMenu, int]:
-        """Helper function to calculate the Pie Menu and index dynamically."""
-        # Use the Enum to determine which list to use
-        pie_menus = {
-            PieMenuType.TASK_SWITCHER: self.pie_menus_primary,
-            PieMenuType.WIN_CONTROL: self.pie_menus_secondary
-        }.get(pie_menu_type)
-
-        if pie_menus is None:
-            raise ValueError(f"Invalid pie menu type: {pie_menu_type}.")
-
-        max_buttons = CONFIG.INTERNAL_MAX_BUTTONS
-
-        pie_menu_index = button_index // max_buttons  # Determine the task switcher index
-        index = button_index % max_buttons  # Calculate the index within the task switcher
-
-        if pie_menu_index < len(pie_menus):
-            pie_menu = pie_menus[pie_menu_index]
-        else:
-            raise ValueError(f"Invalid button index {index}: exceeds available task switchers.")
-
-        return pie_menu, index
 
     def setup_window_control_buttons(self):
         actual_self = self

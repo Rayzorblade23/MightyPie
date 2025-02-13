@@ -4,8 +4,8 @@ from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
 
 from data.config import CONFIG
-from functions.icon_utils import get_icon
-from functions.shortcut_utils import open_audio_settings, open_network_settings, open_projection_settings, \
+from utils.icon_utils import get_icon
+from utils.shortcut_utils import open_audio_settings, open_network_settings, open_projection_settings, \
     open_explorer_window, open_task_manager
 
 

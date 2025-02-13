@@ -6,7 +6,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPainter, QColor
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QHBoxLayout, QWidget, QSizePolicy
 
-from functions.color_utils import adjust_saturation
+from utils.color_utils import adjust_saturation
 from data.config import CONFIG
 from global_mouse_filter import GlobalMouseFilter
 

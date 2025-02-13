@@ -5,8 +5,9 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
                              QPushButton, QScrollArea, QMessageBox, QSizePolicy, QColorDialog)
 
 from data.config import CONFIG, DefaultConfig
-from functions.file_handling_utils import get_resource_path
-from functions.icon_utils import get_icon
+from utils.file_handling_utils import get_resource_path
+from utils.icon_utils import get_icon
+from utils.program_utils import restart_program
 
 
 class NoScrollSpinBox(QSpinBox):
@@ -167,12 +168,10 @@ class ConfigSettingsWindow(QMainWindow):
         self.close()
 
     def save_settings_and_restart(self):
-        from gui.pie_window import PieWindow
-
         for name, widget in self.setting_widgets.items():
             value = self._get_widget_value(widget)
             CONFIG.update_setting(name, value)
-        PieWindow.restart_program()
+        restart_program()
 
     def reset_to_defaults(self):
         # Create a confirmation dialog

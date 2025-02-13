@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Any
 
 from data.config import CONFIG
-from functions.json_utils import JSONManager
+from utils.json_utils import JSONManager
 
 
 class ButtonInfo:

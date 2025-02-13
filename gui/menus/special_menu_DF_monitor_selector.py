@@ -5,7 +5,7 @@ from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QApplication
 
 from data.config import CONFIG
-from functions.icon_utils import get_icon
+from utils.icon_utils import get_icon
 
 
 class MonitorSetupMenu(QWidget):

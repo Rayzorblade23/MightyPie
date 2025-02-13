@@ -1,4 +1,4 @@
-# window_functions.py
+# window_utils.py
 
 import ctypes
 import os
@@ -19,7 +19,7 @@ from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget, QMessageBox
 
 from data.config import CONFIG
-from functions.json_utils import JSONManager
+from utils.json_utils import JSONManager
 from data.window_manager import WindowManager
 
 cache_being_cleared = False
@@ -134,7 +134,7 @@ def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple
             raw_window_title = win32gui.GetWindowText(hwnd)
             class_name = win32gui.GetClassName(hwnd)
 
-            # print(f"hwnd: {hwnd} and main_window title: {window_title}. This is the main_window functions script \n")
+            # print(f"hwnd: {hwnd} and main_window title: {window_title}. This is the main_window utils script \n")
 
             # Check if the main_window is cloaked (hidden or transparent)
             isCloaked = ctypes.c_int(0)

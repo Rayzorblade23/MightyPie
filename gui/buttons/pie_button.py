@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QPushButton, QHB
 
 from data.config import CONFIG
 from data.font_styles import FontStyle
-from functions.icon_utils import invert_icon
+from utils.icon_utils import invert_icon
 from gui.elements.scrolling_text_label import ScrollingLabel
 
 

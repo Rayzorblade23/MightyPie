@@ -3,11 +3,12 @@ import sys
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
 
+from utils.program_utils import restart_program, quit_program
 from gui.menus.button_info_editor import ButtonInfoEditor
 from data.config import CONFIG
 from gui.menus.config_settings_menu import ConfigSettingsWindow
-from functions.icon_utils import get_icon
-from functions.window_functions import clear_cache
+from utils.icon_utils import get_icon
+from utils.window_utils import clear_cache
 
 
 class AppSettingsMenu(QWidget):
@@ -47,8 +48,8 @@ class AppSettingsMenu(QWidget):
             ("shredder", "Clear App Info Cache", lambda: clear_cache(self)),
             ("cake", "Open the Button Config", lambda: self.open_button_info_editor()),
             ("settings", "Open the App Settings", lambda: self.open_settings_window()),
-            ("restart", "Restart Program", lambda: self.parent().main_window.restart_program()),
-            ("quit", "Quit Program", lambda: self.parent().main_window.quit_program()),
+            ("restart", "Restart Program", lambda: restart_program()),
+            ("quit", "Quit Program", lambda: quit_program()),
         ]
 
         # Create and store buttons

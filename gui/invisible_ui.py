@@ -5,9 +5,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QPushButton, QWidget
 
 from data.config import CONFIG
-from functions.shortcut_utils import open_explorer_window
-from functions.taskbar_hide_utils import toggle_taskbar
-from functions.window_functions import add_hwnd_to_exclude
+from utils.shortcut_utils import open_explorer_window
+from utils.taskbar_hide_utils import toggle_taskbar
+from utils.window_utils import add_hwnd_to_exclude
 
 
 class InvisibleUI(QWidget):

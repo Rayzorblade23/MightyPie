@@ -1,4 +1,4 @@
-from functions.file_handling_utils import get_resource_path
+from utils.file_handling_utils import get_resource_path
 
 EXTERNAL_ICON_PATHS = {
     "windows_key": get_resource_path("external_icons/brand-windows.png"),

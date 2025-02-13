@@ -9,7 +9,7 @@ from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import QPushButton
 
 from data.config import CONFIG
-from functions.file_handling_utils import get_resource_path
+from utils.file_handling_utils import get_resource_path
 
 
 class SVGIndicatorButton(QPushButton):

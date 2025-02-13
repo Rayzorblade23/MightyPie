@@ -4,8 +4,8 @@ import os
 from dataclasses import fields
 from typing import Any, List
 
-from functions.color_utils import adjust_saturation
-from functions.json_utils import JSONManager  # Assuming the previous JSONManager is saved as json_utils.py
+from utils.color_utils import adjust_saturation
+from utils.json_utils import JSONManager  # Assuming the previous JSONManager is saved as json_utils.py
 
 from dataclasses import dataclass
 from typing import Tuple

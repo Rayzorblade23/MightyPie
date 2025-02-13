@@ -1,5 +1,4 @@
 import math
-from enum import Enum
 from typing import TYPE_CHECKING, List, Optional
 
 from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize, pyqtSignal, pyqtSlot, QTimer
@@ -8,7 +7,7 @@ from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QPushButton,
 from pynput.mouse import Controller, Button
 
 from data.config import CONFIG
-from functions.window_functions import load_cache, launch_app, focus_window_by_handle, close_window_by_handle
+from utils.window_utils import load_cache, launch_app, focus_window_by_handle, close_window_by_handle
 from gui.buttons.area_button import AreaButton
 from gui.buttons.expanded_button import ExpandedButton
 from gui.buttons.pie_button import PieButton
@@ -16,12 +15,6 @@ from gui.elements.svg_indicator_button import SVGIndicatorButton
 
 if TYPE_CHECKING:
     from gui.pie_window import PieWindow
-
-
-class PieMenuType(Enum):
-    TASK_SWITCHER = "TaskSwitcher"
-    WIN_CONTROL = "WinControl"
-
 
 
 class PieMenu(QWidget):
@@ -278,6 +271,7 @@ class PieMenu(QWidget):
                 )
             )
             pie_button.setEnabled(True)
+
 
 class PrimaryPieMenu(PieMenu):
     def __init__(self, pie_menu_index: int, obj_name: str = "", parent: 'PieWindow' = None):

@@ -12,8 +12,8 @@ from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget
 from gui.elements.toggle_switch import ToggleSwitch
 from data.config import CONFIG
 from events import taskbar_event
-from functions.icon_utils import get_icon
-from functions.taskbar_hide_utils import toggle_taskbar, is_taskbar_visible
+from utils.icon_utils import get_icon
+from utils.taskbar_hide_utils import toggle_taskbar, is_taskbar_visible
 from gui.invisible_ui import InvisibleUI
 from gui.menus.special_menu_DF_monitor_selector import MonitorSetupMenu
 from gui.menus.special_menu_app_shortcuts import AppSettingsMenu
