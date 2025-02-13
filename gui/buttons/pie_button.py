@@ -2,7 +2,7 @@ from typing import *
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPixmap, QCursor
-from PyQt6.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
+from PyQt6.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy, QGraphicsOpacityEffect
 
 from data.config import CONFIG
 from data.font_styles import FontStyle
@@ -41,6 +41,10 @@ class PieButton(QPushButton):
         self.left_click_action = None
         self.right_click_action = None
         self.middle_click_action = None
+
+        self.opacity_effect = QGraphicsOpacityEffect()
+        self.setGraphicsEffect(self.opacity_effect)
+        self.opacity_effect.setOpacity(0.0)
 
         self.hovered = False
         # Create a QVBoxLayout for the label

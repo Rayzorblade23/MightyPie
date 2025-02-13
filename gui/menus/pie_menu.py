@@ -1,9 +1,9 @@
 import math
 from typing import TYPE_CHECKING, Optional
 
-from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize, pyqtSignal, pyqtSlot, QTimer
 from PyQt6.QtGui import QPainter
-from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QPushButton, QGraphicsOpacityEffect
+from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget
 
 from data.config import CONFIG
 from gui.buttons.area_button import AreaButton
@@ -143,11 +143,11 @@ class PieMenu(QWidget):
         for button in self.pie_buttons.values():
             self.animate_button(button, button.geometry())
 
-    def animate_button(self, button: QPushButton, rect: QRect):
+    def animate_button_with_delay(self, button: PieButton, rect: QRect, delay=50):  # Use MyButton
+        QTimer.singleShot(delay, lambda: self.animate_button(button, rect))
 
-        # Apply a QGraphicsOpacityEffect to the button to control its opacity
-        opacity_effect = QGraphicsOpacityEffect()
-        button.setGraphicsEffect(opacity_effect)
+    def animate_button(self, button: PieButton, rect: QRect):  # Use MyButton
+        # Now, we ONLY work with the existing effect
 
         duration = 100
 
@@ -166,7 +166,7 @@ class PieMenu(QWidget):
         size_animation.setEasingCurve(QEasingCurve.Type.OutCurve)  # Easing curve for size
 
         # Opacity animation to fade in/out the button
-        opacity_animation = QPropertyAnimation(opacity_effect, b"opacity")
+        opacity_animation = QPropertyAnimation(button.opacity_effect, b"opacity")
         opacity_animation.setDuration(duration // 4)  # Duration in milliseconds
         opacity_animation.setStartValue(0.0)  # Start from fully transparent
         opacity_animation.setEndValue(1.0)  # End at fully opaque
@@ -174,6 +174,14 @@ class PieMenu(QWidget):
 
         # Append animations to the list to avoid garbage collection
         self.animations.extend([pos_animation, size_animation, opacity_animation])
+
+        if button.index % 8 == 0:
+            print(f"  Starting animations:")
+            print(
+                f"    pos: start=({pos_animation.startValue().x()}, {pos_animation.startValue().y()}) end=({pos_animation.endValue().x()}, {pos_animation.endValue().y()}) - Button {button.index}")
+            print(
+                f"    size: start=({size_animation.startValue().width()}, {size_animation.startValue().height()}) end=({size_animation.endValue().width()}, {size_animation.endValue().height()}) - Button {button.index}")
+            print(f"    opacity: start={opacity_animation.startValue()} end={opacity_animation.endValue()} - Button {button.index}")
 
         # Start both animations
         pos_animation.start()
