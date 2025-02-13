@@ -24,8 +24,8 @@ class BaseConfig:
     SHOW_SETTINGS_AT_STARTUP: bool = True
     REFRESH_INTERVAL: int = 3000
     TASKBAR_OPACITY: int = 150
-    HOTKEY_OPEN_TASKS: str = "F14"
-    HOTKEY_OPEN_WINCON: str = "F13"
+    HOTKEY_PRIMARY: str = "F14"
+    HOTKEY_SECONDARY: str = "F13"
     HIDE_WINDOW_WHEN_ALREADY_FOCUSED: bool = True
 
     # Monitor and display settings

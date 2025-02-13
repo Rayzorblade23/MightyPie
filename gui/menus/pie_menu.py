@@ -41,6 +41,8 @@ class PieMenu(QWidget):
         self.pie_buttons: list[PieButton] = []
         self.animations = []
 
+        self.hotkey = CONFIG.HOTKEY_PRIMARY
+
         self.middle_button: Optional[ExpandedButton] = None
         self.area_button: Optional[AreaButton] = None
 

@@ -6,143 +6,22 @@ import tempfile
 import threading
 import warnings
 
+from helper.keyboard_listener import HotkeyListener
+
 warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
-import keyboard
-from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import (
     QApplication,
-    QWidget, QMessageBox, )
+    QMessageBox, )
 
 from data.config import CONFIG
-from events import ShowWindowEvent, HotkeyReleaseEvent
+from events import ShowWindowEvent
 from functions.file_handling_utils import get_resource_path
 from functions.taskbar_hide_utils import set_taskbar_opacity, show_taskbar
 from global_mouse_filter import GlobalMouseFilter
 from gui.pie_window import PieWindow
 
 import ctypes
-
-
-def listen_for_hotkeys(main_window: QWidget):
-    """Listen for global hotkeys."""
-    can_open_window = True  # Track window state
-    initial_mouse_pos = None  # Store initial mouse position on press
-
-    # Assign variables at the start
-    pm_win_controls = getattr(main_window, 'pm_win_controls', None)
-    pm_task_switchers = getattr(main_window, 'pm_task_switchers', None)
-
-    # Check if any of the necessary windows are None (not instantiated)
-    if not pm_win_controls or not pm_task_switchers or not isinstance(pm_task_switchers, list) or not isinstance(pm_win_controls, list):
-        print("Warning: Task switchers or window control are not instantiated.")
-        return
-
-    def on_press(hotkey_name: str):
-        nonlocal can_open_window, initial_mouse_pos
-        if can_open_window:  # Only show if not already open
-            print(f"{hotkey_name} pressed!")
-            initial_mouse_pos = QCursor.pos()  # Store initial mouse position using QCursor
-
-            if hotkey_name == CONFIG.HOTKEY_OPEN_TASKS:
-                # Find the first task switcher to toggle or open the next one
-                for index, task_switcher in enumerate(pm_task_switchers):
-                    if task_switcher.isVisible():
-                        # Toggle to the next task switcher or back to the first
-                        next_index = (index + 1) % len(pm_task_switchers)
-                        child_window = pm_task_switchers[next_index]
-                        main_window.active_child = next_index + 1
-                        break
-                else:
-                    # If none are visible, open the first task switcher
-                    child_window = pm_task_switchers[0]
-                    main_window.active_child = 1
-
-            elif hotkey_name == CONFIG.HOTKEY_OPEN_WINCON:
-                # Find the first task switcher to toggle or open the next one
-                for index, win_control in enumerate(pm_win_controls):
-
-                    if win_control.isVisible():
-                        # Toggle to the next task switcher or back to the first
-                        next_index = (index + 1) % len(pm_win_controls)
-                        child_window = pm_win_controls[next_index]
-                        main_window.active_child = len(pm_task_switchers) + next_index + 1
-                        break
-                else:
-                    # If none are visible, open the first task switcher
-                    child_window = pm_win_controls[0]
-                    main_window.active_child = len(pm_task_switchers) + 1
-            else:
-                print("Hotkey not found.")
-                return
-
-            if child_window:
-                show_event = ShowWindowEvent(main_window, child_window)
-                QApplication.postEvent(main_window, show_event)
-                can_open_window = False
-
-    def on_release(hotkey_name: str):
-        nonlocal can_open_window, initial_mouse_pos
-        # Get current mouse position
-        current_mouse_pos = QCursor.pos()
-        # Check if the mouse has moved beyond a threshold (e.g., 10 pixels)
-        if (initial_mouse_pos is not None and
-                (abs(current_mouse_pos.x() - initial_mouse_pos.x()) <= 35) and
-                (abs(current_mouse_pos.y() - initial_mouse_pos.y()) <= 35)):
-            # print("Mouse released without movement.")
-            can_open_window = True
-
-        else:
-
-            # print("Mouse released WITH movement.")
-            if hotkey_name == CONFIG.HOTKEY_OPEN_TASKS:
-                # Select the task switcher based on the active_child value
-                index = main_window.active_child - 1
-                # Check if in range for Task Switchers
-                if 0 <= index <= len(pm_task_switchers) - 1:
-                    child_window = pm_task_switchers[index]
-                else:
-                    print("Active child index is out of range for task switchers.")
-                    return
-            elif hotkey_name == CONFIG.HOTKEY_OPEN_WINCON:
-                # Select the task switcher based on the active_child value
-                index = main_window.active_child - 1 - len(pm_task_switchers)
-                # Check if in range for WinControls
-                if 0 <= index <= len(pm_task_switchers) -1:
-                    child_window = pm_win_controls[index]
-                else:
-                    print("Active child index is out of range for task switchers.")
-                    return
-            else:
-                print("Hotkey not found.")
-                return
-
-            if child_window:
-                release_event = HotkeyReleaseEvent(main_window, child_window)
-                QApplication.postEvent(main_window, release_event)
-                can_open_window = True  # Reset the state
-
-    # def handle_mouse_click(x, y, button, pressed):
-    #     """Handle mouse button events."""
-    #     if button == MouseButton.x2:  # Forward button
-    #         if pressed:
-    #             print("PRESSED")
-    #             on_press()
-    #         else:
-    #             print("RELEASED")
-    #             on_release()
-
-    # Start mouse listener in a separate thread
-    # mouse_listener = MouseListener(on_click=handle_mouse_click)
-    # mouse_listener.start()
-
-    keyboard.on_press_key(CONFIG.HOTKEY_OPEN_TASKS, lambda _: on_press(CONFIG.HOTKEY_OPEN_TASKS), suppress=True)
-    keyboard.on_release_key(CONFIG.HOTKEY_OPEN_TASKS, lambda _: on_release(CONFIG.HOTKEY_OPEN_TASKS))
-
-    keyboard.on_press_key(CONFIG.HOTKEY_OPEN_WINCON, lambda _: on_press(CONFIG.HOTKEY_OPEN_WINCON), suppress=True)
-    keyboard.on_release_key(CONFIG.HOTKEY_OPEN_WINCON, lambda _: on_release(CONFIG.HOTKEY_OPEN_WINCON))
-
-    keyboard.wait()
 
 
 def signal_handler(signal, frame):
@@ -221,7 +100,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
-    app.setApplicationName("MightyPie")
+    app.setApplicationName(CONFIG.INTERNAL_PROGRAM_NAME)
 
     set_taskbar_opacity(CONFIG.TASKBAR_OPACITY)
 
@@ -256,9 +135,8 @@ if __name__ == "__main__":
     # main_window.hide()  # Hide it right after showing
 
     # Hotkey Thread
-    hotkey_thread = threading.Thread(
-        target=listen_for_hotkeys, args=(window,), daemon=True
-    )
+    hotkey_listener = HotkeyListener(window)
+    hotkey_thread = threading.Thread(target=hotkey_listener.start_listening, daemon=True)
     hotkey_thread.start()
 
     # main_window.auto_refresh()
