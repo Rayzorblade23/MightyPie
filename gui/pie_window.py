@@ -4,26 +4,28 @@ import sys
 import threading
 import time
 from threading import Lock
-from typing import Dict, Tuple, Set, Optional
+from typing import Dict, Tuple, Set, Optional, Type
 
 import psutil
 import pyautogui
 import win32con
 import win32gui
-from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QCoreApplication, QTimer, QObject
+from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QCoreApplication, QTimer
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor, QGuiApplication
-from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView, QWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
 
-from gui.buttons.pie_button import PieButton
 from data.button_info import ButtonInfo
 from data.config import CONFIG
-from events import ShowWindowEvent, HotkeyReleaseEvent
 from data.icon_paths import EXTERNAL_ICON_PATHS
-from functions.window_functions import get_filtered_list_of_windows, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app, \
+from data.window_manager import WindowManager
+from events import ShowWindowEvent, HotkeyReleaseEvent
+from functions.window_functions import get_filtered_list_of_windows, load_cache, show_special_menu, toggle_maximize_window_at_cursor, \
+    minimize_window_at_cursor, launch_app, \
     cache_being_cleared, restore_last_minimized_window, focus_all_explorer_windows, center_window_at_cursor
+from gui.buttons.pie_button import PieButton
 from gui.menus.pie_menu import PieMenu, PieMenuType, PrimaryPieMenu, SecondaryPieMenu
 from gui.menus.special_menu import SpecialMenu
-from data.window_manager import WindowManager
+
 
 class PieWindow(QMainWindow):
     EXIT_CODE_REBOOT = 122
@@ -227,6 +229,68 @@ class PieWindow(QMainWindow):
     def refresh(self):
         # Start the background task
         threading.Thread(target=self.update_pm_task_buttons, daemon=True).start()
+
+    def get_next_pie_menu_after_hotkey_press(self, pie_menu_type: Type[PieMenu]) -> Tuple[Optional[PieMenu], Optional[int]]:
+        """Helper to find the next pie menu (task switcher or window control) to toggle.
+
+        Args:
+            pie_menu_type: The class type (PrimaryPieMenu or SecondaryPieMenu) of pie menu to search for.
+
+        Returns:
+            A tuple containing the next child window to activate and its corresponding
+            main_window_active_child index.  Returns (None, None) if an error occurs
+            or the specified menu type is invalid.
+        """
+
+        if pie_menu_type is PrimaryPieMenu:
+            pie_menus = self.pie_menus_primary
+            offset = 0  # Task switchers start at index 1 in main_window_active_child
+            menu_type_str = "primary"  # string of pie_menu for error printing
+        elif pie_menu_type is SecondaryPieMenu:
+            pie_menus = self.pie_menus_secondary
+            pie_menus_primary = self.pie_menus_primary
+            offset = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY if pie_menus_primary else 0
+            menu_type_str = "secondary"  # string of pie_menu for error printing
+        else:
+            print(f"Warning: Invalid pie_menu_type: {pie_menu_type}")
+            return None, None
+
+        if not pie_menus or not isinstance(pie_menus, list):
+            print(f"Warning: {menu_type_str.replace('_', ' ').title()} Pie Menus are not instantiated.")
+            return None, None
+
+        # Find the first pie menu to toggle or open the next one
+        for index, current_pie_menu in enumerate(pie_menus):
+            if current_pie_menu.isVisible():
+                # Toggle to the next pie menu or back to the first
+                next_index = (index + 1) % len(pie_menus)
+                pie_menu = pie_menus[next_index]
+                main_window_active_child = offset + next_index + 1
+                return pie_menu, main_window_active_child
+        else:
+            # If none are visible, open the first pie menu
+            pie_menu = pie_menus[0]
+            main_window_active_child = offset + 1
+            return pie_menu, main_window_active_child
+
+    def get_pie_menu_after_hotkey_drag(self, pie_menu_type: type[PieMenu]) -> PieMenu | None:
+        """Selects the appropriate pie menu based on active_child and menu type."""
+        if pie_menu_type is PrimaryPieMenu:
+            offset = 0
+            menus = self.pie_menus_primary
+        elif pie_menu_type is SecondaryPieMenu:
+            offset = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
+            menus = self.pie_menus_secondary
+        else:
+            raise ValueError("Invalid pie_menu_type. Expected PrimaryPieMenu or SecondaryPieMenu.")
+
+        index = self.active_child - 1 - offset
+
+        if 0 <= index < CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY:
+            return menus[index]
+
+        print("Active child index is out of range for task switchers.")
+        return None
 
     def show_pie_window(self, pie_menu):
         """Display the main window and bring it to the foreground."""
