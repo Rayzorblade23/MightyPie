@@ -1,14 +1,13 @@
-import sys
 from typing import *
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap, QCursor
-from PyQt6.QtWidgets import QVBoxLayout, QApplication, QWidget, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
 
 from data.config import CONFIG
 from data.font_styles import FontStyle
-from utils.icon_utils import invert_icon
 from gui.elements.scrolling_text_label import ScrollingLabel
+from utils.icon_utils import invert_icon
 
 
 class PieButton(QPushButton):
@@ -17,12 +16,9 @@ class PieButton(QPushButton):
     def __init__(self,
                  object_name: str,
                  index: int,
-                 text_1: str = "",
+                 text_1: str = "Empty",
                  text_2: str = "",
                  icon_path: str = "",
-                 action: Optional[Callable] = None,
-                 fixed_size: bool = True,
-                 size: Tuple[int, int] = (CONFIG.INTERNAL_BUTTON_WIDTH, CONFIG.INTERNAL_BUTTON_HEIGHT),
                  pos: Tuple[int, int] = (0, 0),
                  parent: Optional[QWidget] = None
                  ):
@@ -30,6 +26,8 @@ class PieButton(QPushButton):
 
         self.setObjectName(object_name)
         self.index = index
+        self.text_1 = text_1
+        self.text_2 = text_2
 
         # Store actions for each mouse button
         self.left_click_action = None
@@ -42,7 +40,7 @@ class PieButton(QPushButton):
         # self.label_layout.setSpacing(0)  # No space between widgets
 
         # Create a Label (which is on top, when both texts are set
-        self.label_1 = ScrollingLabel(text_1, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Normal, v_offset=-1)
+        self.label_1 = ScrollingLabel(self.text_1, h_align=Qt.AlignmentFlag.AlignLeft, font_style=FontStyle.Normal, v_offset=-1)
         self.label_1.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         self.label_layout.addWidget(self.label_1)
@@ -78,7 +76,6 @@ class PieButton(QPushButton):
         self.setEnabled(False)  # Disable the button
 
         self.update_content("Empty", "", "")
-
 
     def update_content(self, text_1: str, text_2: str, app_icon_path=None, is_invert_icon=False) -> None:
         self.set_label_1_text(text_1)
@@ -207,36 +204,7 @@ class PieButton(QPushButton):
     def leaveEvent(self, event):
         self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Restore default cursor
 
-
-
     def update_hover_state(self, hovered):
         self.setProperty("hovered", hovered)
         self.style().unpolish(self)
         self.style().polish(self)
-
-def example_function():
-    print("Button pressed!")
-
-
-# Example usage
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    # Load the stylesheet
-    with open("../../style.qss", "r") as file:
-        app.setStyleSheet(file.read())
-
-    window = QWidget()
-    layout = QVBoxLayout(window)
-
-    some_text = "This is a very long text that should scroll smoothly if it doesn't fit in the button."
-    some_text_2 = "Short text."
-    button = PieButton("button_1", some_text, some_text_2, action=example_function)
-    layout.addWidget(button)
-
-    icon_path = "D:\Mind-Portal\Multi-Media\Icons\music.png"
-    button2 = PieButton("button_2", "Short text.", icon_path=icon_path)
-    layout.addWidget(button2)
-
-    window.show()
-    sys.exit(app.exec())

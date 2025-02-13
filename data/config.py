@@ -35,7 +35,7 @@ class BaseConfig:
     MONITOR_SHORTCUT_3: Tuple[str, str] = ("win", "num3")
 
     # UI and layout configurations
-    INTERNAL_MAX_BUTTONS: int = 8
+    INTERNAL_NUM_BUTTONS_IN_PIE_MENU: int = 8
     INTERNAL_NUM_PIE_MENUS_PRIMARY: int = 3
     INTERNAL_NUM_PIE_MENUS_SECONDARY: int = 2
     INTERNAL_BUTTON_WIDTH: int = 140

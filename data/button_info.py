@@ -159,7 +159,7 @@ class ButtonInfo:
                 }
 
         # Fill in missing tasks
-        for i in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY):
+        for i in range(CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU * CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY):
             if i not in self.button_info_dict:
                 self.button_info_dict[i] = {
                     "task_type": "program_window_any",

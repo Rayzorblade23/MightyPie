@@ -1,23 +1,19 @@
 import math
-import sys
 from typing import Tuple
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPainter, QColor
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QHBoxLayout, QWidget, QSizePolicy
+from PyQt6.QtWidgets import QPushButton, QWidget, QSizePolicy
 
-from utils.color_utils import adjust_saturation
 from data.config import CONFIG
-from global_mouse_filter import GlobalMouseFilter
 
 
 class AreaButton(QPushButton):
     def __init__(self,
                  object_name: str,
-                 text="",
                  pos: Tuple[int, int] = (0, 0),
                  parent=None):
-        super().__init__(text, parent)
+        super().__init__(parent)
         self.setObjectName(object_name)
         self.setAttribute(Qt.WidgetAttribute.WA_Hover)
 
@@ -119,66 +115,3 @@ class DotWidget(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setBrush(QColor(255, 0, 0))  # Red color for the dot
         painter.drawEllipse(0, 0, self.width(), self.height())  # Draw a circle
-
-
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-
-        # Set the main main_window title and size
-        self.setWindowTitle("Main Window with AreaButton")
-        self.setGeometry(300, 100, CONFIG.INTERNAL_CANVAS_SIZE[0], CONFIG.INTERNAL_CANVAS_SIZE[1])  # Initial size of the main_window
-
-        # Create a QWidget to hold the layout
-        central_widget = QWidget(self)
-
-        # Create a QHBoxLayout
-        layout = QHBoxLayout()
-
-        button_pos_x = int(CONFIG.INTERNAL_CANVAS_SIZE[0] / 2)
-        button_pos_y = int(CONFIG.INTERNAL_CANVAS_SIZE[1] / 2)
-
-        # Create an AreaButton instance and add it to the layout
-        self.area_button = AreaButton("Slice!",
-                                      "",
-                                      pos=(button_pos_x, button_pos_y),
-                                      angle_start=270 - 22.5,
-                                      angle_degrees=45,
-                                      parent=self)
-
-        # Set the layout to the central widget
-        central_widget.setLayout(layout)
-
-        # Set the central widget of the main main_window
-        self.setCentralWidget(central_widget)
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    # Create the main main_window
-    window = MainWindow()
-
-    # Install the global mouse filtered_event filter
-    global_mouse_filter = GlobalMouseFilter(window.area_button)
-    app.installEventFilter(global_mouse_filter)
-
-    # creating hues
-    accent_color_muted = adjust_saturation(CONFIG.ACCENT_COLOR, 0.5)
-
-    # Load the QSS template
-    with open("../../style.qss", "r") as file:
-        qss_template = file.read()
-
-    # inserting style attributes from the config.py file
-    qss = (qss_template
-           .replace("{{accent_color}}", CONFIG.ACCENT_COLOR)
-           .replace("{{accent_muted}}", accent_color_muted)
-           .replace("{{bg_color}}", CONFIG.BG_COLOR))
-
-    # Apply the QSS to the application or widgets
-    app.setStyleSheet(qss)
-
-    window.show()
-
-    sys.exit(app.exec())

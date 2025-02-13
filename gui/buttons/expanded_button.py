@@ -14,13 +14,19 @@ class ExpandedButton(QPushButton):
         super().__init__(text, parent)
         self.setObjectName(object_name)
 
+        self.set_size(fixed_size, size)
+
+        self.set_pos(pos)
+
+    def set_pos(self, pos):
+        x, y = pos
+        self.move(x, y)
+
+    def set_size(self, fixed_size, size):
         if fixed_size:
             self.setFixedSize(QSize(size[0], size[1]))
         else:
             self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-
-        x, y = pos
-        self.move(x, y)
 
     def mousePressEvent(self, event):
         """Handle mouse press events (left, right, middle)."""

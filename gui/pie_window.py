@@ -8,6 +8,7 @@ import win32gui
 from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QTimer
 from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor, QGuiApplication
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
+from pyscreeze import pixel
 
 from data.button_info import ButtonInfo
 from data.config import CONFIG
@@ -61,7 +62,6 @@ class PieWindow(QMainWindow):
         self.pie_menu_pos = QPoint()
         self.button_mapping_lock = Lock()
         self.last_window_handles = []
-        self.pie_button_texts = ["Empty" for _ in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY)]
         self.windowHandles_To_buttonIndexes_map = {}
         self.fixed_button_indexes: Set[int] = set()
         self.fixed_windows: Set[int] = set()
@@ -114,8 +114,9 @@ class PieWindow(QMainWindow):
     def make_right_click_hide_for_all_buttons_in_pie_menu(self, menus: list) -> None:
         """Disables right-click by setting action to hide for all pie buttons in given menus."""
         for pie_menu in menus:
-            for pie_button in pie_menu.pie_buttons:
+            for button_index, pie_button in pie_menu.pie_buttons.items(): # type: int, PieButton
                 pie_button.set_right_click_action(action=lambda: self.hide())
+
 
     def handle_geometry_change(self):
         screen = QApplication.primaryScreen()
@@ -373,7 +374,8 @@ class PieWindow(QMainWindow):
 
         for config in button_config:
             i, j = config["index"]
-            button = self.pie_menus_secondary[i].pie_buttons[j]
+            pie_menu = self.pie_menus_secondary[i]
+            button = pie_menu.pie_buttons.get(j)
 
             button.set_label_1_text(config.get("label", ""))
             if config["label"]:

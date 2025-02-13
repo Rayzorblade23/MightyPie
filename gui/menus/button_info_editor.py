@@ -40,7 +40,7 @@ class ButtonInfoEditor(QWidget):
 
         # Calculate number of columns needed
         num_columns = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
-        buttons_per_column = CONFIG.INTERNAL_MAX_BUTTONS
+        buttons_per_column = CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU
 
         # Create columns
         for col in range(num_columns):

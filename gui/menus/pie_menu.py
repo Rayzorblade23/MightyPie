@@ -1,24 +1,24 @@
 import math
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize, pyqtSignal, pyqtSlot, QTimer
 from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QPushButton, QGraphicsOpacityEffect
-from pynput.mouse import Controller, Button
 
 from data.config import CONFIG
-from utils.window_utils import load_cache, launch_app, focus_window_by_handle, close_window_by_handle
 from gui.buttons.area_button import AreaButton
 from gui.buttons.expanded_button import ExpandedButton
 from gui.buttons.pie_button import PieButton
+from gui.buttons.pie_menu_middle_button import PieMenuMiddleButton
 from gui.elements.svg_indicator_button import SVGIndicatorButton
+from utils.window_utils import load_cache, launch_app, focus_window_by_handle, close_window_by_handle
 
 if TYPE_CHECKING:
     from gui.pie_window import PieWindow
 
 
 class PieMenu(QWidget):
-    update_buttons_signal = pyqtSignal(list)  # Expect QWidget and list
+    update_buttons_signal = pyqtSignal(list)
 
     def __init__(self, pie_menu_index: int, obj_name: str = "", parent: 'PieWindow' = None):
         super().__init__(parent)
@@ -31,8 +31,7 @@ class PieMenu(QWidget):
         self.scene = None
         self.view = None
         self.btn = None
-        self.pie_button_texts: List[str] = ["Empty" for _ in range(CONFIG.INTERNAL_MAX_BUTTONS)]
-        self.pie_buttons: list[PieButton] = []
+        self.pie_buttons: dict[int, PieButton] = {}
         self.animations = []
 
         self.hotkey = CONFIG.HOTKEY_PRIMARY
@@ -46,7 +45,7 @@ class PieMenu(QWidget):
         # Create scene and graphical elements
         self.setup_scene_and_view()
         # Create all buttons (task and main_window controls)
-        self.setup_buttons()
+        self.setup_ui()
 
     def setup_window(self):
         """Set up the main main_window properties."""
@@ -63,40 +62,27 @@ class PieMenu(QWidget):
         self.view.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         self.view.setGeometry(0, 0, self.width(), self.height())
         self.view.setObjectName(self.obj_name)
+        self.view.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-    def setup_buttons(self):
+    def setup_ui(self):
         """Create and position all buttons."""
-
         self.indicator = SVGIndicatorButton(
             object_name="Indicator",
             size=300,
-            action=None,
             pos=(self.rect().center().x(), self.rect().center().y()),
             parent=self
         )
-        self.indicator.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         # Create and configure the refresh button
-        self.middle_button = ExpandedButton(
+        self.middle_button = PieMenuMiddleButton(
             text="",
             object_name="middleButton",
-            fixed_size=True,
-            # Using size instead of geometry
-            size=(CONFIG.INTERNAL_INNER_RADIUS * 2, CONFIG.INTERNAL_INNER_RADIUS * 2),
-            pos=(self.width() // 2 - CONFIG.INTERNAL_INNER_RADIUS, self.height() // 2 - CONFIG.INTERNAL_INNER_RADIUS)
-            # Using position for x and y
+            pos=(self.width() // 2 - CONFIG.INTERNAL_INNER_RADIUS, self.height() // 2 - CONFIG.INTERNAL_INNER_RADIUS),
+            parent=self
         )
-        self.middle_button.left_clicked.connect(
-            lambda: [self.parent().hide(), Controller().press(Button.x2), Controller().release(Button.x2)])
-        self.middle_button.right_clicked.connect(lambda: self.pie_window.hide())
-        self.middle_button.middle_clicked.connect(lambda: self.pie_window.open_special_menu())
-        self.middle_button.setParent(self)
-        self.middle_button.lower()
-        self.view.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         # Creates the area button that has the screen spanning pie sections
         self.area_button = AreaButton("Slice!",
-                                      "",
                                       pos=(self.width() // 2, self.height() // 2),
                                       parent=self)
         # Make the actual button click-through
@@ -105,23 +91,25 @@ class PieMenu(QWidget):
         self.create_pie_buttons()
 
     def create_pie_buttons(self):
-        # Create 8 buttons in a circular pattern, starting with top middle
-        for i, pie_button_text in enumerate(self.pie_button_texts):
-            angle_in_degrees = (
-                    i / 8 * 360
-            )  # Calculate button's position using angle_in_radians
+        """Create pie menu buttons in a circular pattern."""
+        # Define all the CONFIG variables at the start
+        num_buttons = CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU
+        button_width = CONFIG.INTERNAL_BUTTON_WIDTH
+        button_height = CONFIG.INTERNAL_BUTTON_HEIGHT
+        radius = CONFIG.INTERNAL_RADIUS
 
-            # the base offset here moves the anchor point from top left to center
-            offset_x = -CONFIG.INTERNAL_BUTTON_WIDTH / 2
-            offset_y = CONFIG.INTERNAL_BUTTON_HEIGHT / 2
+        # Define the nudge values
+        nudge_x = button_width / 2 - button_height / 2
+        nudge_y = button_height / 2
 
-            # the standard anchor position is the middle of a square area at the side of the button
-            # the top and bottom buttons don't need it, they should remain centered
-            nudge_x = CONFIG.INTERNAL_BUTTON_WIDTH / 2 - CONFIG.INTERNAL_BUTTON_HEIGHT / 2
-            # some buttons need to be nudged so the distribution looks more circular
-            # so we nudge the buttons at 45 degrees closer to the x-axis
-            nudge_y = CONFIG.INTERNAL_BUTTON_HEIGHT / 2
+        for i in range(num_buttons):
+            angle_in_rad = math.radians(i / num_buttons * 360)  # Calculate button's position using angle_in_radians
 
+            # the base offset moves the anchor point from top left to center
+            offset_x = -button_width / 2
+            offset_y = button_height / 2
+
+            # Apply nudges for specific button positions
             if i == 1:  # 45 degrees
                 offset_x += nudge_x
                 offset_y += -nudge_y
@@ -140,31 +128,21 @@ class PieMenu(QWidget):
             elif i == 7:  # 315 degrees
                 offset_x += -nudge_x
                 offset_y += -nudge_y
-            else:
-                pass
 
-            # distribute the buttons in a circle
-            button_pos_x = int(self.width() / 2 + offset_x + CONFIG.INTERNAL_RADIUS * math.sin(math.radians(angle_in_degrees)))
-            button_pos_y = int(self.height() / 2 - offset_y - CONFIG.INTERNAL_RADIUS * math.cos(math.radians(angle_in_degrees)))
+            # Distribute the buttons in a circle
+            button_pos_x = int(self.width() / 2 + offset_x + radius * math.sin(angle_in_rad))
+            button_pos_y = int(self.height() / 2 - offset_y - radius * math.cos(angle_in_rad))
 
             button_name = "Pie_Button" + str(i)  # name of the button not used
-            # self.btn = create_button(name, button_name, pos=(button_pos_x, button_pos_y))
+            button_index = CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU * self.pie_menu_index + i
 
-            self.btn = PieButton(
-                object_name=button_name,
-                index=self.pie_menu_index * CONFIG.INTERNAL_MAX_BUTTONS + i,
-                text_1=pie_button_text,
-                text_2="",
-                icon_path="",
-                action=None,
-                pos=(button_pos_x, button_pos_y),
-                parent=self)
+            self.btn = PieButton(button_name, button_index, pos=(button_pos_x, button_pos_y), parent=self)
 
-            self.pie_buttons.append(self.btn)
+            self.pie_buttons[i] = self.btn
 
     def showEvent(self, event):
         super().showEvent(event)  # Call the parent class's method
-        for button in self.pie_buttons:
+        for button in self.pie_buttons.values():
             self.animate_button(button, button.geometry())
 
     def animate_button(self, button: QPushButton, rect: QRect):
@@ -209,17 +187,14 @@ class PieMenu(QWidget):
         """Update button UI in the main thread."""
         app_info_cache = load_cache()
 
-        if self.pie_menu_index > 2:
+        if isinstance(self, SecondaryPieMenu):
             return
 
-        print(f"PM: {self.pie_menu_index}")
+        pie_menu_updates = [update for update in button_updates if
+                            update["index"] // CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU == self.pie_menu_index]
 
-        # TODO: Give all the Pie Menus the update, which give the buttons their updates
-        #       This can then probably go into PieMenu instead
-
-        pie_menu_updates = [update for update in button_updates if update["index"] // CONFIG.INTERNAL_MAX_BUTTONS == self.pie_menu_index]
-
-        for pie_button in self.pie_buttons:
+        for pie_button in self.pie_buttons.values():
+            print(pie_button.index)
             if not any(update["index"] == pie_button.index for update in pie_menu_updates):
                 # Clear the button
                 pie_button.clear()

@@ -52,6 +52,8 @@ class SVGIndicatorButton(QPushButton):
         # Set the size of the button
         self.setFixedSize(self.button_size, self.button_size)
         self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+
 
     def sizeHint(self):
         """Override sizeHint to ensure the button is the correct size."""
