@@ -10,12 +10,12 @@ QWidget {
     border:none;              /* No border */
 }
 
-#PieMenuTaskSwitcher {
+#PrimaryPieMenu {
     background-color: transparent;
     border:none;
 }
 
-#PieMenuWinControl {
+#SecondaryPieMenu {
     background-color: transparent;
     border:none;
 }
@@ -26,14 +26,11 @@ QWidget {
     border-radius: 15px;
 }
 
-
 #SpecialMenu {
     background-color: rgba(20, 20, 20, 255);
     border-radius: 10px;
     border: 1px solid {{accent_muted}};              /* No border */
 }
-
-
 
 #Clock {
     border-radius: 5px;

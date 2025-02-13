@@ -23,6 +23,7 @@ class PieMenuType(Enum):
     WIN_CONTROL = "WinControl"
 
 
+
 class PieMenu(QWidget):
     update_buttons_signal = pyqtSignal(list)  # Expect QWidget and list
 
@@ -277,3 +278,16 @@ class PieMenu(QWidget):
                 )
             )
             pie_button.setEnabled(True)
+
+class PrimaryPieMenu(PieMenu):
+    def __init__(self, pie_menu_index: int, obj_name: str = "", parent: 'PieWindow' = None):
+        super().__init__(pie_menu_index, obj_name, parent)
+
+        self.hotkey = CONFIG.HOTKEY_PRIMARY
+
+
+class SecondaryPieMenu(PieMenu):
+    def __init__(self, pie_menu_index: int, obj_name: str = "", parent: 'PieWindow' = None):
+        super().__init__(pie_menu_index, obj_name, parent)
+
+        self.hotkey = CONFIG.HOTKEY_SECONDARY

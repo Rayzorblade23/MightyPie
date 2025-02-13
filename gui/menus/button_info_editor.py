@@ -39,7 +39,7 @@ class ButtonInfoEditor(QWidget):
         main_layout.addWidget(scroll)
 
         # Calculate number of columns needed
-        num_columns = CONFIG.INTERNAL_NUM_PIE_TASK_SWITCHERS
+        num_columns = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
         buttons_per_column = CONFIG.INTERNAL_MAX_BUTTONS
 
         # Create columns

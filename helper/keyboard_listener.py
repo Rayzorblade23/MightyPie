@@ -43,11 +43,11 @@ class HotkeyListener:
         self.initial_mouse_pos = QCursor.pos()  # Store initial mouse position using QCursor
 
         if hotkey_name == CONFIG.HOTKEY_PRIMARY:
-            child_window, main_window_active_child = self._get_next_task_switcher()
+            child_window, main_window_active_child = self._get_next_pie_menu("task_switcher")
             self.main_window.active_child = main_window_active_child
 
         elif hotkey_name == CONFIG.HOTKEY_SECONDARY:
-            child_window, main_window_active_child = self._get_next_win_control()
+            child_window, main_window_active_child = self._get_next_pie_menu("win_control")
             self.main_window.active_child = main_window_active_child
 
         else:
@@ -75,17 +75,17 @@ class HotkeyListener:
                 # Select the task switcher based on the active_child value
                 index = self.main_window.active_child - 1
                 # Check if in range for Task Switchers
-                if 0 <= index <= len(self.main_window.pm_task_switchers) - 1:
-                    child_window = self.main_window.pm_task_switchers[index]
+                if 0 <= index <= len(self.main_window.pie_menus_primary) - 1:
+                    child_window = self.main_window.pie_menus_primary[index]
                 else:
                     print("Active child index is out of range for task switchers.")
                     return
             elif hotkey_name == CONFIG.HOTKEY_SECONDARY:
                 # Select the task switcher based on the active_child value
-                index = self.main_window.active_child - 1 - len(self.main_window.pm_task_switchers)
+                index = self.main_window.active_child - 1 - len(self.main_window.pie_menus_primary)
                 # Check if in range for WinControls
-                if 0 <= index <= len(self.main_window.pm_task_switchers) - 1:
-                    child_window = self.main_window.pm_win_controls[index]
+                if 0 <= index <= len(self.main_window.pie_menus_primary) - 1:
+                    child_window = self.main_window.pie_menus_secondary[index]
                 else:
                     print("Active child index is out of range for task switchers.")
                     return
@@ -98,45 +98,48 @@ class HotkeyListener:
                 QApplication.postEvent(self.main_window, release_event)
                 self.can_open_window = True  # Reset the state
 
-    def _get_next_task_switcher(self):
-        """Helper to find the next task switcher to toggle."""
-        pm_task_switchers = getattr(self.main_window, 'pm_task_switchers', None)
-        if not pm_task_switchers or not isinstance(pm_task_switchers, list):
-            print("Warning: Task switchers are not instantiated.")
+    def _get_next_pie_menu(self, menu_type):
+        """Helper to find the next pie menu (task switcher or window control) to toggle.
+
+        Args:
+            menu_type:  A string, either 'task_switcher' or 'win_control', indicating which
+                        type of pie menu to search for.
+
+        Returns:
+            A tuple containing the next child window to activate and its corresponding
+            main_window_active_child index.  Returns (None, None) if an error occurs
+            or the specified menu type is invalid.
+        """
+
+        if menu_type == 'task_switcher':
+            pie_menus = getattr(self.main_window, 'pie_menus_primary', None)
+            offset = 0  # Task switchers start at index 1 in main_window_active_child
+        elif menu_type == 'win_control':
+            pie_menus = getattr(self.main_window, 'pie_menus_secondary', None)
+            pm_task_switchers = getattr(self.main_window, 'pie_menus_primary',
+                                        None)  # Required for proper main_window_active_child index calculation
+            if pm_task_switchers:
+                offset = len(pm_task_switchers)  # Window controls start after task switchers
+            else:
+                offset = 0
+        else:
+            print(f"Warning: Invalid menu_type: {menu_type}")
             return None, None
 
-        # Find the first task switcher to toggle or open the next one
-        for index, task_switcher in enumerate(pm_task_switchers):
-            if task_switcher.isVisible():
-                # Toggle to the next task switcher or back to the first
-                next_index = (index + 1) % len(pm_task_switchers)
-                child_window = pm_task_switchers[next_index]
-                main_window_active_child = next_index + 1
-                return child_window, main_window_active_child
-        else:
-            # If none are visible, open the first task switcher
-            child_window = pm_task_switchers[0]
-            main_window_active_child = 1
-            return child_window, main_window_active_child
-
-    def _get_next_win_control(self):
-        """Helper to find the next window control to toggle."""
-        pm_win_controls = getattr(self.main_window, 'pm_win_controls', None)
-        pm_task_switchers = getattr(self.main_window, 'pm_task_switchers', None)
-        if not pm_win_controls or not isinstance(pm_win_controls, list):
-            print("Warning: Task switchers are not instantiated.")
+        if not pie_menus or not isinstance(pie_menus, list):
+            print(f"Warning: {menu_type.replace('_', ' ').title()}s are not instantiated.")
             return None, None
 
-        # Find the first task switcher to toggle or open the next one
-        for index, win_control in enumerate(pm_win_controls):
-            if win_control.isVisible():
-                # Toggle to the next task switcher or back to the first
-                next_index = (index + 1) % len(pm_win_controls)
-                child_window = pm_win_controls[next_index]
-                main_window_active_child = len(pm_task_switchers) + next_index + 1
+        # Find the first pie menu to toggle or open the next one
+        for index, pie_menu in enumerate(pie_menus):
+            if pie_menu.isVisible():
+                # Toggle to the next pie menu or back to the first
+                next_index = (index + 1) % len(pie_menus)
+                child_window = pie_menus[next_index]
+                main_window_active_child = offset + next_index + 1
                 return child_window, main_window_active_child
         else:
-            # If none are visible, open the first task switcher
-            child_window = pm_win_controls[0]
-            main_window_active_child = len(pm_task_switchers) + 1
+            # If none are visible, open the first pie menu
+            child_window = pie_menus[0]
+            main_window_active_child = offset + 1
             return child_window, main_window_active_child

@@ -16,8 +16,8 @@ class GlobalMouseFilter(QObject):
         """Update the task switcher dynamically based on active_child."""
         active_child = getattr(self.main_window, 'active_child', None)
 
-        end_task_switchers = len(self.main_window.pm_task_switchers)
-        end_win_controls = len(self.main_window.pm_task_switchers) + len(self.main_window.pm_win_controls)
+        end_task_switchers = len(self.main_window.pie_menus_primary)
+        end_win_controls = len(self.main_window.pie_menus_primary) + len(self.main_window.pie_menus_secondary)
 
         index_task_switchers = active_child - 1
         index_win_controls = active_child - 1 - end_task_switchers
@@ -27,10 +27,10 @@ class GlobalMouseFilter(QObject):
             # Handle task switchers dynamically using their index
             if isinstance(active_child, int) and 1 <= active_child <= end_task_switchers:
                 # Map active_child to the appropriate Task Switcher
-                self.pie_menu = self.main_window.pm_task_switchers[index_task_switchers]
+                self.pie_menu = self.main_window.pie_menus_primary[index_task_switchers]
             elif isinstance(active_child, int) and end_task_switchers <= active_child <= end_win_controls:
                 # Map active_child to the appropriate Win Control
-                self.pie_menu = self.main_window.pm_win_controls[index_win_controls]
+                self.pie_menu = self.main_window.pie_menus_secondary[index_win_controls]
             else:
                 self.pie_menu = None  # Ensure pie_menu is None if no valid match is found
 

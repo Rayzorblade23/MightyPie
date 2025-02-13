@@ -21,7 +21,7 @@ from events import ShowWindowEvent, HotkeyReleaseEvent
 from data.icon_paths import EXTERNAL_ICON_PATHS
 from functions.window_functions import get_filtered_list_of_windows, load_cache, show_special_menu, toggle_maximize_window_at_cursor, minimize_window_at_cursor, launch_app, \
     cache_being_cleared, restore_last_minimized_window, focus_all_explorer_windows, center_window_at_cursor
-from gui.menus.pie_menu import PieMenu, PieMenuType
+from gui.menus.pie_menu import PieMenu, PieMenuType, PrimaryPieMenu, SecondaryPieMenu
 from gui.menus.special_menu import SpecialMenu
 from data.window_manager import WindowManager
 
@@ -61,7 +61,7 @@ class PieWindow(QMainWindow):
         self.pie_menu_pos = QPoint()
         self.button_mapping_lock = Lock()
         self.last_window_handles = []
-        self.pie_button_texts = ["Empty" for _ in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_TASK_SWITCHERS)]
+        self.pie_button_texts = ["Empty" for _ in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY)]
         self.windowHandles_To_buttonIndexes_map = {}
         self.fixed_button_indexes: Set[int] = set()
         self.fixed_windows: Set[int] = set()
@@ -69,29 +69,31 @@ class PieWindow(QMainWindow):
         self.active_child = 1
         self.is_window_open = False
 
-        # Create Pie Menus with this main_window as parent
-        self.pm_task_switchers: list[PieMenu] = []  # List to hold the task switchers
-        for i in range(1, CONFIG.INTERNAL_NUM_PIE_TASK_SWITCHERS + 1):  # Adjust the range if the number of task switchers changes
-            task_switcher = PieMenu(i - 1, "PieMenuTaskSwitcher", parent=self)
-            if i > 1:  # Hide task switchers 2 and 3 initially
-                task_switcher.hide()
-            self.pm_task_switchers.append(task_switcher)
+        num_primary_pie_menus = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
+        num_secondary_pie_menus = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
 
-        # TODO: Make the Types of PieMenu children of PieMenu, they have their own shortcut value then
-        self.pm_win_controls: list[PieMenu] = []
-        for i in range(1, CONFIG.INTERNAL_NUM_PIE_WIN_CONTROLS + 1):  # Adjust the range if the number of task switchers changes
-            win_control = PieMenu(3 + i - 1, "PieMenuWinControl", parent=self)
+        # Create Pie Menus with this main_window as parent
+        self.pie_menus_primary: list[PieMenu] = []  # List to hold the task switchers
+        for i in range(0, num_primary_pie_menus):  # Adjust the range if the number of task switchers changes
+            pie_menu = PrimaryPieMenu(i, "PrimaryPieMenu", parent=self)
+            if i > 1:  # Hide task switchers 2 and 3 initially
+                pie_menu.hide()
+            self.pie_menus_primary.append(pie_menu)
+
+        self.pie_menus_secondary: list[PieMenu] = []
+        for i in range(0, num_secondary_pie_menus):  # Adjust the range if the number of task switchers changes
+            win_control = SecondaryPieMenu(num_primary_pie_menus + i, "SecondaryPieMenu", parent=self)
             win_control.hide()  # Hide all at first
-            self.pm_win_controls.append(win_control)
+            self.pie_menus_secondary.append(win_control)
 
         self.setup_window_control_buttons()
 
         # For now, right-click should always just hide
-        for i in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_TASK_SWITCHERS):
-            task_switcher, index = self.get_pie_menu_and_index(i, PieMenuType.TASK_SWITCHER)
-            task_switcher.pie_buttons[index].set_right_click_action(action=lambda: self.hide())
+        for i in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY):
+            pie_menu, index = self.get_pie_menu_and_index(i, PieMenuType.TASK_SWITCHER)
+            pie_menu.pie_buttons[index].set_right_click_action(action=lambda: self.hide())
 
-        for i in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_WIN_CONTROLS):
+        for i in range(CONFIG.INTERNAL_MAX_BUTTONS * CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY):
             win_control, index = self.get_pie_menu_and_index(i, PieMenuType.WIN_CONTROL)
             win_control.pie_buttons[index].set_right_click_action(action=lambda: self.hide())
 
@@ -285,8 +287,8 @@ class PieWindow(QMainWindow):
         """Helper function to calculate the Pie Menu and index dynamically."""
         # Use the Enum to determine which list to use
         pie_menus = {
-            PieMenuType.TASK_SWITCHER: self.pm_task_switchers,
-            PieMenuType.WIN_CONTROL: self.pm_win_controls
+            PieMenuType.TASK_SWITCHER: self.pie_menus_primary,
+            PieMenuType.WIN_CONTROL: self.pie_menus_secondary
         }.get(pie_menu_type)
 
         if pie_menus is None:
@@ -351,7 +353,7 @@ class PieWindow(QMainWindow):
 
         for config in button_config:
             i, j = config["index"]
-            button = self.pm_win_controls[i].pie_buttons[j]
+            button = self.pie_menus_secondary[i].pie_buttons[j]
 
             button.set_label_1_text(config.get("label", ""))
             if config["label"]:
@@ -553,7 +555,7 @@ class PieWindow(QMainWindow):
         # Process the rest, one Pie Menu at a time,
         # so already-assigned Windows only jump
         # if there is a free slot in the lower-index Pie Menu
-        for pie_menu_index in range(CONFIG.INTERNAL_NUM_PIE_TASK_SWITCHERS):
+        for pie_menu_index in range(CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY):
             process_existing_mappings(pie_menu_index)
             fill_empty_buttons(pie_menu_index)
 
@@ -566,9 +568,9 @@ class PieWindow(QMainWindow):
         self.clean_up_stale_window_mappings(final_button_updates)
 
         # Emit updates
-        for pie_menu in self.pm_task_switchers:
+        for pie_menu in self.pie_menus_primary:
             pie_menu.update_buttons_signal.emit(final_button_updates)
-        for pie_menu in self.pm_win_controls:
+        for pie_menu in self.pie_menus_secondary:
             pie_menu.update_buttons_signal.emit(final_button_updates)
 
     def clean_up_stale_window_mappings(self, final_button_updates):
