@@ -20,7 +20,7 @@ class WindowManager:
                     WindowManager._instance = WindowManager()
         return WindowManager._instance
 
-    def update_window_hwnd_mapping(self, new_map: Dict[int, Tuple[str, str, int]]) -> None:
+    def update_open_windows_info(self, new_map: Dict[int, Tuple[str, str, int]]) -> None:
         """
         Atomically update the mapping with the new data.
         Replaces the current mapping to ensure consistency for readers.
@@ -29,7 +29,7 @@ class WindowManager:
         - The key is the HWND (int).
         - The values are a tuple containing:
             1. Window title (str): The title of the window.
-            2. Exe name (str): The human-friendly name of the executable.
+            2. App Name (str): The human-friendly name of the executable.
             3. Instance number (int): A unique instance number for this window.
 
         Args:
@@ -48,7 +48,7 @@ class WindowManager:
             # Atomically replace the entire dictionary
             self._window_hwnd_mapping = new_map.copy()
 
-    def get_window_hwnd_mapping(self) -> Dict[int, Tuple[str, str, int]]:
+    def get_open_windows_info(self) -> Dict[int, Tuple[str, str, int]]:
         """
         Return a copy of the current mapping.
         Ensures readers always get a consistent and stable view of the data.
@@ -57,7 +57,7 @@ class WindowManager:
         - The key is the HWND (int).
         - The values are a tuple containing:
             1. Window title (str): The title of the window.
-            2. Exe name (str): The human-friendly name of the executable.
+            2. App Name (str): The human-friendly name of the executable.
             3. Instance number (int): A unique instance number for this window.
 
         Returns:

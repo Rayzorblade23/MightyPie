@@ -1,23 +1,8 @@
-Have two lists:
 
-temp_button_texts: index -> window_title
-updates
+I have:
 
-All fixed buttons go first
+- WINDOW MANAGER - list of all windows - Dict[hwnd, Tuple[Title, App_Name, Instance_Number]]
 
+- APP INFO CACHE - saved info off all known programs. all apps from window manager are in there
 
-
-
-
-LAYER 1 - RULES:
-
-- if Button has Window: just pass it along
-- if Button
-
-
-
-indexes: all
-
-look for indexes of fixed_buttons:
- - look for already assigned buttons
-  - check
+- BUTTON INFO - has the basic instructions and properties of EACH button

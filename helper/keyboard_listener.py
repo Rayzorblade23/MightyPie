@@ -45,11 +45,11 @@ class HotkeyListener:
         self.initial_mouse_pos = QCursor.pos()  # Store initial mouse position using QCursor
 
         if hotkey_name == CONFIG.HOTKEY_PRIMARY:
-            pie_menu, main_window_active_child = self.main_window.get_next_pie_menu_after_hotkey_press(PrimaryPieMenu)
+            pie_menu, main_window_active_child = self.main_window.get_next_pie_menu_on_hotkey_press(PrimaryPieMenu)
             self.main_window.active_child = main_window_active_child
 
         elif hotkey_name == CONFIG.HOTKEY_SECONDARY:
-            pie_menu, main_window_active_child = self.main_window.get_next_pie_menu_after_hotkey_press(SecondaryPieMenu)
+            pie_menu, main_window_active_child = self.main_window.get_next_pie_menu_on_hotkey_press(SecondaryPieMenu)
             self.main_window.active_child = main_window_active_child
 
         else:

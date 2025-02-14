@@ -175,9 +175,9 @@ def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple
         temp_window_hwnds_mapping = assign_instance_numbers(temp_window_hwnds_mapping)
 
         # Update the main mapping dictionary with the filtered main_window handles
-        manager.update_window_hwnd_mapping(temp_window_hwnds_mapping)
+        manager.update_open_windows_info(temp_window_hwnds_mapping)
 
-        return manager.get_window_hwnd_mapping()
+        return manager.get_open_windows_info()
     except Exception as e:
         print(f"Error getting windows: {e}")
         return []
@@ -187,7 +187,7 @@ def assign_instance_numbers(temp_window_hwnds_mapping: Dict[int, Tuple[str, str,
     """Assign unique instance numbers to windows with the same title and executable name."""
 
     # Get the current mapping of HWNDs to window info from the manager
-    existing_mapping = manager.get_window_hwnd_mapping()
+    existing_mapping = manager.get_open_windows_info()
 
     # Create our result mapping
     result_mapping = {}
@@ -236,7 +236,7 @@ def assign_instance_numbers(temp_window_hwnds_mapping: Dict[int, Tuple[str, str,
 def focus_all_explorer_windows():
     """Focuses all open Explorer Windows"""
     explorer_hwnds = []
-    window_mapping = manager.get_window_hwnd_mapping()
+    window_mapping = manager.get_open_windows_info()
 
     for hwnd, (title, exe_name, _) in window_mapping.items():
         # Explorer windows typically show up with "File Explorer" or "Windows Explorer" as the exe_name
@@ -621,7 +621,7 @@ def minimize_window_at_cursor(pie_window: QWidget):
 
     window_handle = win32gui.WindowFromPoint(cursor_pos)
 
-    valid_hwnds = set(manager.get_window_hwnd_mapping().keys())
+    valid_hwnds = set(manager.get_open_windows_info().keys())
 
     if window_handle and window_handle != win32gui.GetDesktopWindow():
         print("Valid window found")

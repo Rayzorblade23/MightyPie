@@ -209,7 +209,7 @@ class PieWindow(QMainWindow):
         # Start the background task
         threading.Thread(target=self.update_pm_task_buttons, daemon=True).start()
 
-    def get_next_pie_menu_after_hotkey_press(self, pie_menu_type: Type[PieMenu]) -> Tuple[Optional[PieMenu], Optional[int]]:
+    def get_next_pie_menu_on_hotkey_press(self, pie_menu_type: Type[PieMenu]) -> Tuple[Optional[PieMenu], Optional[int]]:
         """Helper to find the next pie menu (task switcher or window control) to toggle.
 
         Args:
@@ -398,7 +398,7 @@ class PieWindow(QMainWindow):
             print("DANGER! CACHE IS BEING CLEARED. SKIP.")
             return
 
-        all_open_windows_info_by_hwnd = self.manager.get_window_hwnd_mapping()
+        open_windows_info: Dict[int, Tuple[str, str, int]] = self.manager.get_open_windows_info()
         app_info_cache = load_cache()
         final_button_updates = []
         processed_handles = set()
@@ -461,13 +461,13 @@ class PieWindow(QMainWindow):
             """Checks if the assigned window is still valid (exists and matches the exe_name)."""
             return (
                     assigned_hwnd
-                    and assigned_hwnd in all_open_windows_info_by_hwnd
-                    and all_open_windows_info_by_hwnd[assigned_hwnd][1] == exe_name
+                    and assigned_hwnd in open_windows_info
+                    and open_windows_info[assigned_hwnd][1] == exe_name
             )
 
         def _process_valid_window(button_index: int, assigned_hwnd: int, exe_name: str) -> None:
             """Processes a valid assigned window: creates an update and adds the handle to processed handles."""
-            title, _, instance = all_open_windows_info_by_hwnd[assigned_hwnd]
+            title, _, instance = open_windows_info[assigned_hwnd]
             update = create_button_update(button_index, assigned_hwnd, title, exe_name, instance)
             if update:
                 final_button_updates.append(update)
@@ -488,14 +488,14 @@ class PieWindow(QMainWindow):
 
         def _find_new_window(exe_name: str, already_assigned_windows: Set[int]) -> Optional[int]:
             """Finds a new window that matches the given exe_name and is not already processed or assigned."""
-            for hwnd, (title, window_exe, instance) in all_open_windows_info_by_hwnd.items():
+            for hwnd, (title, window_exe, instance) in open_windows_info.items():
                 if window_exe == exe_name and hwnd not in processed_handles and hwnd not in already_assigned_windows:
                     return hwnd
             return None
 
         def _assign_new_window(button_index: int, new_hwnd: int, exe_name: str, already_assigned_windows: Set[int]) -> None:
             """Assigns a new window to the button: creates an update, adds the handle to processed handles and assigned windows, and updates the mapping."""
-            title, _, instance = all_open_windows_info_by_hwnd[new_hwnd]
+            title, _, instance = open_windows_info[new_hwnd]
             update = create_button_update(button_index, new_hwnd, title, exe_name, instance)
             if update:
                 final_button_updates.append(update)
@@ -513,9 +513,9 @@ class PieWindow(QMainWindow):
             """Process existing window mappings for non-fixed buttons, leaving fixed ones intact."""
             # Windows that are already assigned and still exist
             previously_assigned_windows: Dict[int, Tuple[str, str, int]] = {
-                hwnd: all_open_windows_info_by_hwnd[hwnd]
+                hwnd: open_windows_info[hwnd]
                 for hwnd in self.windowHandles_To_buttonIndexes_map
-                if hwnd in all_open_windows_info_by_hwnd
+                if hwnd in open_windows_info
             }
 
             # for hwnd, (title, exe_name, instance) in previously_assigned_windows.items():
@@ -549,7 +549,7 @@ class PieWindow(QMainWindow):
                 if button_index in self.fixed_button_indexes:
                     continue  # Skip fixed buttons
 
-                for hwnd, (title, exe_name, instance) in all_open_windows_info_by_hwnd.items():
+                for hwnd, (title, exe_name, instance) in open_windows_info.items():
                     if hwnd not in processed_handles and hwnd not in self.fixed_windows:
                         update = create_button_update(button_index, hwnd, title, exe_name, instance)
                         if update:

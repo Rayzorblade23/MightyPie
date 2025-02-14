@@ -21,6 +21,10 @@ class ButtonInfo:
             return  # Skip re-initialization
         self.__initialized = True
 
+        # Shorter variables for CONFIG.s...
+        self.program_name = CONFIG.INTERNAL_PROGRAM_NAME
+        self.button_config_filename = CONFIG.INTERNAL_BUTTON_CONFIG_FILENAME
+
         self.button_info_dict: Dict[int, Dict[str, Any]] = {}
         self.has_unsaved_changes = False
 
@@ -32,7 +36,7 @@ class ButtonInfo:
 
     def load_json(self) -> None:
         """Load button configuration from JSON file with proper error handling"""
-        loaded_dict = JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, CONFIG.INTERNAL_BUTTON_CONFIG_FILENAME, default={})
+        loaded_dict = JSONManager.load(self.program_name, self.button_config_filename, default={})
 
         if loaded_dict:
             self.button_info_dict = {int(k): v for k, v in loaded_dict.items()}
@@ -41,12 +45,13 @@ class ButtonInfo:
             self._initialize_tasks()
             self.logger.info("Config file not found. Initialized with default configuration.")
 
+
     def save_to_json(self) -> bool:
         """Save current configuration to JSON file atomically with error handling"""
         if not self.has_unsaved_changes:
             return True
 
-        if JSONManager.save(CONFIG.INTERNAL_PROGRAM_NAME, CONFIG.INTERNAL_BUTTON_CONFIG_FILENAME, self.button_info_dict):
+        if JSONManager.save(self.program_name, self.button_config_filename, self.button_info_dict):
             self.has_unsaved_changes = False
             self.logger.info("Configuration saved successfully.")
             return True

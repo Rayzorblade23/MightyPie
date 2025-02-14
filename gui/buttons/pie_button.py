@@ -126,8 +126,6 @@ class PieButton(QPushButton):
         )
         self.setEnabled(True)
 
-
-
     def clear(self):
         # Disable the button
         self.set_left_click_action(action=None)
@@ -267,3 +265,43 @@ class PieButton(QPushButton):
         self.setProperty("hovered", hovered)
         self.style().unpolish(self)
         self.style().polish(self)
+
+
+class ShowAnyWindowPieButton(PieButton):
+    """Primary Button with customized actions or behavior."""
+
+    def __init__(self, *args, **kwargs):
+        # Pass all arguments to the parent class constructor
+        super().__init__(*args, **kwargs)
+
+
+class ShowProgramWindowPieButton(PieButton):
+    """Primary Button with customized actions or behavior."""
+
+    def __init__(self, *args, **kwargs):
+        # Pass all arguments to the parent class constructor
+        super().__init__(*args, **kwargs)
+
+
+class LaunchProgramPieButton(PieButton):
+    """Primary Button with customized actions or behavior."""
+
+    def __init__(self, *args, **kwargs):
+        # Pass all arguments to the parent class constructor
+        super().__init__(*args, **kwargs)
+
+
+class MaximizeWindowPieButton(PieButton):
+    """Primary Button with customized actions or behavior."""
+
+    def __init__(self, *args, **kwargs):
+        # Pass all arguments to the parent class constructor
+        super().__init__(*args, **kwargs)
+
+
+BUTTON_TYPES: dict[str, Type[PieButton]] = {
+    "show_any_window": ShowAnyWindowPieButton,
+    "show_program_window": ShowProgramWindowPieButton,
+    "launch_program": LaunchProgramPieButton,
+    "maximize_window": MaximizeWindowPieButton,
+}
