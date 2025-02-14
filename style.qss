@@ -20,6 +20,7 @@ QWidget {
     border:none;
 }
 
+
 /* Style the Title Bar Button Widget */
 #controlButtonWidget {
     background-color: transparent;  /* Light background for the layout container */
@@ -63,6 +64,46 @@ QWidget {
 /* Style the button */
 QPushButton {
     background-color: {{bg_color}};
+    color: white;              /* White text */
+    font-size: 12px;           /* Font size */
+    border: 1px solid {{accent_color}};              /* No border */
+    border-radius: 5px;        /* Rounded corners */
+    opacity:1.0;
+    padding: 5px 10px;
+}
+
+#show_any_window_button {
+    background-color: orange;
+    color: white;              /* White text */
+    font-size: 12px;           /* Font size */
+    border: 1px solid {{accent_color}};              /* No border */
+    border-radius: 5px;        /* Rounded corners */
+    opacity:1.0;
+    padding: 5px 10px;
+}
+
+#show_program_window_button {
+    background-color: red;
+    color: white;              /* White text */
+    font-size: 12px;           /* Font size */
+    border: 1px solid {{accent_color}};              /* No border */
+    border-radius: 5px;        /* Rounded corners */
+    opacity:1.0;
+    padding: 5px 10px;
+}
+
+#launch_program_button {
+    background-color: blue;
+    color: white;              /* White text */
+    font-size: 12px;           /* Font size */
+    border: 1px solid {{accent_color}};              /* No border */
+    border-radius: 5px;        /* Rounded corners */
+    opacity:1.0;
+    padding: 5px 10px;
+}
+
+#maximize_window_button {
+    background-color: green;
     color: white;              /* White text */
     font-size: 12px;           /* Font size */
     border: 1px solid {{accent_color}};              /* No border */

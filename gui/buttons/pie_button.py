@@ -6,9 +6,10 @@ from PyQt6.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QSpac
 
 from data.config import CONFIG
 from data.font_styles import FontStyle
+from data.icon_paths import EXTERNAL_ICON_PATHS
 from gui.elements.scrolling_text_label import ScrollingLabel
 from utils.icon_utils import invert_icon
-from utils.window_utils import load_cache, launch_app, focus_window_by_handle, close_window_by_handle
+from utils.window_utils import load_cache, launch_app, focus_window_by_handle, close_window_by_handle, toggle_maximize_window_at_cursor
 
 if TYPE_CHECKING:
     from gui.pie_window import PieWindow
@@ -35,7 +36,6 @@ class PieButton(QPushButton):
         self.text_2 = text_2
 
         self.button_type = "normal_pie_button"
-        print(f"I am a {self.button_type}")
 
         self.pie_menu_parent: "PieMenu" = parent
         self.main_window: "PieWindow" = cast("PieWindow", self.pie_menu_parent.parent())
@@ -80,6 +80,10 @@ class PieButton(QPushButton):
         # Set position using `move()`, not `setGeometry()`
         self.move(x, y)
 
+
+    def print_button_type(self):
+        print(f"I am {self.button_type} {self.index}")
+
     def default_action(self):
         """Default action when no external action is provided."""
         print(f"There was only the default action assigned for {self.objectName()}")
@@ -92,6 +96,10 @@ class PieButton(QPushButton):
         window_handle = properties["window_handle"]
         app_icon_path = properties["app_icon_path"]
         exe_name = properties["exe_name"]
+
+        if button_text_1 == "":
+            self.clear()
+            return
 
         # Update button text and icon
         self._update_ui(button_text_1, button_text_2, app_icon_path)
@@ -277,8 +285,11 @@ class ShowAnyWindowPieButton(PieButton):
         # Pass all arguments to the parent class constructor
         super().__init__(*args, **kwargs)
 
+        self.setObjectName("show_any_window_button")
         self.button_type = "show_any_window"
-        print(f"I am a {self.button_type}")
+
+        self.print_button_type()
+
 
 class ShowProgramWindowPieButton(PieButton):
     """Primary Button with customized actions or behavior."""
@@ -287,8 +298,11 @@ class ShowProgramWindowPieButton(PieButton):
         # Pass all arguments to the parent class constructor
         super().__init__(*args, **kwargs)
 
+        self.setObjectName("show_program_window_button")
         self.button_type = "show_program_window"
-        print(f"I am a {self.button_type}")
+
+        self.print_button_type()
+
 
 class LaunchProgramPieButton(PieButton):
     """Primary Button with customized actions or behavior."""
@@ -297,8 +311,11 @@ class LaunchProgramPieButton(PieButton):
         # Pass all arguments to the parent class constructor
         super().__init__(*args, **kwargs)
 
+        self.setObjectName("launch_program_button")
         self.button_type = "launch_program"
-        print(f"I am a {self.button_type}")
+
+        self.print_button_type()
+
 
 class MaximizeWindowPieButton(PieButton):
     """Primary Button with customized actions or behavior."""
@@ -307,8 +324,50 @@ class MaximizeWindowPieButton(PieButton):
         # Pass all arguments to the parent class constructor
         super().__init__(*args, **kwargs)
 
+        self.setObjectName("maximize_window_button")
         self.button_type = "maximize_window"
-        print(f"I am a {self.button_type}")
+
+        self.print_button_type()
+
+    def update_button(self, properties: dict) -> None:
+        actual_self = self
+
+        button_text_1 = "MAXIMIZE"
+        button_text_2 = ""
+        app_icon_path = EXTERNAL_ICON_PATHS.get("window_maximize")
+
+        if button_text_1 == "":
+            self.clear()
+            return
+
+        # Update button text and icon
+        self._update_ui(button_text_1, button_text_2, app_icon_path, is_invert_icon=True)
+
+        # Disconnect any previous connections
+        try:
+            self.clicked.disconnect()
+        except TypeError:
+            pass  # No connections to disconnect
+
+        print("############################")
+        print(self.main_window.view.objectName())
+
+        # Handle window actions
+        self.set_left_click_action(
+            lambda: (
+                self.main_window.hide(),  # Hide the window first
+                QTimer.singleShot(0, lambda: toggle_maximize_window_at_cursor(self.main_window))  # Schedule the action
+            )
+        )
+        # self.set_middle_click_action(
+        #     lambda hwnd=window_handle: (
+        #         QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
+        #         QTimer.singleShot(100, lambda: self.main_window.auto_refresh()),
+        #     )
+        # )
+        self.setEnabled(True)
+
+
 
 BUTTON_TYPES: dict[str, Type[PieButton]] = {
     "show_any_window": ShowAnyWindowPieButton,

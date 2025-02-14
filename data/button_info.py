@@ -108,7 +108,7 @@ class ButtonInfo:
         """Initialize with default configuration"""
         # Pre-defined tasks (example data)
         self.button_info_dict = {
-            24: {
+            0: {
                 "task_type": "show_any_window",
                 "properties": {
                     "app_name": "Vivaldi",
@@ -141,35 +141,32 @@ class ButtonInfo:
                     "exe_name": "telegram.exe"
                 }
             },
-            32: {
-                "task_type": "launch_program",
+            7: {
+                "task_type": "maximize_window",
                 "properties": {
-                    "app_name": "Telegram Desktop",
                     "text_1": "WHYYYY",
                     "text_2": "Telegram Desktop",
-                    "window_handle": -1,
                     "app_icon_path": "",
-                    "exe_name": "telegram.exe"
                 }
             }
         }
 
-        # Explorer reserved spaces
-        explorer_reserved_indexes = [8, 10, 12, 14]
-
-        for i in explorer_reserved_indexes:
-            if i not in self.button_info_dict:
-                self.button_info_dict[i] = {
-                    "task_type": "show_any_window",
-                    "properties": {
-                        "app_name": "Windows Explorer",
-                        "text_1": "",
-                        "text_2": "Windows Explorer",
-                        "window_handle": -1,
-                        "app_icon_path": "",
-                        "exe_name": "explorer.exe"
-                    }
-                }
+        # # Explorer reserved spaces
+        # explorer_reserved_indexes = [8, 10, 12, 14]
+        #
+        # for i in explorer_reserved_indexes:
+        #     if i not in self.button_info_dict:
+        #         self.button_info_dict[i] = {
+        #             "task_type": "show_any_window",
+        #             "properties": {
+        #                 "app_name": "Windows Explorer",
+        #                 "text_1": "",
+        #                 "text_2": "Windows Explorer",
+        #                 "window_handle": -1,
+        #                 "app_icon_path": "",
+        #                 "exe_name": "explorer.exe"
+        #             }
+        #         }
 
         # Fill in missing tasks
         for i in range(CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU * (
