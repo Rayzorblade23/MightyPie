@@ -2,17 +2,17 @@ from typing import *
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPixmap, QCursor
-from PyQt6.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy, QGraphicsOpacityEffect
+from PyQt6.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy, QGraphicsOpacityEffect, QApplication
 
+from data.button_functions import ButtonFunctions
 from data.config import CONFIG
 from data.font_styles import FontStyle
-from data.icon_paths import EXTERNAL_ICON_PATHS
 from gui.elements.scrolling_text_label import ScrollingLabel
 from utils.icon_utils import invert_icon
-from utils.window_utils import load_cache, launch_app, focus_window_by_handle, close_window_by_handle, toggle_maximize_window_at_cursor
+from utils.program_utils import main_window_hide, main_window_auto_refresh
+from utils.window_utils import load_cache, launch_app, focus_window_by_handle, close_window_by_handle
 
 if TYPE_CHECKING:
-    from gui.pie_window import PieWindow
     from gui.menus.pie_menu import PieMenu
 
 
@@ -38,7 +38,6 @@ class PieButton(QPushButton):
         self.button_type = "normal_pie_button"
 
         self.pie_menu_parent: "PieMenu" = parent
-        self.main_window: "PieWindow" = cast("PieWindow", self.pie_menu_parent.parent())
 
         # Store actions for each mouse button
         self.left_click_action = None
@@ -80,7 +79,6 @@ class PieButton(QPushButton):
         # Set position using `move()`, not `setGeometry()`
         self.move(x, y)
 
-
     def print_button_type(self):
         print(f"I am {self.button_type} {self.index}")
 
@@ -116,7 +114,7 @@ class PieButton(QPushButton):
             if exe_path:
                 self.set_left_click_action(
                     lambda captured_exe_path=exe_path: (
-                        self.main_window.hide(),
+                        main_window_hide(),
                         QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
                     )
                 )
@@ -125,14 +123,14 @@ class PieButton(QPushButton):
         # Handle window actions
         self.set_left_click_action(
             lambda hwnd=window_handle: (
-                self.main_window.hide(),
+                main_window_hide(),
                 QTimer.singleShot(0, lambda: focus_window_by_handle(hwnd)),
             )
         )
         self.set_middle_click_action(
             lambda hwnd=window_handle: (
                 QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
-                QTimer.singleShot(100, lambda: self.main_window.auto_refresh()),
+                QTimer.singleShot(100, lambda: main_window_auto_refresh()),
             )
         )
         self.setEnabled(True)
@@ -317,24 +315,34 @@ class LaunchProgramPieButton(PieButton):
         self.print_button_type()
 
 
-class MaximizeWindowPieButton(PieButton):
+class CallFunctionPieButton(PieButton):
     """Primary Button with customized actions or behavior."""
 
     def __init__(self, *args, **kwargs):
         # Pass all arguments to the parent class constructor
         super().__init__(*args, **kwargs)
 
-        self.setObjectName("maximize_window_button")
-        self.button_type = "maximize_window"
+        self.setObjectName("call_function_button")
+        self.button_type = "call_function"
+
+        self.is_setup_finished: bool = False
+        self.button_functions = ButtonFunctions()
 
         self.print_button_type()
 
     def update_button(self, properties: dict) -> None:
-        actual_self = self
+        if self.is_setup_finished:
+            return
 
-        button_text_1 = "MAXIMIZE"
+        function_metadata = self.button_functions.get_function(properties["function_name"])
+
+        # Access the text, icon, and action
+        button_text_1 = function_metadata["text_1"]
         button_text_2 = ""
-        app_icon_path = EXTERNAL_ICON_PATHS.get("window_maximize")
+        app_icon_path = function_metadata["icon"]
+
+        # Define the left-click action, which will invoke the wrapped function
+        left_click_action = lambda: function_metadata["action"]()
 
         if button_text_1 == "":
             self.clear()
@@ -343,22 +351,14 @@ class MaximizeWindowPieButton(PieButton):
         # Update button text and icon
         self._update_ui(button_text_1, button_text_2, app_icon_path, is_invert_icon=True)
 
-        # Disconnect any previous connections
-        try:
-            self.clicked.disconnect()
-        except TypeError:
-            pass  # No connections to disconnect
-
-        print("############################")
-        print(self.main_window.view.objectName())
-
         # Handle window actions
         self.set_left_click_action(
             lambda: (
-                self.main_window.hide(),  # Hide the window first
-                QTimer.singleShot(0, lambda: toggle_maximize_window_at_cursor(self.main_window))  # Schedule the action
+                main_window_hide(),  # Hide the window first
+                QTimer.singleShot(0, left_click_action)  # Schedule the action
             )
         )
+
         # self.set_middle_click_action(
         #     lambda hwnd=window_handle: (
         #         QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
@@ -366,12 +366,12 @@ class MaximizeWindowPieButton(PieButton):
         #     )
         # )
         self.setEnabled(True)
-
+        self.is_setup_finished = True
 
 
 BUTTON_TYPES: dict[str, Type[PieButton]] = {
     "show_any_window": ShowAnyWindowPieButton,
     "show_program_window": ShowProgramWindowPieButton,
     "launch_program": LaunchProgramPieButton,
-    "maximize_window": MaximizeWindowPieButton,
+    "call_function": CallFunctionPieButton,
 }

@@ -141,12 +141,40 @@ class ButtonInfo:
                     "exe_name": "telegram.exe"
                 }
             },
-            7: {
-                "task_type": "maximize_window",
+            24: {
+                "task_type": "call_function",
                 "properties": {
-                    "text_1": "WHYYYY",
-                    "text_2": "Telegram Desktop",
-                    "app_icon_path": "",
+                    "function_name": "toggle_maximize_window",
+                }
+            },
+            25: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "restore_minimized_window",
+                }
+            },
+            26: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "navigation_forward",
+                }
+            },
+            27: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "focus_all_explorer_windows",
+                }
+            },
+            28: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "minimize_window",
+                }
+            },
+            29: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "center_window",
                 }
             }
         }

@@ -2,9 +2,14 @@ import os
 import subprocess
 import sys
 import time
+from typing import TYPE_CHECKING
 
 import psutil
 from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtWidgets import QApplication
+
+if TYPE_CHECKING:
+    from gui.pie_window import PieWindow
 
 
 def restart_program():
@@ -32,3 +37,13 @@ def restart_program():
 
 def quit_program():
     QCoreApplication.exit()
+
+
+def main_window_hide() -> None:
+    main_window: "PieWindow" = QApplication.instance().property("main_window")
+    main_window.hide()
+
+
+def main_window_auto_refresh() -> None:
+    main_window: "PieWindow" = QApplication.instance().property("main_window")
+    main_window.auto_refresh()

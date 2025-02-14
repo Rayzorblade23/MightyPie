@@ -173,8 +173,8 @@ class PieWindow(QMainWindow):
                 pie_menu.show()
                 if "Task" in pie_menu.view.objectName():
                     self.refresh()
-                self.pie_menu_pos = self.show_pie_window_at_mouse_pos(
-                    pie_menu)  # Safely call show_pie_window_at_mouse_pos when the filtered_event is posted
+                self.pie_menu_pos = self.show_pie_menu_at_mouse_pos(
+                    pie_menu)  # Safely call show_pie_menu_at_mouse_pos when the filtered_event is posted
             return True
         elif isinstance(event, HotkeyReleaseEvent):
             pie_menu = event.child_window
@@ -271,7 +271,7 @@ class PieWindow(QMainWindow):
         print("Active child index is out of range for task switchers.")
         return None
 
-    def show_pie_window_at_mouse_pos(self, pie_menu):
+    def show_pie_menu_at_mouse_pos(self, pie_menu):
         """Display the main window and bring it to the foreground."""
         try:
             # Get the main window handle

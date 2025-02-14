@@ -1,10 +1,10 @@
 from typing import Tuple, TYPE_CHECKING, cast
 
-from PyQt6.QtCore import Qt
 from pynput.mouse import Controller, Button
 
 from data.config import CONFIG
 from gui.buttons.expanded_button import ExpandedButton
+from utils.program_utils import main_window_hide
 
 if TYPE_CHECKING:
     from gui.pie_window import PieWindow
@@ -27,8 +27,8 @@ class PieMenuMiddleButton(ExpandedButton):
         self.set_pos(pos=pos)
 
         self.left_clicked.connect(
-            lambda: [self.main_window.hide(), Controller().press(Button.x2), Controller().release(Button.x2)])
-        self.right_clicked.connect(lambda: self.main_window.hide())
+            lambda: [main_window_hide(), Controller().press(Button.x2), Controller().release(Button.x2)])
+        self.right_clicked.connect(lambda: main_window_hide())
         self.middle_clicked.connect(lambda: self.main_window.open_special_menu())
 
         self.lower()

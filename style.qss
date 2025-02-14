@@ -74,42 +74,50 @@ QPushButton {
 
 #show_any_window_button {
     background-color: orange;
-    color: white;              /* White text */
-    font-size: 12px;           /* Font size */
-    border: 1px solid {{accent_color}};              /* No border */
-    border-radius: 5px;        /* Rounded corners */
-    opacity:1.0;
-    padding: 5px 10px;
 }
 
 #show_program_window_button {
     background-color: red;
-    color: white;              /* White text */
-    font-size: 12px;           /* Font size */
-    border: 1px solid {{accent_color}};              /* No border */
-    border-radius: 5px;        /* Rounded corners */
-    opacity:1.0;
-    padding: 5px 10px;
 }
 
 #launch_program_button {
     background-color: blue;
-    color: white;              /* White text */
-    font-size: 12px;           /* Font size */
-    border: 1px solid {{accent_color}};              /* No border */
-    border-radius: 5px;        /* Rounded corners */
-    opacity:1.0;
-    padding: 5px 10px;
 }
 
-#maximize_window_button {
+#call_function_button {
     background-color: green;
-    color: white;              /* White text */
-    font-size: 12px;           /* Font size */
-    border: 1px solid {{accent_color}};              /* No border */
-    border-radius: 5px;        /* Rounded corners */
-    opacity:1.0;
-    padding: 5px 10px;
+}
+
+#show_any_window_button[hovered="true"] {
+    background-color: {{accent_muted}};
+}
+
+#show_program_window_button[hovered="true"] {
+    background-color: {{accent_muted}};
+}
+
+#launch_program_button[hovered="true"] {
+    background-color: {{accent_muted}};
+}
+
+#call_function_button[hovered="true"] {
+    background-color: {{accent_muted}};
+}
+
+#show_any_window_button:pressed {
+    background-color: {{accent_color}};
+}
+
+#show_program_window_button:pressed {
+    background-color: {{accent_color}};
+}
+
+#launch_program_button:pressed {
+    background-color: {{accent_color}};
+}
+
+#call_function_button:pressed {
+    background-color: {{accent_color}};
 }
 
 DonutSliceButton {
@@ -119,7 +127,7 @@ DonutSliceButton {
 }
 
 QPushButton:hover {
-    background-color: {{accent_muted}}; /* Darker blue on hover */
+    background-color: {{accent_muted}};
 }
 
 QPushButton[hovered="true"] {
@@ -129,11 +137,11 @@ QPushButton[hovered="true"] {
 
 
 QPushButton:pressed {
-    background-color: {{accent_color}}; /* Even darker blue when pressed */
+    background-color: {{accent_color}};
 }
 
 QPushButton[pressed="true"] {
-    background-color: {{accent_color}}; /* Even darker blue when pressed */
+    background-color: {{accent_color}};
 }
 
 QPushButton:disabled {

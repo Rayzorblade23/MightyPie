@@ -119,6 +119,7 @@ if __name__ == "__main__":
 
     # Create and show the main main_window
     window = PieWindow()
+    app.setProperty("main_window", window)
 
     # Install the GlobalMouseFilter
     global_mouse_filter = GlobalMouseFilter(window)

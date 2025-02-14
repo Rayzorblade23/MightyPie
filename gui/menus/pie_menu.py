@@ -1,5 +1,5 @@
 import math
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize, pyqtSignal, pyqtSlot, QTimer
 from PyQt6.QtGui import QPainter
@@ -12,9 +12,6 @@ from gui.buttons.pie_button import PieButton, BUTTON_TYPES
 from gui.buttons.pie_menu_middle_button import PieMenuMiddleButton
 from gui.elements.svg_indicator_button import SVGIndicatorButton
 
-if TYPE_CHECKING:
-    from gui.pie_window import PieWindow
-
 
 class PieMenu(QWidget):
     update_buttons_signal = pyqtSignal(list)
@@ -25,7 +22,6 @@ class PieMenu(QWidget):
         # Initialize these attributes BEFORE calling setup methods
         self.pie_menu_index: int = pie_menu_index
         self.obj_name: str = obj_name
-        self.pie_window: 'PieWindow' = parent
         self.indicator: Optional[SVGIndicatorButton] = None
         self.scene = None
         self.view = None
@@ -42,15 +38,15 @@ class PieMenu(QWidget):
 
         self.update_buttons_signal.connect(self.update_button_ui)
 
-        self.setup_window()  # Configure main_window properties
+        self.setup_window()
         # Create scene and graphical elements
         self.setup_scene_and_view()
-        # Create all buttons (task and main_window controls)
+        # Create all buttons
         self.setup_ui()
 
     def setup_window(self):
         """Set up the main main_window properties."""
-        # Non-resizable main_window
+        # Non-resizable window
         self.setFixedSize(CONFIG.INTERNAL_RADIUS * 2 + CONFIG.INTERNAL_BUTTON_WIDTH * 2,
                           CONFIG.INTERNAL_RADIUS * 2 + CONFIG.INTERNAL_BUTTON_HEIGHT * 2)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -240,23 +236,24 @@ class PieMenu(QWidget):
 
         # Directly update each pie_button with the properties from button_info
         for pie_button in list(self.pie_buttons.values()):
-            button_type = button_info[pie_button.index]["task_type"]
-            if pie_button.button_type != button_type:
-                self.replace_pie_button(pie_button.index % 8, BUTTON_TYPES[button_type])
+            if button_info[pie_button.index]["task_type"] in BUTTON_TYPES.keys():
+                button_type = button_info[pie_button.index]["task_type"]
+                if pie_button.button_type != button_type:
+                    self.replace_pie_button(pie_button.index % 8, BUTTON_TYPES[button_type])
 
         for pie_button in self.pie_buttons.values():
             pie_button.update_button(button_info[pie_button.index]['properties'])
 
 
 class PrimaryPieMenu(PieMenu):
-    def __init__(self, pie_menu_index: int, obj_name: str = "", parent: 'PieWindow' = None):
+    def __init__(self, pie_menu_index: int, obj_name: str = "", parent=None):
         super().__init__(pie_menu_index, obj_name, parent)
 
         self.hotkey = CONFIG.HOTKEY_PRIMARY
 
 
 class SecondaryPieMenu(PieMenu):
-    def __init__(self, pie_menu_index: int, obj_name: str = "", parent: 'PieWindow' = None):
+    def __init__(self, pie_menu_index: int, obj_name: str = "", parent=None):
         super().__init__(pie_menu_index, obj_name, parent)
 
         self.hotkey = CONFIG.HOTKEY_SECONDARY
