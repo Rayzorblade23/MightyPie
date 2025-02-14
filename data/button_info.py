@@ -45,7 +45,6 @@ class ButtonInfo:
             self._initialize_tasks()
             self.logger.info("Config file not found. Initialized with default configuration.")
 
-
     def save_to_json(self) -> bool:
         """Save current configuration to JSON file atomically with error handling"""
         if not self.has_unsaved_changes:
@@ -59,15 +58,13 @@ class ButtonInfo:
             self.logger.error("Error saving configuration.")
             return False
 
-
-
     def update_button(self, index, update_dict):
         """Update a button's configuration (but don't save to file)"""
         try:
             # If the index doesn't exist, initialize it with default values
             if index not in self.button_info_dict:
                 self.button_info_dict[index] = {
-                    "task_type": "program_window_any",
+                    "task_type": "show_any_window",
                     "properties": {
                         "app_name": "",
                         "text_1": "",
@@ -111,11 +108,11 @@ class ButtonInfo:
         """Initialize with default configuration"""
         # Pre-defined tasks (example data)
         self.button_info_dict = {
-            0: {
-                "task_type": "program_window_fixed",
+            24: {
+                "task_type": "show_any_window",
                 "properties": {
                     "app_name": "Vivaldi",
-                    "text_1": "",
+                    "text_1": "MYAH",
                     "text_2": "",
                     "window_handle": -1,
                     "app_icon_path": "",
@@ -123,10 +120,10 @@ class ButtonInfo:
                 }
             },
             4: {
-                "task_type": "program_window_fixed",
+                "task_type": "show_program_window",
                 "properties": {
                     "app_name": "Spotify",
-                    "text_1": "",
+                    "text_1": "YO",
                     "text_2": "",
                     "window_handle": -1,
                     "app_icon_path": "",
@@ -134,10 +131,21 @@ class ButtonInfo:
                 }
             },
             6: {
-                "task_type": "program_window_fixed",
+                "task_type": "launch_program",
                 "properties": {
                     "app_name": "Telegram Desktop",
                     "text_1": "",
+                    "text_2": "Telegram Desktop",
+                    "window_handle": -1,
+                    "app_icon_path": "",
+                    "exe_name": "telegram.exe"
+                }
+            },
+            32: {
+                "task_type": "launch_program",
+                "properties": {
+                    "app_name": "Telegram Desktop",
+                    "text_1": "WHYYYY",
                     "text_2": "Telegram Desktop",
                     "window_handle": -1,
                     "app_icon_path": "",
@@ -152,7 +160,7 @@ class ButtonInfo:
         for i in explorer_reserved_indexes:
             if i not in self.button_info_dict:
                 self.button_info_dict[i] = {
-                    "task_type": "program_window_fixed",
+                    "task_type": "show_any_window",
                     "properties": {
                         "app_name": "Windows Explorer",
                         "text_1": "",
@@ -164,10 +172,11 @@ class ButtonInfo:
                 }
 
         # Fill in missing tasks
-        for i in range(CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU * CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY):
+        for i in range(CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU * (
+                CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY + CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY)):
             if i not in self.button_info_dict:
                 self.button_info_dict[i] = {
-                    "task_type": "program_window_any",
+                    "task_type": "show_any_window",
                     "properties": {
                         "app_name": "",
                         "text_1": "",
@@ -190,10 +199,15 @@ class ButtonInfo:
         self.button_info_dict[index] = value
         self.save_to_json()
 
-
     def __iter__(self):
         """Allow iteration over the keys of button_info_dict."""
         return iter(self.button_info_dict)
+
+    def get_button_info_list(self) -> list:
+        """Returns the button info as a sorted list of dictionaries by index."""
+        # Sort the button_info_dict by the keys (index)
+        sorted_button_info = sorted(self.button_info_dict.items(), key=lambda item: item[0])
+        return [value for key, value in sorted_button_info]
 
     def items(self):
         """Allow direct access to items like button_info.items()."""

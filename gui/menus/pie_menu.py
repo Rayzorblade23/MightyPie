@@ -5,6 +5,7 @@ from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize, pyq
 from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget
 
+from data.button_info import ButtonInfo
 from data.config import CONFIG
 from gui.buttons.area_button import AreaButton
 from gui.buttons.pie_button import PieButton
@@ -33,6 +34,9 @@ class PieMenu(QWidget):
         self.animations = []
 
         self.hotkey = CONFIG.HOTKEY_PRIMARY
+
+        self.button_info: ButtonInfo = ButtonInfo.get_instance()
+
 
         self.middle_button: Optional[PieMenuMiddleButton] = None
         self.area_button: Optional[AreaButton] = None
@@ -88,55 +92,66 @@ class PieMenu(QWidget):
 
         self.create_pie_buttons()
 
+    def replace_pie_button(self, index: int, new_button_class):
+        """Replace a pie button with a new button class."""
+        # Remove the old button from the parent widget
+        old_button = self.pie_buttons.get(index)
+        if old_button:
+            old_button.deleteLater()  # Clean up the old button
+
+        # Create the new button of the specified class
+        button_name = "Pie_Button" + str(index)
+        button_index = CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU * self.pie_menu_index + index
+        new_button = new_button_class(button_name, button_index, parent=self)
+
+        # Update the reference in the pie_buttons list
+        self.pie_buttons[index] = new_button
+        # The new button will place itself using its own placement logic
+
+    def calculate_offsets(self, i: int, button_width: int, button_height: int):
+        """Calculate button nudges and offsets based on button position."""
+        nudge_x = button_width / 2 - button_height / 2
+        nudge_y = button_height / 2
+
+        offset_x, offset_y = -button_width / 2, button_height / 2  # base offset
+
+        if i == 1:  # 45 degrees
+            offset_x += nudge_x
+            offset_y += -nudge_y
+        elif i == 2:  # 90 degrees
+            offset_x += nudge_x
+        elif i == 3:  # 135 degrees
+            offset_x += nudge_x
+            offset_y += nudge_y
+        elif i == 5:  # 225 degrees
+            offset_x += -nudge_x
+            offset_y += nudge_y
+        elif i == 6:  # 270 degrees
+            offset_x += -nudge_x
+        elif i == 7:  # 315 degrees
+            offset_x += -nudge_x
+            offset_y += -nudge_y
+
+        return offset_x, offset_y
+
     def create_pie_buttons(self):
         """Create pie menu buttons in a circular pattern."""
-        # Define all the CONFIG variables at the start
         num_buttons = CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU
         button_width = CONFIG.INTERNAL_BUTTON_WIDTH
         button_height = CONFIG.INTERNAL_BUTTON_HEIGHT
         radius = CONFIG.INTERNAL_RADIUS
 
-        # Define the nudge values
-        nudge_x = button_width / 2 - button_height / 2
-        nudge_y = button_height / 2
-
         for i in range(num_buttons):
             angle_in_rad = math.radians(i / num_buttons * 360)  # Calculate button's position using angle_in_radians
+            offset_x, offset_y = self.calculate_offsets(i, button_width, button_height)
 
-            # the base offset moves the anchor point from top left to center
-            offset_x = -button_width / 2
-            offset_y = button_height / 2
-
-            # Apply nudges for specific button positions
-            if i == 1:  # 45 degrees
-                offset_x += nudge_x
-                offset_y += -nudge_y
-            elif i == 2:  # 90 degrees
-                offset_x += nudge_x
-                offset_y += 0
-            elif i == 3:  # 135 degrees
-                offset_x += nudge_x
-                offset_y += nudge_y
-            elif i == 5:  # 225 degrees
-                offset_x += -nudge_x
-                offset_y += nudge_y
-            elif i == 6:  # 270 degrees
-                offset_x += -nudge_x
-                offset_y += 0
-            elif i == 7:  # 315 degrees
-                offset_x += -nudge_x
-                offset_y += -nudge_y
-
-            # Distribute the buttons in a circle
             button_pos_x = int(self.width() / 2 + offset_x + radius * math.sin(angle_in_rad))
             button_pos_y = int(self.height() / 2 - offset_y - radius * math.cos(angle_in_rad))
 
             button_name = "Pie_Button" + str(i)  # name of the button not used
             button_index = CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU * self.pie_menu_index + i
 
-            self.btn = PieButton(button_name, button_index, pos=(button_pos_x, button_pos_y), parent=self)
-
-            self.pie_buttons[i] = self.btn
+            self.pie_buttons[i] = PieButton(button_name, button_index, pos=(button_pos_x, button_pos_y), parent=self)
 
     def showEvent(self, event):
         super().showEvent(event)  # Call the parent class's method
@@ -191,25 +206,48 @@ class PieMenu(QWidget):
     @pyqtSlot(list)
     def update_button_ui(self, button_updates):
         """Update button UI in the main thread."""
-        if isinstance(self, SecondaryPieMenu):
-            return
+        # if isinstance(self, SecondaryPieMenu):
+        #     return
 
-        pie_menu_updates = [update for update in button_updates if
-                            update["index"] // CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU == self.pie_menu_index]
+        button_things= self.button_info.get_button_info_list()
+
+        print("BUTTON THINGS")
+        for i in range(0, 8):
+            print(f"Update {i}:")
+            print(button_things[i]['task_type'])
+            print("  Properties:")
+            for prop_name, prop_value in button_things[i]['properties'].items():
+                print(f"  {prop_name}: {prop_value}")
+
+
+        # Filter out updates from only this Pie Menu
+        # pie_menu_updates = [update for update in button_updates if
+        #                     update["index"] // CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU == self.pie_menu_index]
+
+        # Initialize an empty list to store all 'properties' dictionaries
+        all_properties_list = []
+
+        # Loop through all buttons and collect the properties
+        for button in button_things:
+            properties = button['properties']
+            all_properties_list.append(properties)
 
         for pie_button in self.pie_buttons.values():
-            if not any(update["index"] == pie_button.index for update in pie_menu_updates):
-                # Clear the button
-                pie_button.clear()
-                # print(f"Clearing button {pie_button.index}")
-                continue
+            pie_button.update_button(all_properties_list[pie_button.index])
 
-            try:
-                pie_button_update = next(update for update in pie_menu_updates if update["index"] == pie_button.index)
-            except StopIteration:
-                raise ValueError("No update found for the specified pie button index.")
-
-            pie_button.update_button(pie_button_update["properties"])
+    # for pie_button in self.pie_buttons.values():
+        #     if not any(update["index"] == pie_button.index for update in pie_menu_updates):
+        #         # Clear the button
+        #         pie_button.clear()
+        #         # print(f"Clearing button {pie_button.index}")
+        #         continue
+        #     # Create the update the Pie Button
+        #     try:
+        #         pie_button_update = next(update for update in pie_menu_updates if update["index"] == pie_button.index)
+        #     except StopIteration:
+        #         raise ValueError("No update found for the specified pie button index.")
+        #
+        #     pie_button.update_button(pie_button_update["properties"])
 
 
 class PrimaryPieMenu(PieMenu):

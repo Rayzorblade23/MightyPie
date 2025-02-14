@@ -6,3 +6,15 @@ I have:
 - APP INFO CACHE - saved info off all known programs. all apps from window manager are in there
 
 - BUTTON INFO - has the basic instructions and properties of EACH button
+
+
+
+Maybe
+
+BUTTON INFO has the current state of all buttons.
+
+during update thread a copy of it is updated
+
+after thread it gets actually updated.
+
+then the buttons get their info from it

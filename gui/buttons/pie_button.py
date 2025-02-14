@@ -34,6 +34,9 @@ class PieButton(QPushButton):
         self.text_1 = text_1
         self.text_2 = text_2
 
+        self.button_type = "normal_pie_button"
+        print(f"I am a {self.button_type}")
+
         self.pie_menu_parent: "PieMenu" = parent
         self.main_window: "PieWindow" = cast("PieWindow", self.pie_menu_parent.parent())
 
@@ -274,6 +277,8 @@ class ShowAnyWindowPieButton(PieButton):
         # Pass all arguments to the parent class constructor
         super().__init__(*args, **kwargs)
 
+        self.button_type = "show_any_window"
+        print(f"I am a {self.button_type}")
 
 class ShowProgramWindowPieButton(PieButton):
     """Primary Button with customized actions or behavior."""
@@ -282,6 +287,8 @@ class ShowProgramWindowPieButton(PieButton):
         # Pass all arguments to the parent class constructor
         super().__init__(*args, **kwargs)
 
+        self.button_type = "show_program_window"
+        print(f"I am a {self.button_type}")
 
 class LaunchProgramPieButton(PieButton):
     """Primary Button with customized actions or behavior."""
@@ -290,6 +297,8 @@ class LaunchProgramPieButton(PieButton):
         # Pass all arguments to the parent class constructor
         super().__init__(*args, **kwargs)
 
+        self.button_type = "launch_program"
+        print(f"I am a {self.button_type}")
 
 class MaximizeWindowPieButton(PieButton):
     """Primary Button with customized actions or behavior."""
@@ -298,6 +307,8 @@ class MaximizeWindowPieButton(PieButton):
         # Pass all arguments to the parent class constructor
         super().__init__(*args, **kwargs)
 
+        self.button_type = "maximize_window"
+        print(f"I am a {self.button_type}")
 
 BUTTON_TYPES: dict[str, Type[PieButton]] = {
     "show_any_window": ShowAnyWindowPieButton,
