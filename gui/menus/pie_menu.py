@@ -205,7 +205,7 @@ class PieMenu(QWidget):
         # Append animations to the list to avoid garbage collection
         self.animations.extend([pos_animation, size_animation, opacity_animation])
 
-        if button.index % 8 == 0:
+        if button.index % CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU == 0:
             print(f"  Starting animations:")
             print(
                 f"    pos: start=({pos_animation.startValue().x()}, {pos_animation.startValue().y()}) end=({pos_animation.endValue().x()}, {pos_animation.endValue().y()}) - Button {button.index}")
@@ -221,9 +221,6 @@ class PieMenu(QWidget):
     @pyqtSlot(list)
     def update_button_ui(self, button_updates):
         """Update button UI in the main thread."""
-        # if isinstance(self, SecondaryPieMenu):
-        #     return
-
         button_info = self.button_info.get_button_info_list()
 
         print("BUTTON THINGS")

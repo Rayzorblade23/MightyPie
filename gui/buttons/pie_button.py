@@ -312,7 +312,37 @@ class LaunchProgramPieButton(PieButton):
         self.setObjectName("launch_program_button")
         self.button_type = "launch_program"
 
+        self.is_setup_finished: bool = False
+
         self.print_button_type()
+
+    def update_button(self, properties: dict) -> None:
+        if self.is_setup_finished:
+            return
+
+        app_info_cache = load_cache()
+
+        button_text_2 = "- Launch -"
+        exe_name = properties["exe_name"]
+        button_text_1 = app_info_cache.get(exe_name, {}).get("app_name")
+        app_icon_path = app_info_cache.get(exe_name, {}).get("icon_path")
+
+        print(app_icon_path)
+        # Update button text and icon
+        self._update_ui(button_text_1, button_text_2, app_icon_path)
+
+        exe_path = app_info_cache.get(exe_name, {}).get("exe_path")
+        if exe_path:
+            self.set_left_click_action(
+                lambda captured_exe_path=exe_path: (
+                    main_window_hide(),
+                    QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
+                )
+            )
+
+        # self.set_middle_click_action()
+        self.setEnabled(True)
+        self.is_setup_finished = True
 
 
 class CallFunctionPieButton(PieButton):
@@ -359,12 +389,7 @@ class CallFunctionPieButton(PieButton):
             )
         )
 
-        # self.set_middle_click_action(
-        #     lambda hwnd=window_handle: (
-        #         QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
-        #         QTimer.singleShot(100, lambda: self.main_window.auto_refresh()),
-        #     )
-        # )
+        # self.set_middle_click_action()
         self.setEnabled(True)
         self.is_setup_finished = True
 

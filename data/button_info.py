@@ -130,17 +130,6 @@ class ButtonInfo:
                     "exe_name": "spotify.exe"
                 }
             },
-            6: {
-                "task_type": "launch_program",
-                "properties": {
-                    "app_name": "Telegram Desktop",
-                    "text_1": "",
-                    "text_2": "Telegram Desktop",
-                    "window_handle": -1,
-                    "app_icon_path": "",
-                    "exe_name": "telegram.exe"
-                }
-            },
             24: {
                 "task_type": "call_function",
                 "properties": {
@@ -176,7 +165,14 @@ class ButtonInfo:
                 "properties": {
                     "function_name": "center_window",
                 }
-            }
+            },
+            32: {
+                "task_type": "launch_program",
+                "properties": {
+                    "exe_name": "sourcetree.exe"
+                }
+            },
+
         }
 
         # # Explorer reserved spaces

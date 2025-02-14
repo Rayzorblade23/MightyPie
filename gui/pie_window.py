@@ -2,61 +2,40 @@ import threading
 from threading import Lock
 from typing import Dict, Tuple, Set, Optional, Type, List
 
-import pyautogui
 import win32con
 import win32gui
 from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QTimer
-from PyQt6.QtGui import QMouseEvent, QKeyEvent, QCursor, QGuiApplication
+from PyQt6.QtGui import QKeyEvent, QCursor, QGuiApplication
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
 
 from data.button_info import ButtonInfo
 from data.config import CONFIG
-from data.icon_paths import EXTERNAL_ICON_PATHS
 from data.window_manager import WindowManager
 from events import ShowWindowEvent, HotkeyReleaseEvent
 from gui.buttons.pie_button import PieButton
 from gui.menus.pie_menu import PieMenu, PrimaryPieMenu, SecondaryPieMenu
 from gui.menus.special_menu import SpecialMenu
-from utils.window_utils import get_filtered_list_of_windows, load_cache, show_special_menu, toggle_maximize_window_at_cursor, \
-    minimize_window_at_cursor, launch_app, \
-    cache_being_cleared, restore_last_minimized_window, focus_all_explorer_windows, center_window_at_cursor
+from utils.window_utils import get_filtered_list_of_windows, show_special_menu, cache_being_cleared
 
 
 class PieWindow(QMainWindow):
     EXIT_CODE_REBOOT = 122
 
     # Add a custom signal for thread-safe updates
-    update_buttons_signal = pyqtSignal(list)  # Expect QWidget and list
+    update_buttons_signal = pyqtSignal(list)
 
     def __init__(self):
         super().__init__()
-        # Set the default cursor (normal arrow cursor)
-        self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Set the normal cursor
 
-        # Create the scene and view for the left part of the screen
-        self.scene = QGraphicsScene(self)
-        self.view = QGraphicsView(self.scene, self)
-
-        # Get the primary screen geometry
-        screen_geometry = QApplication.primaryScreen().geometry()
-        screen_width = screen_geometry.width()
-        screen_height = screen_geometry.height()
-
-        # Set the main_window size to take the full screen
-        self.setGeometry(0, 0, screen_width, screen_height)
-
-        # Set the geometry of the QGraphicsView to take the left half
-        self.view.setGeometry(0, 0, screen_width, screen_height)
-        self.view.setObjectName("PieWindow")
-        self.scene.setSceneRect(0, 0, screen_width, screen_height)
-
-        self.setup_window()
+        self.scene: Optional[QGraphicsScene] = None
+        self.view: Optional[QGraphicsView] = None
+        self.special_menu: Optional[SpecialMenu] = None
+        self.pie_menus_primary: Optional[List[PieMenu]] = None
+        self.pie_menus_secondary: Optional[List[PieMenu]] = None
+        self.auto_refresh_timer: Optional[QTimer] = None
 
         self.manager = WindowManager.get_instance()
         self.button_info: ButtonInfo = ButtonInfo.get_instance()
-
-        self.pie_menus_primary: Optional[List[PieMenu]] = None
-        self.pie_menus_secondary: Optional[List[PieMenu]] = None
 
         self.pie_menu_pos = QPoint()
         self.button_mapping_lock = Lock()
@@ -68,30 +47,43 @@ class PieWindow(QMainWindow):
         self.active_child = 1
         self.is_window_open = False
 
-        num_primary_pie_menus = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
-        num_secondary_pie_menus = CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY
+        self.initialize_ui()
+        self.setup_window()
+        self.connect_signals()
+        self.auto_refresh()
 
-        # Create Pie Menus with this main_window as parent
-        self.create_pie_menus(num_primary_pie_menus, num_secondary_pie_menus)
-
-        self.setup_window_control_buttons()
-
-        # For now, right-click should always just hide
-        self.make_right_click_hide_for_all_buttons_in_pie_menu(self.pie_menus_primary)
-        self.make_right_click_hide_for_all_buttons_in_pie_menu(self.pie_menus_secondary)
-
-        self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None, main_window=self)
-        self.special_menu.hide()
-
+    def connect_signals(self):
         # Start auto-refreshing every REFRESH_INTERVAL milliseconds
         self.auto_refresh_timer = QTimer(self)
         self.auto_refresh_timer.timeout.connect(self.auto_refresh)
         self.auto_refresh_timer.start(CONFIG.REFRESH_INTERVAL)  # Periodic refresh
-
         screen = QApplication.primaryScreen()
         screen.geometryChanged.connect(self.handle_geometry_change)
 
-        self.auto_refresh()
+    def initialize_ui(self):
+        """Set up all UI components and data structures."""
+        self.scene = QGraphicsScene(self)
+        self.view = QGraphicsView(self.scene, self)
+        self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None, main_window=self)
+        self.create_pie_menus(CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY, CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY)
+        self.make_right_click_hide_for_all_buttons_in_pie_menu(self.pie_menus_primary)
+        self.make_right_click_hide_for_all_buttons_in_pie_menu(self.pie_menus_secondary)
+
+    def setup_window(self):
+        """Set up the main main_window properties."""
+        self.setWindowTitle(f"{CONFIG.INTERNAL_PROGRAM_NAME} - Main")
+        # Set the default cursor (normal arrow cursor)
+        self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Set the normal cursor
+        # Get the primary screen geometry
+        screen_geometry = QApplication.primaryScreen().geometry()
+        screen_width = screen_geometry.width()
+        screen_height = screen_geometry.height()
+        self.setGeometry(0, 0, screen_width, screen_height)
+        self.view.setGeometry(0, 0, screen_width, screen_height)
+        self.view.setObjectName("PieWindow")
+        self.scene.setSceneRect(0, 0, screen_width, screen_height)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
     def create_pie_menus(self, num_primary: int, num_secondary: int) -> None:
         """Creates primary and secondary pie menus and appends them to respective lists."""
@@ -99,69 +91,14 @@ class PieWindow(QMainWindow):
             PrimaryPieMenu(i, "PrimaryPieMenu", parent=self)
             for i in range(num_primary)
         ]
-        for i, pie_menu in enumerate(self.pie_menus_primary):
-            if i > 1:  # Hide task switchers 2 and 3 initially
-                pie_menu.hide()
 
         self.pie_menus_secondary = [
             SecondaryPieMenu(num_primary + i, "SecondaryPieMenu", parent=self)
             for i in range(num_secondary)
         ]
-        for win_control in self.pie_menus_secondary:
-            win_control.hide()  # Hide all at first
-
-    def make_right_click_hide_for_all_buttons_in_pie_menu(self, menus: list) -> None:
-        """Disables right-click by setting action to hide for all pie buttons in given menus."""
-        for pie_menu in menus:
-            for button_index, pie_button in pie_menu.pie_buttons.items():  # type: int, PieButton
-                pie_button.set_right_click_action(action=lambda: self.hide())
-
-    def handle_geometry_change(self):
-        screen = QApplication.primaryScreen()
-        geometry = screen.geometry()
-
-        # Update the main window size based on the screen geometry
-        self.setGeometry(0, 0, geometry.width(), geometry.height())
-
-        # Update the QGraphicsView size to match the new screen size
-        self.view.setGeometry(0, 0, geometry.width(), geometry.height())
-
-        # Update the QGraphicsScene size to match the new screen size
-        self.scene.setSceneRect(0, 0, geometry.width(), geometry.height())
-
-    def closeEvent(self, event):
-        """Hide the main_window instead of closing it."""
-        self.hide()
-        event.ignore()  # Prevent the default close behavior
-
-    def mousePressEvent(self, event: QMouseEvent):
-        """Close the main_window on any mouse button press."""
-        # if event.button() in (Qt.MouseButton.LeftButton, Qt.MouseButton.RightButton):
-        #     self.hide()
-
-    def keyPressEvent(self, event: QKeyEvent):
-        """Close the main_window on pressing the Escape key."""
-        if event.key() == Qt.Key.Key_Escape:
-            self.hide()
-        else:
-            super().keyPressEvent(event)  # Pass other key events to the parent
-
-    def setup_window(self):
-        """Set up the main main_window properties."""
-        self.setWindowTitle(f"{CONFIG.INTERNAL_PROGRAM_NAME} - Main")
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-
-    def open_special_menu(self):
-        if hasattr(self, "special_menu"):
-            self.hide()
-            show_special_menu(self.special_menu)
-        else:
-            print("No SpecialMenu here...")
 
     def event(self, event):
         """Handle the custom filtered_event to show the main_window."""
-
         if isinstance(event, ShowWindowEvent):
             pie_menu: PieMenu = event.child_window
             if pie_menu is not None:
@@ -189,6 +126,48 @@ class PieWindow(QMainWindow):
             return True
         return super().event(event)
 
+    def keyPressEvent(self, event: QKeyEvent):
+        """Close the main_window on pressing the Escape key."""
+        if event.key() == Qt.Key.Key_Escape:
+            self.hide()
+        else:
+            super().keyPressEvent(event)  # Pass other key events to the
+
+    def closeEvent(self, event):
+        """Hide the main_window instead of closing it."""
+        self.hide()
+        event.ignore()  # Prevent the default close behavior
+
+    def handle_geometry_change(self):
+        screen = QApplication.primaryScreen()
+        geometry = screen.geometry()
+
+        # Update the main window size based on the screen geometry
+        self.setGeometry(0, 0, geometry.width(), geometry.height())
+
+        # Update the QGraphicsView size to match the new screen size
+        self.view.setGeometry(0, 0, geometry.width(), geometry.height())
+
+        # Update the QGraphicsScene size to match the new screen size
+        self.scene.setSceneRect(0, 0, geometry.width(), geometry.height())
+
+    def open_special_menu(self):
+        if hasattr(self, "special_menu"):
+            self.hide()
+            show_special_menu(self.special_menu)
+        else:
+            print("No SpecialMenu here...")
+
+    def make_right_click_hide_for_all_buttons_in_pie_menu(self, menus: list) -> None:
+        """Disables right-click by setting action to hide for all pie buttons in given menus."""
+        for pie_menu in menus:
+            for button_index, pie_button in pie_menu.pie_buttons.items():  # type: int, PieButton
+                pie_button.set_right_click_action(action=lambda: self.hide())
+
+    def refresh(self):
+        # Start the background task
+        threading.Thread(target=self.update_pm_task_buttons, daemon=True).start()
+
     def auto_refresh(self):
         """Automatically monitor and refresh windows periodically in a thread-safe way."""
         # start_time = time.time()
@@ -204,192 +183,6 @@ class PieWindow(QMainWindow):
 
         # elapsed_time = time.time() - start_time
         # print(f"auto_refresh took {elapsed_time:.3f} seconds")
-
-    def refresh(self):
-        # Start the background task
-        threading.Thread(target=self.update_pm_task_buttons, daemon=True).start()
-
-    def get_next_pie_menu_on_hotkey_press(self, pie_menu_type: Type[PieMenu]) -> Tuple[Optional[PieMenu], Optional[int]]:
-        """Helper to find the next pie menu (task switcher or window control) to toggle.
-
-        Args:
-            pie_menu_type: The class type (PrimaryPieMenu or SecondaryPieMenu) of pie menu to search for.
-
-        Returns:
-            A tuple containing the next child window to activate and its corresponding
-            main_window_active_child index.  Returns (None, None) if an error occurs
-            or the specified menu type is invalid.
-        """
-
-        if pie_menu_type is PrimaryPieMenu:
-            pie_menus = self.pie_menus_primary
-            offset = 0  # Task switchers start at index 1 in main_window_active_child
-            menu_type_str = "primary"  # string of pie_menu for error printing
-        elif pie_menu_type is SecondaryPieMenu:
-            pie_menus = self.pie_menus_secondary
-            pie_menus_primary = self.pie_menus_primary
-            offset = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY if pie_menus_primary else 0
-            menu_type_str = "secondary"  # string of pie_menu for error printing
-        else:
-            print(f"Warning: Invalid pie_menu_type: {pie_menu_type}")
-            return None, None
-
-        if not pie_menus or not isinstance(pie_menus, list):
-            print(f"Warning: {menu_type_str.replace('_', ' ').title()} Pie Menus are not instantiated.")
-            return None, None
-
-        # Find the first pie menu to toggle or open the next one
-        for index, current_pie_menu in enumerate(pie_menus):
-            if current_pie_menu.isVisible():
-                # Toggle to the next pie menu or back to the first
-                next_index = (index + 1) % len(pie_menus)
-                pie_menu = pie_menus[next_index]
-                main_window_active_child = offset + next_index + 1
-                return pie_menu, main_window_active_child
-        else:
-            # If none are visible, open the first pie menu
-            pie_menu = pie_menus[0]
-            main_window_active_child = offset + 1
-            return pie_menu, main_window_active_child
-
-    def get_pie_menu_after_hotkey_drag(self, pie_menu_type: type[PieMenu]) -> PieMenu | None:
-        """Selects the appropriate pie menu based on active_child and menu type."""
-        if pie_menu_type is PrimaryPieMenu:
-            offset = 0
-            menus = self.pie_menus_primary
-        elif pie_menu_type is SecondaryPieMenu:
-            offset = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
-            menus = self.pie_menus_secondary
-        else:
-            raise ValueError("Invalid pie_menu_type. Expected PrimaryPieMenu or SecondaryPieMenu.")
-
-        index = self.active_child - 1 - offset
-
-        if 0 <= index < CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY:
-            return menus[index]
-
-        print("Active child index is out of range for task switchers.")
-        return None
-
-    def show_pie_menu_at_mouse_pos(self, pie_menu):
-        """Display the main window and bring it to the foreground."""
-        try:
-            # Get the main window handle
-            hwnd = int(self.winId())
-
-            # Get the current mouse position
-            cursor_pos = QCursor.pos()
-
-            screen = QGuiApplication.screenAt(cursor_pos)  # Detect screen at cursor position
-            screen_geometry = screen.availableGeometry()  # Get the screen geometry
-
-            # Get screen dimensions
-            screen_left = screen_geometry.left()
-            screen_top = screen_geometry.top()
-            screen_right = screen_geometry.right()
-            screen_bottom = screen_geometry.bottom()
-
-            # Calculate initial new_x and new_y
-            new_x = cursor_pos.x() - (pie_menu.width() // 2)
-            new_y = cursor_pos.y() - (pie_menu.height() // 2)
-
-            # Ensure window position stays within screen bounds
-            corrected_x = max(screen_left, min(new_x, screen_right - pie_menu.width()))
-            corrected_y = max(screen_top, min(new_y, screen_bottom - pie_menu.height()))
-
-            # Normalize top left for other monitors
-            corrected_x -= screen_left
-            corrected_y -= screen_top
-
-            if pie_menu is not None:
-                pie_menu.move(corrected_x, corrected_y)
-
-            # Set geometry for pie_window on the current screen
-            self.move(screen_geometry.topLeft())  # Move to the top-left of the screen
-            self.setFixedSize(screen_geometry.width(), screen_geometry.height())  # Ensure the window size matches screen size
-            self.view.setFixedSize(screen_geometry.width(), screen_geometry.height())  # Ensure view size matches screen size
-            self.scene.setSceneRect(0, 0, screen_geometry.width(), screen_geometry.height())
-
-            # Prevents flashing a frame of the last window position when calling show()
-            self.setWindowOpacity(0)  # Make the window fully transparent
-            self.show()
-            QTimer.singleShot(1, lambda: self.setWindowOpacity(1))  # Restore opacity after a short delay
-
-            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-            win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
-            win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
-            win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
-                                  win32con.SWP_SHOWWINDOW + win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
-
-            return cursor_pos
-
-        except Exception as e:
-            print(f"Error showing the main window: {e}")
-
-    def setup_window_control_buttons(self):
-        actual_self = self
-        app_info_cache = load_cache()
-
-        # button_config = [
-        #     {"index": (0, 0), "label": "MAXIMIZE",
-        #      "action": lambda: toggle_maximize_window_at_cursor(actual_self),
-        #      "icon": EXTERNAL_ICON_PATHS.get("window_maximize"), "is_inverted": True},
-        #     {"index": (0, 1), "label": "Restore Minimized",
-        #      "action": restore_last_minimized_window,
-        #      "icon": EXTERNAL_ICON_PATHS.get("change"), "is_inverted": True},
-        #     {"index": (0, 2), "label": "Forward!",
-        #      "action": lambda: pyautogui.hotkey('alt', 'right'),
-        #      "icon": EXTERNAL_ICON_PATHS.get("arrow-right"), "is_inverted": True},
-        #     {"index": (0, 3), "label": "Get All Expl. Win.",
-        #      "action": focus_all_explorer_windows,
-        #      "icon": EXTERNAL_ICON_PATHS.get("folders"), "is_inverted": True},
-        #     {"index": (0, 4), "label": "Minimize",
-        #      "action": lambda: minimize_window_at_cursor(actual_self),
-        #      "icon": EXTERNAL_ICON_PATHS.get("window_minimize"), "is_inverted": True},
-        #     {"index": (0, 5), "label": "Center Window",
-        #      "action": lambda: center_window_at_cursor(actual_self),
-        #      "icon": EXTERNAL_ICON_PATHS.get("center"), "is_inverted": True},
-        #     {"index": (0, 6), "label": ""},
-        #     {"index": (0, 7), "label": ""},
-        #     {"index": (1, 0), "label": "Exploreraaaaaaaaaaaaaaaaaaaaaaaaa 🚀",
-        #      "action": lambda: launch_app(app_info_cache.get("explorer.exe", {}).get("exe_path")),
-        #      "icon": app_info_cache.get("explorer.exe", {}).get("icon_path"), "is_inverted": False},
-        #     {"index": (1, 1), "label": "PyCharm 🚀",
-        #      "action": lambda: launch_app(app_info_cache.get("pycharm64.exe", {}).get("exe_path")),
-        #      "icon": app_info_cache.get("pycharm64.exe", {}).get("icon_path"), "is_inverted": False},
-        #     {"index": (1, 2), "label": "Sourcetree 🚀",
-        #      "action": lambda: launch_app(app_info_cache.get("sourcetree.exe", {}).get("exe_path")),
-        #      "icon": app_info_cache.get("sourcetree.exe", {}).get("icon_path"), "is_inverted": False},
-        #     {"index": (1, 3), "label": ""},
-        #     {"index": (1, 4), "label": "Blender 🚀",
-        #      "action": lambda: launch_app(app_info_cache.get("blender.exe", {}).get("exe_path")),
-        #      "icon": app_info_cache.get("blender.exe", {}).get("icon_path"), "is_inverted": False},
-        #     {"index": (1, 5), "label": ""},
-        #     {"index": (1, 6), "label": "Notepad 🚀",
-        #      "action": lambda: launch_app(app_info_cache.get("notepad.exe", {}).get("exe_path")),
-        #      "icon": app_info_cache.get("notepad.exe", {}).get("icon_path"), "is_inverted": False},
-        #     {"index": (1, 7), "label": ""},
-        # ]
-        #
-        # for config in button_config:
-        #     i, j = config["index"]
-        #     pie_menu = self.pie_menus_secondary[i]
-        #     button = pie_menu.pie_buttons.get(j)
-        #
-        #     button._set_label_1_text(config.get("label", ""))
-        #     if config["label"]:
-        #         button.setEnabled(True)
-        #     else:
-        #         button.setEnabled(False)
-        #
-        #     if "action" in config:
-        #         button.set_left_click_action(lambda c=config: (
-        #             self.hide(),
-        #             QTimer.singleShot(0, lambda: c["action"]()),
-        #         ))
-        #
-        #     if "icon" and "icon_path" and "is_inverted" in config:
-        #         button.update_icon(config["icon"], is_invert_icon=config["is_inverted"])
 
     # Button Management
     def update_pm_task_buttons(self):
@@ -608,6 +401,68 @@ class PieWindow(QMainWindow):
         for pie_menu in self.pie_menus_secondary:
             pie_menu.update_buttons_signal.emit(final_button_updates)
 
+    def get_next_pie_menu_on_hotkey_press(self, pie_menu_type: Type[PieMenu]) -> Tuple[Optional[PieMenu], Optional[int]]:
+        """Helper to find the next pie menu (task switcher or window control) to toggle.
+
+        Args:
+            pie_menu_type: The class type (PrimaryPieMenu or SecondaryPieMenu) of pie menu to search for.
+
+        Returns:
+            A tuple containing the next child window to activate and its corresponding
+            main_window_active_child index.  Returns (None, None) if an error occurs
+            or the specified menu type is invalid.
+        """
+
+        if pie_menu_type is PrimaryPieMenu:
+            pie_menus = self.pie_menus_primary
+            offset = 0  # Task switchers start at index 1 in main_window_active_child
+            menu_type_str = "primary"  # string of pie_menu for error printing
+        elif pie_menu_type is SecondaryPieMenu:
+            pie_menus = self.pie_menus_secondary
+            pie_menus_primary = self.pie_menus_primary
+            offset = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY if pie_menus_primary else 0
+            menu_type_str = "secondary"  # string of pie_menu for error printing
+        else:
+            print(f"Warning: Invalid pie_menu_type: {pie_menu_type}")
+            return None, None
+
+        if not pie_menus or not isinstance(pie_menus, list):
+            print(f"Warning: {menu_type_str.replace('_', ' ').title()} Pie Menus are not instantiated.")
+            return None, None
+
+        # Find the first pie menu to toggle or open the next one
+        for index, current_pie_menu in enumerate(pie_menus):
+            if current_pie_menu.isVisible():
+                # Toggle to the next pie menu or back to the first
+                next_index = (index + 1) % len(pie_menus)
+                pie_menu = pie_menus[next_index]
+                main_window_active_child = offset + next_index + 1
+                return pie_menu, main_window_active_child
+        else:
+            # If none are visible, open the first pie menu
+            pie_menu = pie_menus[0]
+            main_window_active_child = offset + 1
+            return pie_menu, main_window_active_child
+
+    def get_pie_menu_after_hotkey_drag(self, pie_menu_type: type[PieMenu]) -> PieMenu | None:
+        """Selects the appropriate pie menu based on active_child and menu type."""
+        if pie_menu_type is PrimaryPieMenu:
+            offset = 0
+            menus = self.pie_menus_primary
+        elif pie_menu_type is SecondaryPieMenu:
+            offset = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
+            menus = self.pie_menus_secondary
+        else:
+            raise ValueError("Invalid pie_menu_type. Expected PrimaryPieMenu or SecondaryPieMenu.")
+
+        index = self.active_child - 1 - offset
+
+        if 0 <= index < CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY:
+            return menus[index]
+
+        print("Active child index is out of range for task switchers.")
+        return None
+
     def clean_up_stale_window_mappings(self, final_button_updates):
         # Clean up stale window mappings
         if len(self.windowHandles_To_buttonIndexes_map) > 40:
@@ -617,3 +472,60 @@ class PieWindow(QMainWindow):
                 for handle, button_id in self.windowHandles_To_buttonIndexes_map.items()
                 if handle in valid_handles
             }
+
+    def show_pie_menu_at_mouse_pos(self, pie_menu):
+        """Display the main window and bring it to the foreground."""
+        try:
+            # get Pie Window handle
+            hwnd = int(self.winId())
+            cursor_pos = QCursor.pos()
+            screen, screen_geometry = self.get_screen_bounds(cursor_pos)
+            corrected_x, corrected_y = self.calculate_corrected_pie_menu_position(cursor_pos, pie_menu, screen_geometry)
+
+            if pie_menu:
+                pie_menu.move(corrected_x, corrected_y)
+
+            self.adjust_pie_window_to_screen(screen_geometry)
+
+            # prevent flicker at the last Pie Menu Position
+            self.setWindowOpacity(0)
+            self.show()
+            QTimer.singleShot(1, lambda: self.setWindowOpacity(1))
+
+            self.get_pie_window_to_foreground(hwnd)
+
+            return cursor_pos
+
+        except Exception as e:
+            print(f"Error showing the main window: {e}")
+
+    def adjust_pie_window_to_screen(self, screen_geometry):
+        self.move(screen_geometry.topLeft())
+        self.setFixedSize(screen_geometry.width(), screen_geometry.height())
+        self.view.setFixedSize(screen_geometry.width(), screen_geometry.height())
+        self.scene.setSceneRect(0, 0, screen_geometry.width(), screen_geometry.height())
+
+    @staticmethod
+    def get_screen_bounds(cursor_pos):
+        """Retrieve the screen and its available geometry based on the cursor position."""
+        screen = QGuiApplication.screenAt(cursor_pos)
+        screen_geometry = screen.availableGeometry()
+        return screen, screen_geometry
+
+    @staticmethod
+    def calculate_corrected_pie_menu_position(cursor_pos, pie_menu, screen_geometry):
+        """Calculate the corrected position for the pie menu to ensure it stays within screen bounds."""
+        screen_left, screen_top = screen_geometry.left(), screen_geometry.top()
+        screen_right, screen_bottom = screen_geometry.right(), screen_geometry.bottom()
+
+        new_x = max(screen_left, min(cursor_pos.x() - (pie_menu.width() // 2), screen_right - pie_menu.width()))
+        new_y = max(screen_top, min(cursor_pos.y() - (pie_menu.height() // 2), screen_bottom - pie_menu.height()))
+
+        return new_x - screen_left, new_y - screen_top
+
+    @staticmethod
+    def get_pie_window_to_foreground(hwnd):
+        """Bring the pie window to the foreground and ensure it stays on top momentarily."""
+        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        for flag in [win32con.HWND_NOTOPMOST, win32con.HWND_TOPMOST, win32con.HWND_NOTOPMOST]:
+            win32gui.SetWindowPos(hwnd, flag, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
