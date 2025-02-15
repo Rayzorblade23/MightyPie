@@ -66,8 +66,6 @@ class PieWindow(QMainWindow):
         self.view = QGraphicsView(self.scene, self)
         self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None, main_window=self)
         self.create_pie_menus(CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY, CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY)
-        self.make_right_click_hide_for_all_buttons_in_pie_menu(self.pie_menus_primary)
-        self.make_right_click_hide_for_all_buttons_in_pie_menu(self.pie_menus_secondary)
 
     def setup_window(self):
         """Set up the main main_window properties."""
@@ -158,12 +156,6 @@ class PieWindow(QMainWindow):
         else:
             print("No SpecialMenu here...")
 
-    def make_right_click_hide_for_all_buttons_in_pie_menu(self, menus: list) -> None:
-        """Disables right-click by setting action to hide for all pie buttons in given menus."""
-        for pie_menu in menus:
-            for button_index, pie_button in pie_menu.pie_buttons.items():  # type: int, PieButton
-                pie_button.set_right_click_action(action=lambda: self.hide())
-
     def refresh(self):
         # Start the background task
         threading.Thread(target=self.update_pm_task_buttons, daemon=True).start()
@@ -191,7 +183,8 @@ class PieWindow(QMainWindow):
             print("DANGER! CACHE IS BEING CLEARED. SKIP.")
             return
 
-        # open_windows_info: Dict[int, Tuple[str, str, int]] = self.manager.get_open_windows_info()
+        open_windows_info: Dict[int, Tuple[str, str, int]] = self.manager.get_open_windows_info()
+        print(open_windows_info)
         # app_info_cache = load_cache()
         final_button_updates = []
         # processed_handles = set()

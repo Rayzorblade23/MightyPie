@@ -111,22 +111,16 @@ class ButtonInfo:
             0: {
                 "task_type": "show_any_window",
                 "properties": {
-                    "app_name": "Vivaldi",
-                    "text_1": "MYAH",
-                    "text_2": "",
-                    "window_handle": -1,
-                    "app_icon_path": "",
-                    "exe_name": "vivaldi.exe"
+                    "window_title": "SourceTree Repo",
+                    "window_handle": 853076,
+                    "exe_name": "sourcetree.exe"
                 }
             },
             4: {
                 "task_type": "show_program_window",
                 "properties": {
-                    "app_name": "Spotify",
-                    "text_1": "YO",
-                    "text_2": "",
+                    "window_title": "Spotify Premium",
                     "window_handle": -1,
-                    "app_icon_path": "",
                     "exe_name": "spotify.exe"
                 }
             },
@@ -199,11 +193,8 @@ class ButtonInfo:
                 self.button_info_dict[i] = {
                     "task_type": "show_any_window",
                     "properties": {
-                        "app_name": "",
-                        "text_1": "",
-                        "text_2": "",
+                        "window_title": "",
                         "window_handle": -1,
-                        "app_icon_path": "",
                         "exe_name": ""
                     }
                 }

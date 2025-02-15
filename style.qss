@@ -120,6 +120,18 @@ QPushButton {
     background-color: {{accent_color}};
 }
 
+#show_any_window_button:disabled,
+#show_any_window_button:disabled:hover {
+    background-color: {{bg_color}};
+    border: 1px solid #333333;
+}
+
+#show_program_window_button:disabled,
+#show_program_window_button:disabled:hover {
+    background-color: {{bg_color}};
+    border: 1px solid #333333;
+}
+
 DonutSliceButton {
     background-color: {{accent_muted}};
     border: none;              /* No border */

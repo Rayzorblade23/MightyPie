@@ -2,7 +2,7 @@ from typing import *
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPixmap, QCursor
-from PyQt6.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy, QGraphicsOpacityEffect, QApplication
+from PyQt6.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy, QGraphicsOpacityEffect
 
 from data.button_functions import ButtonFunctions
 from data.config import CONFIG
@@ -79,6 +79,8 @@ class PieButton(QPushButton):
         # Set position using `move()`, not `setGeometry()`
         self.move(x, y)
 
+        self.set_right_click_action(action=lambda: main_window_hide())
+
     def print_button_type(self):
         print(f"I am {self.button_type} {self.index}")
 
@@ -89,36 +91,18 @@ class PieButton(QPushButton):
     def update_button(self, properties: dict) -> None:
         app_info_cache = load_cache()
 
-        button_text_1 = properties["text_1"]
-        button_text_2 = properties["text_2"]
+        button_text_1 = properties["window_title"]
         window_handle = properties["window_handle"]
-        app_icon_path = properties["app_icon_path"]
         exe_name = properties["exe_name"]
+        button_text_2 = app_info_cache.get(exe_name, {}).get("app_name")
+        app_icon_path = app_info_cache.get(exe_name, {}).get("icon_path")
 
-        if button_text_1 == "":
+        if window_handle == -1:
             self.clear()
             return
 
         # Update button text and icon
         self._update_ui(button_text_1, button_text_2, app_icon_path)
-
-        # Disconnect any previous connections
-        try:
-            self.clicked.disconnect()
-        except TypeError:
-            pass  # No connections to disconnect
-
-        # Handle reserved button actions that have no open window
-        if window_handle == 0:
-            exe_path = app_info_cache.get(exe_name, {}).get("exe_path")
-            if exe_path:
-                self.set_left_click_action(
-                    lambda captured_exe_path=exe_path: (
-                        main_window_hide(),
-                        QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
-                    )
-                )
-            return
 
         # Handle window actions
         self.set_left_click_action(
@@ -130,7 +114,7 @@ class PieButton(QPushButton):
         self.set_middle_click_action(
             lambda hwnd=window_handle: (
                 QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
-                QTimer.singleShot(100, lambda: main_window_auto_refresh()),
+                QTimer.singleShot(100, lambda: main_window_auto_refresh),
             )
         )
         self.setEnabled(True)
@@ -300,6 +284,51 @@ class ShowProgramWindowPieButton(PieButton):
         self.button_type = "show_program_window"
 
         self.print_button_type()
+
+    def update_button(self, properties: dict) -> None:
+        app_info_cache = load_cache()
+
+        button_text_1 = properties["window_title"]
+        window_handle = properties["window_handle"]
+        exe_name = properties["exe_name"]
+        button_text_2 = app_info_cache.get(exe_name, {}).get("app_name")
+        app_icon_path = app_info_cache.get(exe_name, {}).get("icon_path")
+
+        if window_handle == -1:
+            self.clear()
+            return
+
+        # Handle reserved button actions that have no open window
+        if window_handle == 0:
+            exe_path = app_info_cache.get(exe_name, {}).get("exe_path")
+            if exe_path:
+                self.set_left_click_action(
+                    lambda captured_exe_path=exe_path: (
+                        main_window_hide(),
+                        QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
+                    )
+                )
+            button_text_1 = ""
+            self._update_ui(button_text_1, button_text_2, app_icon_path)
+            return
+
+        # Update button text and icon
+        self._update_ui(button_text_1, button_text_2, app_icon_path)
+
+        # Handle window actions
+        self.set_left_click_action(
+            lambda hwnd=window_handle: (
+                main_window_hide(),
+                QTimer.singleShot(0, lambda: focus_window_by_handle(hwnd)),
+            )
+        )
+        self.set_middle_click_action(
+            lambda hwnd=window_handle: (
+                QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
+                QTimer.singleShot(100, lambda: main_window_auto_refresh()),
+            )
+        )
+        self.setEnabled(True)
 
 
 class LaunchProgramPieButton(PieButton):
