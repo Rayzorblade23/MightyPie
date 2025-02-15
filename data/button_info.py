@@ -111,17 +111,22 @@ class ButtonInfo:
             0: {
                 "task_type": "show_any_window",
                 "properties": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "sourcetree.exe",
                     "window_title": "SourceTree Repo",
                     "window_handle": 853076,
-                    "exe_name": "sourcetree.exe"
                 }
             },
             4: {
                 "task_type": "show_program_window",
                 "properties": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "spotify.exe",
+                    "exe_path": "",
                     "window_title": "Spotify Premium",
                     "window_handle": -1,
-                    "exe_name": "spotify.exe"
                 }
             },
             24: {
@@ -163,7 +168,10 @@ class ButtonInfo:
             32: {
                 "task_type": "launch_program",
                 "properties": {
-                    "exe_name": "sourcetree.exe"
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "sourcetree.exe",
+                    "exe_path": "",
                 }
             },
 
@@ -193,9 +201,11 @@ class ButtonInfo:
                 self.button_info_dict[i] = {
                     "task_type": "show_any_window",
                     "properties": {
+                        "app_name": "",
+                        "app_icon_path": "",
+                        "exe_name": "",
                         "window_title": "",
                         "window_handle": -1,
-                        "exe_name": ""
                     }
                 }
 

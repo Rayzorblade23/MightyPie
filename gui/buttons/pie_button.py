@@ -89,6 +89,10 @@ class PieButton(QPushButton):
         print(f"There was only the default action assigned for {self.objectName()}")
 
     def update_button(self, properties: dict) -> None:
+        """Update the whole button UI and functionality"""
+        # TODO: the app_info_cache should later be in button assignment only
+        #       that means the exe_name, button_text_2 and app_icon path
+        #       should all appear in ButtonInfo properties
         app_info_cache = load_cache()
 
         button_text_1 = properties["window_title"]

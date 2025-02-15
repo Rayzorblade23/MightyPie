@@ -7,6 +7,9 @@
 
 IDEA:
 
+Implement a Delay when opening that can be set via config.
+There is already a setOpacity with singleShot in show_pie_menu_at_mouse_pos
+
 Implement Task Types as Buttons inherited from Pie Button instead
 
 We could run PWAs like YouTube Music via custom run commands. Would need a new type of pie menu button.
@@ -17,6 +20,8 @@ Collect multiple windows on one button
 
 
 BUGS:
+- LaunchApp might not bring app to foreground
+
 - Scrolling not working on Labels of Window Control Pie Menus
 
 - first mouse click in Button Config doesn't do anything except closing Special Menu
