@@ -226,13 +226,13 @@ class PieMenu(QWidget):
         self.button_info.has_unsaved_changes = True
         self.button_info.save_to_json()
 
-        print("BUTTON THINGS")
-        for i in range(0, 8):
-            print(f"Update {i}:")
-            print(updated_button_config[i]['task_type'])
-            print("  Properties:")
-            for prop_name, prop_value in updated_button_config[i]['properties'].items():
-                print(f"  {prop_name}: {prop_value}")
+        # print("BUTTON THINGS")
+        # for i in range(0, 8):
+        #     print(f"Update {i}:")
+        #     print(updated_button_config[i]['task_type'])
+        #     print("  Properties:")
+        #     for prop_name, prop_value in updated_button_config[i]['properties'].items():
+        #         print(f"  {prop_name}: {prop_value}")
 
         # Directly update each pie_button with the properties from button_info
         for pie_button in list(self.pie_buttons.values()):

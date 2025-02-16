@@ -29,7 +29,7 @@ class WindowManager:
         - The key is the HWND (int).
         - The values are a tuple containing:
             1. Window title (str): The title of the window.
-            2. App Name (str): The human-friendly name of the executable.
+            2. Exe Name (str): The human-friendly name of the executable.
             3. Instance number (int): A unique instance number for this window.
 
         Args:
@@ -57,7 +57,7 @@ class WindowManager:
         - The key is the HWND (int).
         - The values are a tuple containing:
             1. Window title (str): The title of the window.
-            2. App Name (str): The human-friendly name of the executable.
+            2. Exe Name (str): The human-friendly name of the executable.
             3. Instance number (int): A unique instance number for this window.
 
         Returns:

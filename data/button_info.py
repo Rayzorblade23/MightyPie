@@ -72,7 +72,6 @@ class ButtonInfo:
                         "text_2": "",
                         "window_handle": -1,
                         "app_icon_path": "",
-                        "exe_name": ""
                     }
                 }
 
@@ -194,7 +193,6 @@ class ButtonInfo:
                     "properties": {
                         "app_name": "",
                         "app_icon_path": "",
-                        "exe_name": "",
                         "window_title": "",
                         "window_handle": -1,
                     }

@@ -94,13 +94,11 @@ class PieButton(QPushButton):
         # TODO: the app_info_cache should later be in button assignment only
         #       that means the exe_name, button_text_2 and app_icon path
         #       should all appear in ButtonInfo properties
-        app_info_cache = load_cache()
 
         button_text_1 = properties["window_title"]
         window_handle = properties["window_handle"]
-        exe_name = properties["exe_name"]
-        button_text_2 = app_info_cache.get(exe_name, {}).get("app_name")
-        app_icon_path = app_info_cache.get(exe_name, {}).get("icon_path")
+        button_text_2 = properties["app_name"]
+        app_icon_path = properties["app_icon_path"]
 
         if window_handle == -1:
             self.clear()
@@ -361,7 +359,6 @@ class LaunchProgramPieButton(PieButton):
         button_text_1 = app_info_cache.get(exe_name, {}).get("app_name")
         app_icon_path = app_info_cache.get(exe_name, {}).get("icon_path")
 
-        print(app_icon_path)
         # Update button text and icon
         self._update_ui(button_text_1, button_text_2, app_icon_path)
 
