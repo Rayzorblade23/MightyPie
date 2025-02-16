@@ -82,7 +82,8 @@ class PieButton(QPushButton):
         self.set_right_click_action(action=lambda: main_window_hide())
 
     def print_button_type(self):
-        print(f"I am {self.button_type} {self.index}")
+        # print(f"I am {self.button_type} {self.index}")
+        pass
 
     def default_action(self):
         """Default action when no external action is provided."""

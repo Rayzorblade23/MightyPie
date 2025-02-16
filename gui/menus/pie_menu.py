@@ -14,7 +14,7 @@ from gui.elements.svg_indicator_button import SVGIndicatorButton
 
 
 class PieMenu(QWidget):
-    update_buttons_signal = pyqtSignal(list)
+    update_buttons_signal = pyqtSignal(dict)
 
     def __init__(self, pie_menu_index: int, obj_name: str = "", parent: 'PieWindow' = None):
         super().__init__(parent)
@@ -218,28 +218,31 @@ class PieMenu(QWidget):
         size_animation.start()
         opacity_animation.start()
 
-    @pyqtSlot(list)
-    def update_button_ui(self, button_updates):
+    @pyqtSlot(dict)
+    def update_button_ui(self, updated_button_config):
         """Update button UI in the main thread."""
-        button_info = self.button_info.get_button_info_list()
+
+        self.button_info.button_info_dict = updated_button_config
+        self.button_info.has_unsaved_changes = True
+        self.button_info.save_to_json()
 
         print("BUTTON THINGS")
-        # for i in range(0, 8):
-        #     print(f"Update {i}:")
-        #     print(button_info[i]['task_type'])
-        #     print("  Properties:")
-        #     for prop_name, prop_value in button_info[i]['properties'].items():
-        #         print(f"  {prop_name}: {prop_value}")
+        for i in range(0, 8):
+            print(f"Update {i}:")
+            print(updated_button_config[i]['task_type'])
+            print("  Properties:")
+            for prop_name, prop_value in updated_button_config[i]['properties'].items():
+                print(f"  {prop_name}: {prop_value}")
 
         # Directly update each pie_button with the properties from button_info
         for pie_button in list(self.pie_buttons.values()):
-            if button_info[pie_button.index]["task_type"] in BUTTON_TYPES.keys():
-                button_type = button_info[pie_button.index]["task_type"]
+            if updated_button_config[pie_button.index]["task_type"] in BUTTON_TYPES.keys():
+                button_type = updated_button_config[pie_button.index]["task_type"]
                 if pie_button.button_type != button_type:
                     self.replace_pie_button(pie_button.index % 8, BUTTON_TYPES[button_type])
 
         for pie_button in self.pie_buttons.values():
-            pie_button.update_button(button_info[pie_button.index]['properties'])
+            pie_button.update_button(updated_button_config[pie_button.index]['properties'])
 
 
 class PrimaryPieMenu(PieMenu):

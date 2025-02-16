@@ -1,6 +1,7 @@
 # button_info.py
 
 import logging
+from copy import deepcopy
 from typing import Dict, Any
 
 from data.config import CONFIG
@@ -108,16 +109,6 @@ class ButtonInfo:
         """Initialize with default configuration"""
         # Pre-defined tasks (example data)
         self.button_info_dict = {
-            0: {
-                "task_type": "show_any_window",
-                "properties": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "exe_name": "sourcetree.exe",
-                    "window_title": "SourceTree Repo",
-                    "window_handle": 853076,
-                }
-            },
             4: {
                 "task_type": "show_program_window",
                 "properties": {
@@ -247,15 +238,9 @@ class ButtonInfo:
         """Returns a list of all task indexes."""
         return list(self.button_info_dict.keys())
 
-    def filter_buttons(self, attribute, value):
-        """
-        Filters tasks based on a given attribute and value.
-
-        :param attribute: Attribute to check (can be nested, e.g., 'properties.text_2')
-        :param value: The value to match
-        :return: A list of tasks matching the criteria
-        """
-        filtered = []
+    def filter_buttons(self, attribute: str, value: str) -> Dict[int, dict]:
+        """Filters tasks based on a given attribute and value, returning copies."""
+        filtered: Dict[int, dict] = {}  # Dictionary to hold filtered tasks
         for task_id, task in self.button_info_dict.items():
             keys = attribute.split('.')
             temp = task
@@ -263,12 +248,12 @@ class ButtonInfo:
                 for key in keys:
                     temp = temp[key]
                 if temp == value:
-                    filtered.append(task)
+                    filtered[task_id] = deepcopy(task)  # Use task_id as the key in the dictionary
             except KeyError:
                 continue
-        return filtered
+        return filtered  # Now returns a dictionary of filtered tasks
 
-    def get_all_tasks(self):
+    def get_all_tasks(self) -> Dict[int, Dict[str, Any]]:
         """Returns all tasks."""
         return self.button_info_dict
 

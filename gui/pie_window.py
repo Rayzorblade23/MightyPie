@@ -1,4 +1,5 @@
 import threading
+from copy import deepcopy
 from threading import Lock
 from typing import Dict, Tuple, Set, Optional, Type, List
 
@@ -15,7 +16,7 @@ from events import ShowWindowEvent, HotkeyReleaseEvent
 from gui.buttons.pie_button import PieButton
 from gui.menus.pie_menu import PieMenu, PrimaryPieMenu, SecondaryPieMenu
 from gui.menus.special_menu import SpecialMenu
-from utils.window_utils import get_filtered_list_of_windows, show_special_menu, cache_being_cleared
+from utils.window_utils import get_filtered_list_of_windows, show_special_menu, cache_being_cleared, load_cache
 
 
 class PieWindow(QMainWindow):
@@ -176,17 +177,95 @@ class PieWindow(QMainWindow):
         # elapsed_time = time.time() - start_time
         # print(f"auto_refresh took {elapsed_time:.3f} seconds")
 
-    # Button Management
     def update_pm_task_buttons(self):
-        """Update main_window buttons with current main_window information."""
+        """
+        Updates task buttons with current window information.
+        Handles both existing window mappings and unassigned windows.
+        Thread-safe method called periodically to refresh button states.
+        """
         if cache_being_cleared:
-            print("DANGER! CACHE IS BEING CLEARED. SKIP.")
+            print("Cache is being cleared. Skipping update.")
             return
 
-        open_windows_info: Dict[int, Tuple[str, str, int]] = self.manager.get_open_windows_info()
-        print(open_windows_info)
-        # app_info_cache = load_cache()
-        final_button_updates = []
+        # Get current state and app infos
+        open_windows_info = self.manager.get_open_windows_info()
+        app_info_cache = load_cache()
+
+        # Create deep copy to avoid modifying original during updates
+        updated_button_config = deepcopy(self.button_info.get_all_tasks())
+
+        # Get buttons that can show any window
+        buttons_to_update = self.button_info.filter_buttons("task_type", "show_any_window")
+
+        # Update existing window handles first
+        self._update_existing_handles(buttons_to_update, open_windows_info, app_info_cache)
+
+        # Then assign remaining windows to free buttons
+        self._assign_free_windows(buttons_to_update, open_windows_info, app_info_cache)
+
+        # Merge updates back into config
+        updated_button_config.update(buttons_to_update)
+
+        # Emit updates to all pie menus
+        self._emit_button_updates(updated_button_config)
+
+    def _update_existing_handles(self, buttons, windows_info, app_info_cache):
+        """
+        Updates buttons that have existing window handles.
+        Clears properties if handle is no longer valid.
+        """
+        for button in buttons.values():
+            hwnd = button['properties']['window_handle']
+            if hwnd in windows_info:
+                title, exe_name, instance = windows_info.pop(hwnd)
+                self._update_button_with_window_info(
+                    button, title, exe_name, instance, app_info_cache
+                )
+            else:
+                self._clear_button_properties(button)
+
+    def _assign_free_windows(self, buttons, windows_info, app_info_cache):
+        """
+        Assigns remaining windows to buttons that have no window handle.
+        """
+        for button in buttons.values():
+            if button['properties']['window_handle'] == -1 and windows_info:
+                hwnd, (title, exe_name, instance) = windows_info.popitem()
+                button['properties']['window_handle'] = hwnd
+                self._update_button_with_window_info(
+                    button, title, exe_name, instance, app_info_cache
+                )
+
+    def _update_button_with_window_info(self, button, title, exe_name, instance, app_info_cache):
+        """
+        Updates button properties with window information and app cache data.
+        """
+        button['properties'].update({
+            'window_title': f"{title} ({instance})" if instance != 0 else title,
+            'exe_name': exe_name,
+            'app_name': app_info_cache.get(exe_name, {}).get('app_name', ''),
+            'app_icon_path': app_info_cache.get(exe_name, {}).get('icon_path', '')
+        })
+
+    def _clear_button_properties(self, button):
+        """
+        Clears all properties of a button.
+        """
+        button['properties'].update({
+            'window_handle': -1,
+            'window_title': '',
+            'exe_name': '',
+            'app_name': '',
+            'app_icon_path': ''
+        })
+
+    def _emit_button_updates(self, updated_config):
+        """
+        Emits button updates to all pie menus.
+        """
+        for pie_menu in self.pie_menus_primary + self.pie_menus_secondary:
+            pie_menu.update_buttons_signal.emit(updated_config)
+
         # processed_handles = set()
         #
         # def create_button_update(button_index, hwnd, title, exe_name, instance):
@@ -374,25 +453,6 @@ class PieWindow(QMainWindow):
         #
         # self.clean_up_stale_window_mappings(final_button_updates)
         #
-
-        final_button_updates.append({
-            "index": 0,
-            "task_type": "program_window_fixed",
-            "properties": {
-                "app_name": "",
-                "text_1": "",
-                "text_2": "",
-                "window_handle": -1,
-                "app_icon_path": "",
-                "exe_name": ""}
-        }
-        )
-
-        # Emit updates
-        for pie_menu in self.pie_menus_primary:
-            pie_menu.update_buttons_signal.emit(final_button_updates)
-        for pie_menu in self.pie_menus_secondary:
-            pie_menu.update_buttons_signal.emit(final_button_updates)
 
     def get_next_pie_menu_on_hotkey_press(self, pie_menu_type: Type[PieMenu]) -> Tuple[Optional[PieMenu], Optional[int]]:
         """Helper to find the next pie menu (task switcher or window control) to toggle.
