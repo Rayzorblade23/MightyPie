@@ -109,7 +109,7 @@ class ButtonInfoEditor(QWidget):
 
     def reset_to_defaults(self) -> None:
         """Resets button configurations to defaults."""
-        reset_to_defaults(self.button_info, lambda: update_window_title(self.button_info, self), self)
+        reset_to_defaults(self, self.button_info)
 
     def update_apps_info(self) -> None:
         """Updates the list of available executables from the JSON."""

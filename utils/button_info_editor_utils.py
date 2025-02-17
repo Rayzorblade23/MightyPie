@@ -86,7 +86,7 @@ def reset_single_frame(sender: QWidget, button_info: Any, update_window_title: C
     update_window_title()
 
 
-def reset_to_defaults(button_info: Any, update_window_title: Callable[[], None], parent_widget: QWidget) -> None:
+def reset_to_defaults(parent_widget: QWidget, button_info: Any) -> None:
     """Resets all settings to their default values."""
     reply = QMessageBox.question(
         None, "Reset Confirmation",
@@ -95,14 +95,14 @@ def reset_to_defaults(button_info: Any, update_window_title: Callable[[], None],
     )
     if reply == QMessageBox.StandardButton.Yes:
         for button_frame in parent_widget.findChildren(QFrame, "buttonConfigFrame"):
-            task_type_dropdown = button_frame.findChild(QComboBox)
-            if task_type_dropdown:
-                button_index = task_type_dropdown.property("button_index")
-                task_type_dropdown.setCurrentText("show_any_window")
-                exe_name_dropdown = button_frame.findChild(QComboBox, None)
-                if exe_name_dropdown and exe_name_dropdown != task_type_dropdown:
-                    exe_name_dropdown.setCurrentText("")
-                    exe_name_dropdown.setEnabled(False)
+            task_type_combo = button_frame.findChild(QComboBox)
+            if task_type_combo:
+                button_index = task_type_combo.property("button_index")
+                task_type_combo.setCurrentText("show_any_window")
+                exe_name_combo = button_frame.findChild(QComboBox, None)
+                if exe_name_combo and exe_name_combo != task_type_combo:
+                    exe_name_combo.setCurrentText("")
+                    exe_name_combo.setEnabled(False)
                 button_info.update_button(button_index, {
                     "task_type": "show_any_window",
                     "properties": {"exe_name": ""}
