@@ -1,12 +1,13 @@
 import logging
 from functools import partial
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QThread
 from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea, \
     QPushButton, QFrame
 
 from data.button_info import ButtonInfo
 from data.config import CONFIG
+from gui.buttons.pie_button import BUTTON_TYPES
 from utils.file_handling_utils import get_resource_path
 from utils.icon_utils import get_icon
 from utils.json_utils import JSONManager
@@ -16,11 +17,15 @@ logging.basicConfig(level=logging.DEBUG)
 
 class ButtonInfoEditor(QWidget):
     def __init__(self):
+        print("Starting ButtonInfoEditor init")  # Debug
+        print(f"Current thread: {QThread.currentThread()}")  # Debug
         super().__init__()
         self.button_info = ButtonInfo.get_instance()
+        print(f"ButtonInfo instance: {id(self.button_info)}")  # Debug
 
         # Available options for dropdowns
-        self.task_types = ["show_any_window", "show_program_window", "launch_program", "call_function"]
+        self.task_types = list(BUTTON_TYPES.keys())
+
 
         self.apps_info = JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
 
@@ -41,7 +46,7 @@ class ButtonInfoEditor(QWidget):
         main_layout.addWidget(scroll)
 
         # Calculate number of columns needed
-        num_columns = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
+        num_columns = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY + CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY
         buttons_per_column = CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU
 
         # Create columns
@@ -324,43 +329,61 @@ class ButtonInfoEditor(QWidget):
                     exe_name_combo = child
                     break
 
-            # Get current configuration
-            current_config = self.button_info[button_index]
-
-            # Initialize new properties based on the button type
-            if new_task_type == "show_any_window":
-                updated_properties = {
-                    "app_name": "",
-                    "text_1": "",
-                    "text_2": "",
-                    "window_handle": -1,
-                    "app_icon_path": "",
-                    "exe_name": ""
-                }
-            else:
-                # Preserve existing properties or initialize new ones
-                updated_properties = current_config.get("properties", {}).copy()
-                if exe_name_combo:
-                    exe_value = exe_name_combo.currentData() or exe_name_combo.currentText()
-                    updated_properties["exe_name"] = exe_value
-
-            # Update the button configuration
-            self.button_info.update_button(button_index, {
-                "task_type": new_task_type,
-                "properties": updated_properties
-            })
-
-            # Update UI
             if exe_name_combo:
-                exe_name_combo.setEnabled(new_task_type != "show_any_window")
+                # First, handle enabled state
                 if new_task_type == "show_any_window":
-                    exe_name_combo.setCurrentText("")
+                    exe_name_combo.setEnabled(False)
+                else:
+                    exe_name_combo.setEnabled(True)
 
-            self.update_window_title()
+                # Now handle the content update
+                exe_name_combo.clear()
+
+                if new_task_type == "call_function":
+                    from data.button_functions import ButtonFunctions
+                    functions = ButtonFunctions().functions
+                    for func_name, func_data in functions.items():
+                        exe_name_combo.addItem(func_data['text_1'], func_name)
+                    exe_name_combo.setEditable(False)
+                    updated_properties = {
+                        "function_name": exe_name_combo.currentData()
+                    }
+                else:
+                    exe_name_combo.setEditable(True)
+                    if new_task_type == "show_any_window":
+                        updated_properties = {
+                            "app_name": "",
+                            "text_1": "",
+                            "text_2": "",
+                            "window_handle": -1,
+                            "app_icon_path": "",
+                            "exe_name": ""
+                        }
+                    else:
+                        for exe_name, app_name in self.exe_names:
+                            display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
+                            exe_name_combo.addItem(display_text, exe_name)
+                        current_exe = exe_name_combo.currentData() or ""
+                        updated_properties = {
+                            "app_name": "",
+                            "app_icon_path": "",
+                            "exe_name": current_exe,
+                            "exe_path": "",
+                            "window_title": "" if new_task_type == "show_program_window" else None
+                        }
+
+                # Update the button configuration
+                self.button_info.update_button(button_index, {
+                    "task_type": new_task_type,
+                    "properties": updated_properties
+                })
+
+                self.update_window_title()
+
         except Exception as e:
             logging.error(f"Failed to update task type: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to update task type: {str(e)}")
-
+            
     def on_exe_name_changed(self, new_exe_name, button_index):
         try:
             # Get the current button configuration
