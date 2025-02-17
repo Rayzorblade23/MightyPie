@@ -64,16 +64,7 @@ class ButtonInfo:
         try:
             # If the index doesn't exist, initialize it with default values
             if index not in self.button_info_dict:
-                self.button_info_dict[index] = {
-                    "task_type": "show_any_window",
-                    "properties": {
-                        "app_name": "",
-                        "text_1": "",
-                        "text_2": "",
-                        "window_handle": -1,
-                        "app_icon_path": "",
-                    }
-                }
+                self.button_info_dict[index] = self._initialize_button(index)
 
             # Update only the specified fields
             for key, value in update_dict.items():
@@ -90,18 +81,68 @@ class ButtonInfo:
         except Exception as e:
             raise e
 
+    def _initialize_button(self, index):
+        """Initialize a button with default values based on its type"""
+        default_config = {
+            "show_any_window": {
+                "task_type": "show_any_window",
+                "properties": {
+                    "app_name": "",
+                    "text_1": "",
+                    "text_2": "",
+                    "window_handle": -1,
+                    "app_icon_path": "",
+                    "exe_name": "",
+                }
+            },
+            "show_program_window": {
+                "task_type": "show_program_window",
+                "properties": {
+                    "app_name": "",
+                    "text_1": "",
+                    "text_2": "",
+                    "window_handle": -1,
+                    "app_icon_path": "",
+                    "exe_name": "",
+                    "exe_path": "",
+                    "window_title": "",
+                }
+            },
+            "launch_program": {
+                "task_type": "launch_program",
+                "properties": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "",
+                    "exe_path": "",
+                }
+            },
+            "call_function": {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "",
+                }
+            }
+        }
+        # Default to "show_any_window" if the type is not specified
+        task_type = self.button_info_dict.get(index, {}).get("task_type", "show_any_window")
+        return default_config.get(task_type, default_config["show_any_window"])
+
     def _validate_button_config(self, button_config):
         """Validate button configuration structure"""
         required_keys = {"task_type", "properties"}
         required_properties = {
-            "app_name", "text_1", "text_2", "window_handle",
-            "app_icon_path", "exe_name"
+            "show_any_window": {"app_name", "text_1", "text_2", "window_handle", "app_icon_path", "exe_name"},
+            "show_program_window": {"app_name", "text_1", "text_2", "window_handle", "app_icon_path", "exe_name", "exe_path", "window_title"},
+            "launch_program": {"app_name", "app_icon_path", "exe_name", "exe_path"},
+            "call_function": {"function_name"}
         }
 
+        task_type = button_config.get("task_type", "show_any_window")
         if not all(key in button_config for key in required_keys):
             raise ValueError("Missing required keys in button configuration")
 
-        if not all(prop in button_config["properties"] for prop in required_properties):
+        if not all(prop in button_config["properties"] for prop in required_properties.get(task_type, [])):
             raise ValueError("Missing required properties in button configuration")
 
     def _initialize_tasks(self):
