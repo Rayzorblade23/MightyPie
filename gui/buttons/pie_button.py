@@ -10,7 +10,7 @@ from data.font_styles import FontStyle
 from gui.elements.scrolling_text_label import ScrollingLabel
 from utils.icon_utils import invert_icon
 from utils.program_utils import main_window_hide, main_window_auto_refresh
-from utils.window_utils import load_cache, launch_app, focus_window_by_handle, close_window_by_handle
+from utils.window_utils import launch_app, focus_window_by_handle, close_window_by_handle
 
 if TYPE_CHECKING:
     from gui.menus.pie_menu import PieMenu
@@ -122,7 +122,7 @@ class PieButton(QPushButton):
         )
         self.setEnabled(True)
 
-    def clear(self, button_text_2 = ""):
+    def clear(self, button_text_2=""):
         # Disable the button
         self.set_left_click_action(action=None)
         self.set_middle_click_action(action=None)
@@ -330,7 +330,7 @@ class ShowProgramWindowPieButton(PieButton):
         )
         self.setEnabled(True)
 
-    def clear(self, button_text_2 = ""):
+    def clear(self, button_text_2=""):
         # Disable the button
         self.set_left_click_action(action=None)
         self.set_middle_click_action(action=None)
@@ -357,17 +357,14 @@ class LaunchProgramPieButton(PieButton):
         if self.is_setup_finished:
             return
 
-        app_info_cache = load_cache()
-
         button_text_2 = "- Launch -"
-        exe_name = properties["exe_name"]
-        button_text_1 = app_info_cache.get(exe_name, {}).get("app_name")
-        app_icon_path = app_info_cache.get(exe_name, {}).get("icon_path")
+        exe_path = properties["exe_path"]
+        button_text_1 = properties["app_name"]
+        app_icon_path = properties["app_icon_path"]
 
         # Update button text and icon
         self._update_ui(button_text_1, button_text_2, app_icon_path)
 
-        exe_path = app_info_cache.get(exe_name, {}).get("exe_path")
         if exe_path:
             self.set_left_click_action(
                 lambda captured_exe_path=exe_path: (

@@ -79,16 +79,20 @@ class WindowManager:
         # Get filtered button sets by type
         show_program_window_buttons = button_info.filter_buttons("task_type", "show_program_window")
         show_any_window_buttons = button_info.filter_buttons("task_type", "show_any_window")
+        launch_program_buttons = button_info.filter_buttons("task_type", "launch_program")
 
         # Get current windows info
         windows_info = self.get_open_windows_info()
 
-        # Process program-specific buttons
+        # Process Launch Program Buttons
+        self._update_launch_program_windows(launch_program_buttons, app_info_cache)
+
+        # Process Show (specific) Program Buttons
         self._update_existing_handles(show_program_window_buttons, windows_info, processed_buttons, True)
         self._assign_free_windows_for_show_program_window_buttons(
             show_program_window_buttons, windows_info, app_info_cache, processed_buttons)
 
-        # Process generic window buttons
+        # Process Show Any Window Buttons
         self._update_existing_handles(show_any_window_buttons, windows_info, processed_buttons)
         self._assign_free_windows_for_show_any_window_buttons(
             show_any_window_buttons, windows_info, app_info_cache, processed_buttons)
@@ -96,11 +100,18 @@ class WindowManager:
         # Update final configuration
         updated_button_config.update(show_any_window_buttons)
         updated_button_config.update(show_program_window_buttons)
-
-        # Clean up stale window mappings
-        self.clean_up_stale_window_mappings(updated_button_config.values())
+        updated_button_config.update(launch_program_buttons)
 
         self._emit_button_updates(updated_button_config, pie_window)
+
+    def _update_launch_program_windows(
+            self,
+            buttons: Dict[int, Dict[str, Any]],
+            app_info_cache: Dict[str, Dict[str, str]],
+    ) -> None:
+        for _, button in buttons.items():
+            exe_name = button['properties']['exe_name']
+            self._update_button_with_window_info(button, "", exe_name, 0, app_info_cache, True)
 
     def _update_existing_handles(
             self,
@@ -207,13 +218,3 @@ class WindowManager:
         if pie_window:
             for pie_menu in pie_window.pie_menus_primary + pie_window.pie_menus_secondary:
                 pie_menu.update_buttons_signal.emit(updated_config)
-
-    def clean_up_stale_window_mappings(self, final_button_updates):
-        # Clean up stale window mappings
-        if len(self.windowHandles_To_buttonIndexes_map) > 40:
-            valid_handles = {update["properties"]["window_handle"] for update in final_button_updates}
-            self.windowHandles_To_buttonIndexes_map = {
-                handle: button_id
-                for handle, button_id in self.windowHandles_To_buttonIndexes_map.items()
-                if handle in valid_handles
-            }
