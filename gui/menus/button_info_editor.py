@@ -36,7 +36,7 @@ class ButtonInfoEditor(QWidget):
 
     def init_ui(self):
         self.setWindowTitle('Button Info Editor')
-        self.setGeometry(100, 100, 1000, 860)
+        self.setGeometry(100, 100, 1500, 860)
 
         # Create the main layout
         main_layout = QVBoxLayout(self)
@@ -159,35 +159,77 @@ class ButtonInfoEditor(QWidget):
 
     def create_task_type_combo(self, current_task, index):
         task_type_combo = self.NoScrollComboBox()
-        task_type_combo.addItems(self.task_types)
-        task_type_combo.setCurrentText(current_task["task_type"])
+        # Format task types for display
+        for task_type in self.task_types:
+            display_text = task_type.replace('_', ' ').title()
+            task_type_combo.addItem(display_text, task_type)
+        # Find and set current item
+        current_index = self.task_types.index(current_task["task_type"])
+        task_type_combo.setCurrentIndex(current_index)
         task_type_combo.setProperty("button_index", index)
-        task_type_combo.currentTextChanged.connect(self.on_task_type_changed)
+        task_type_combo.currentTextChanged.connect(lambda text: self.on_task_type_changed(self.task_types[task_type_combo.currentIndex()]))
         return task_type_combo
 
     def create_exe_name_combo(self, current_task, index):
         exe_name_combo = self.NoScrollComboBox()
-        for exe_name, app_name in self.exe_names:
-            display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
-            exe_name_combo.addItem(display_text, exe_name)
+        exe_name_combo.setProperty("button_index", index)
 
-        current_exe_name = current_task["properties"].get("exe_name", "")
-        for i in range(exe_name_combo.count()):
-            if exe_name_combo.itemData(i) == current_exe_name:
-                exe_name_combo.setCurrentIndex(i)
-                break
+        # Block signals while setting up
+        exe_name_combo.blockSignals(True)
 
+        if current_task["task_type"] == "show_any_window":
+            # For show_any_window, set empty and disabled first
+            exe_name_combo.setEnabled(False)
+            exe_name_combo.setEditable(True)
+            exe_name_combo.clear()
+            exe_name_combo.setCurrentText("")
+        elif current_task["task_type"] == "call_function":
+            # Handle call_function
+            from data.button_functions import ButtonFunctions
+            functions = ButtonFunctions().functions
+            exe_name_combo.setEditable(False)
+            exe_name_combo.setEnabled(True)
+            for func_name, func_data in functions.items():
+                exe_name_combo.addItem(func_data['text_1'], func_name)
+
+            # Set current function if exists
+            current_function = current_task["properties"].get("function_name", "")
+            if current_function:
+                for i in range(exe_name_combo.count()):
+                    if exe_name_combo.itemData(i) == current_function:
+                        exe_name_combo.setCurrentIndex(i)
+                        break
+        else:
+            # Handle other task types
+            exe_name_combo.setEditable(True)
+            exe_name_combo.setEnabled(True)
+            for exe_name, app_name in self.exe_names:
+                display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
+                exe_name_combo.addItem(display_text, exe_name)
+
+            current_exe_name = current_task["properties"].get("exe_name", "")
+            if current_exe_name:
+                # Set existing value
+                for i in range(exe_name_combo.count()):
+                    if exe_name_combo.itemData(i) == current_exe_name:
+                        exe_name_combo.setCurrentIndex(i)
+                        break
+            else:
+                # Set explorer.exe as default
+                for i in range(exe_name_combo.count()):
+                    if exe_name_combo.itemData(i) == "explorer.exe":
+                        exe_name_combo.setCurrentIndex(i)
+                        break
+
+        # Connect signals after setup
         exe_name_combo.currentIndexChanged.connect(
             partial(self.on_exe_index_changed, button_index=index, combo=exe_name_combo)
         )
         exe_name_combo.editTextChanged.connect(lambda text, idx=index: self.on_exe_name_changed(text, idx))
-        exe_name_combo.setEditable(True)
-        exe_name_combo.setEnabled(current_task["task_type"] != "show_any_window")
-        if current_task["task_type"] == "show_any_window":
-            exe_name_combo.setCurrentText("")
-        exe_name_combo.setProperty("button_index", index)
-        return exe_name_combo
 
+        # Re-enable signals
+        exe_name_combo.blockSignals(False)
+        return exe_name_combo
     def create_button_container(self):
         button_container = QHBoxLayout()
         reset_button = QPushButton("Reset to Defaults")
@@ -321,64 +363,101 @@ class ButtonInfoEditor(QWidget):
     def on_task_type_changed(self, new_task_type):
         sender = self.sender()
         button_index = sender.property("button_index")
+        print(f"\nDEBUG: Task type changed to: {new_task_type}")
+        print(f"DEBUG: Button index: {button_index}")
+
         try:
+            # Get the grandparent (button frame)
             button_frame = sender.parent().parent()
-            exe_name_combo = None
-            for child in button_frame.findChildren(QComboBox):
-                if child.property("button_index") == button_index and child != sender:
-                    exe_name_combo = child
-                    break
+            if not button_frame:
+                print("DEBUG: ERROR - Could not find button frame")
+                return
 
-            if exe_name_combo:
-                # First, handle enabled state
-                if new_task_type == "show_any_window":
-                    exe_name_combo.setEnabled(False)
-                else:
-                    exe_name_combo.setEnabled(True)
+            # Find all combo boxes in this frame that have the same button_index
+            exe_combos = [
+                combo for combo in button_frame.findChildren(QComboBox)
+                if (combo.property("button_index") == button_index and combo != sender)
+            ]
 
-                # Now handle the content update
-                exe_name_combo.clear()
+            if not exe_combos:
+                print("DEBUG: ERROR - Could not find matching exe combo box")
+                return
+
+            exe_name_combo = exe_combos[0]
+            print(f"DEBUG: Found exe_name_combo with button_index: {exe_name_combo.property('button_index')}")
+            print(f"DEBUG: Current enabled state: {exe_name_combo.isEnabled()}")
+            print(f"DEBUG: Current text: '{exe_name_combo.currentText()}'")
+
+            # Block signals during updates
+            exe_name_combo.blockSignals(True)
+
+            print("DEBUG: Clearing combo box")
+            exe_name_combo.clear()
+
+            if new_task_type == "show_any_window":
+                print("DEBUG: Handling show_any_window")
+                exe_name_combo.setEditable(True)
+                exe_name_combo.setCurrentText("")
+                exe_name_combo.setEnabled(False)
+                print(f"DEBUG: After changes - enabled: {exe_name_combo.isEnabled()}, text: '{exe_name_combo.currentText()}'")
+
+                updated_properties = {
+                    "app_name": "",
+                    "text_1": "",
+                    "text_2": "",
+                    "window_handle": -1,
+                    "app_icon_path": "",
+                    "exe_name": ""
+                }
+            else:
+                print(f"DEBUG: Handling other type: {new_task_type}")
+                # Enable the combo box first
+                exe_name_combo.setEnabled(True)
+                print(f"DEBUG: Set enabled: {exe_name_combo.isEnabled()}")
 
                 if new_task_type == "call_function":
+                    print("DEBUG: Setting up call_function items")
                     from data.button_functions import ButtonFunctions
                     functions = ButtonFunctions().functions
+                    exe_name_combo.setEditable(False)
                     for func_name, func_data in functions.items():
                         exe_name_combo.addItem(func_data['text_1'], func_name)
-                    exe_name_combo.setEditable(False)
                     updated_properties = {
                         "function_name": exe_name_combo.currentData()
                     }
                 else:
+                    print("DEBUG: Setting up program items")
                     exe_name_combo.setEditable(True)
-                    if new_task_type == "show_any_window":
-                        updated_properties = {
-                            "app_name": "",
-                            "text_1": "",
-                            "text_2": "",
-                            "window_handle": -1,
-                            "app_icon_path": "",
-                            "exe_name": ""
-                        }
-                    else:
-                        for exe_name, app_name in self.exe_names:
-                            display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
-                            exe_name_combo.addItem(display_text, exe_name)
-                        current_exe = exe_name_combo.currentData() or ""
-                        updated_properties = {
-                            "app_name": "",
-                            "app_icon_path": "",
-                            "exe_name": current_exe,
-                            "exe_path": "",
-                            "window_title": "" if new_task_type == "show_program_window" else None
-                        }
+                    for exe_name, app_name in self.exe_names:
+                        display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
+                        exe_name_combo.addItem(display_text, exe_name)
 
-                # Update the button configuration
-                self.button_info.update_button(button_index, {
-                    "task_type": new_task_type,
-                    "properties": updated_properties
-                })
+                    if not self.button_info[button_index]["properties"].get("exe_name"):
+                        for i in range(exe_name_combo.count()):
+                            if exe_name_combo.itemData(i) == "explorer.exe":
+                                exe_name_combo.setCurrentIndex(i)
+                                break
 
-                self.update_window_title()
+                    current_exe = exe_name_combo.currentData() or ""
+                    updated_properties = {
+                        "app_name": "",
+                        "app_icon_path": "",
+                        "exe_name": current_exe,
+                        "exe_path": "",
+                        "window_title": "" if new_task_type == "show_program_window" else None
+                    }
+
+            print("DEBUG: Updating button configuration")
+            self.button_info.update_button(button_index, {
+                "task_type": new_task_type,
+                "properties": updated_properties
+            })
+
+            print("DEBUG: Re-enabling signals")
+            exe_name_combo.blockSignals(False)
+
+            print(f"DEBUG: Final state - enabled: {exe_name_combo.isEnabled()}, text: '{exe_name_combo.currentText()}'")
+            self.update_window_title()
 
         except Exception as e:
             logging.error(f"Failed to update task type: {str(e)}")

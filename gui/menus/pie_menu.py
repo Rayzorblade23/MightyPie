@@ -204,14 +204,14 @@ class PieMenu(QWidget):
 
         # Append animations to the list to avoid garbage collection
         self.animations.extend([pos_animation, size_animation, opacity_animation])
-
-        if button.index % CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU == 0:
-            print(f"  Starting animations:")
-            print(
-                f"    pos: start=({pos_animation.startValue().x()}, {pos_animation.startValue().y()}) end=({pos_animation.endValue().x()}, {pos_animation.endValue().y()}) - Button {button.index}")
-            print(
-                f"    size: start=({size_animation.startValue().width()}, {size_animation.startValue().height()}) end=({size_animation.endValue().width()}, {size_animation.endValue().height()}) - Button {button.index}")
-            print(f"    opacity: start={opacity_animation.startValue()} end={opacity_animation.endValue()} - Button {button.index}")
+        #
+        # if button.index % CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU == 0:
+        #     print(f"  Starting animations:")
+        #     print(
+        #         f"    pos: start=({pos_animation.startValue().x()}, {pos_animation.startValue().y()}) end=({pos_animation.endValue().x()}, {pos_animation.endValue().y()}) - Button {button.index}")
+        #     print(
+        #         f"    size: start=({size_animation.startValue().width()}, {size_animation.startValue().height()}) end=({size_animation.endValue().width()}, {size_animation.endValue().height()}) - Button {button.index}")
+        #     print(f"    opacity: start={opacity_animation.startValue()} end={opacity_animation.endValue()} - Button {button.index}")
 
         # Start both animations
         pos_animation.start()
