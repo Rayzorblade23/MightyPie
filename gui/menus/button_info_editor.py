@@ -1,14 +1,17 @@
+# button_info_editor.py
+
 import logging
-from functools import partial
 
 from PyQt6.QtCore import Qt, QThread
-from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QScrollArea, \
-    QPushButton, QFrame
+from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QFrame, QPushButton, QLabel
 
 from data.button_info import ButtonInfo
 from data.config import CONFIG
 from gui.buttons.pie_button import BUTTON_TYPES
-from utils.file_handling_utils import get_resource_path
+from utils.button_info_editor_utils import (
+    update_window_title, create_scroll_area, create_column, get_direction, create_button_container,
+    create_task_type_combo, create_exe_name_combo, create_texts_layout, create_dropdowns_layout, reset_single_frame, reset_to_defaults
+)
 from utils.icon_utils import get_icon
 from utils.json_utils import JSONManager
 
@@ -26,7 +29,6 @@ class ButtonInfoEditor(QWidget):
         # Available options for dropdowns
         self.task_types = list(BUTTON_TYPES.keys())
 
-
         self.apps_info = JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
 
         # Extract exe names (keys in the JSON)
@@ -38,59 +40,19 @@ class ButtonInfoEditor(QWidget):
         self.setWindowTitle('Button Info Editor')
         self.setGeometry(100, 100, 1500, 860)
 
-        # Create the main layout
         main_layout = QVBoxLayout(self)
-
-        # Create scroll area
-        scroll, scroll_layout = self.create_scroll_area()
+        scroll, scroll_layout = create_scroll_area()
         main_layout.addWidget(scroll)
 
-        # Calculate number of columns needed
         num_columns = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY + CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY
         buttons_per_column = CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU
 
-        # Create columns
         for col in range(num_columns):
-            column_widget, column_layout = self.create_column(col)
+            column_widget, column_layout = create_column(col, buttons_per_column, get_direction, self.create_button_frame)
             scroll_layout.addWidget(column_widget)
 
-        # Create button container
-        button_container = self.create_button_container()
+        button_container = create_button_container(self.reset_to_defaults, self.save_changes)
         main_layout.addLayout(button_container)
-
-    def create_scroll_area(self):
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll_widget = QWidget()
-        scroll_layout = QHBoxLayout(scroll_widget)
-        scroll.setWidget(scroll_widget)
-        return scroll, scroll_layout
-
-    def create_column(self, col):
-        column_widget = QWidget()
-        column_layout = QVBoxLayout(column_widget)
-
-        # Add column title
-        title_label = QLabel(f"Pie Menu {col + 1}")
-        title_label.setObjectName("titleLabel")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        column_layout.addWidget(title_label)
-
-        # Add vertical line separator before each column except the first
-        if col > 0:
-            line = QFrame()
-            line.setFrameStyle(QFrame.Shape.VLine.value)
-            line.setLineWidth(1)
-            column_layout.addWidget(line)
-
-        # Add buttons to this column
-        for row in range(CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU):
-            index = row + (col * CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU)
-            button_frame = self.create_button_frame(index, row)
-            column_layout.addWidget(button_frame)
-
-        column_layout.addStretch()
-        return column_widget, column_layout
 
     def create_button_frame(self, index, row):
         button_frame = QFrame()
@@ -103,7 +65,7 @@ class ButtonInfoEditor(QWidget):
         frame_layout.addLayout(the_layout)
 
         header_layout = QHBoxLayout()
-        direction = self.get_direction(row)
+        direction = get_direction(row)
         header_label = QLabel(f" {direction} ")
         header_label.setObjectName("buttonConfigFrameHeader")
         header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -119,7 +81,8 @@ class ButtonInfoEditor(QWidget):
         reset_button.setFixedSize(24, 20)
         reset_button.setObjectName("buttonConfigSingleResetButton")
         reset_button.setProperty("button_index", index)
-        reset_button.clicked.connect(self.reset_single_frame)
+        reset_button.clicked.connect(
+            lambda: reset_single_frame(reset_button, self.button_info, lambda: update_window_title(self.button_info, self)))
 
         reset_layout = QVBoxLayout()
         reset_layout.addStretch()
@@ -134,160 +97,19 @@ class ButtonInfoEditor(QWidget):
         current_task = self.button_info[index]
 
         task_type_combo, exe_name_combo = self.create_dropdowns(current_task, index)
-        content_layout.addLayout(self.create_texts_layout())
-        content_layout.addLayout(self.create_dropdowns_layout(task_type_combo, exe_name_combo))
+        content_layout.addLayout(create_texts_layout())
+        content_layout.addLayout(create_dropdowns_layout(task_type_combo, exe_name_combo))
 
         frame_layout.addLayout(content_layout)
         return button_frame
 
-    def create_texts_layout(self):
-        texts_layout = QVBoxLayout()
-        texts_layout.addWidget(QLabel("Task Type:"))
-        texts_layout.addWidget(QLabel("Program:"))
-        return texts_layout
-
-    def create_dropdowns_layout(self, task_type_combo, exe_name_combo):
-        dropdowns_layout = QVBoxLayout()
-        dropdowns_layout.addWidget(task_type_combo)
-        dropdowns_layout.addWidget(exe_name_combo)
-        return dropdowns_layout
-
     def create_dropdowns(self, current_task, index):
-        task_type_combo = self.create_task_type_combo(current_task, index)
-        exe_name_combo = self.create_exe_name_combo(current_task, index)
+        task_type_combo = create_task_type_combo(self.task_types, current_task, index, self.on_task_type_changed)
+        exe_name_combo = create_exe_name_combo(self.exe_names, current_task, index, self.on_exe_index_changed, self.on_exe_name_changed)
         return task_type_combo, exe_name_combo
 
-    def create_task_type_combo(self, current_task, index):
-        task_type_combo = self.NoScrollComboBox()
-        # Format task types for display
-        for task_type in self.task_types:
-            display_text = task_type.replace('_', ' ').title()
-            task_type_combo.addItem(display_text, task_type)
-        # Find and set current item
-        current_index = self.task_types.index(current_task["task_type"])
-        task_type_combo.setCurrentIndex(current_index)
-        task_type_combo.setProperty("button_index", index)
-        task_type_combo.currentTextChanged.connect(lambda text: self.on_task_type_changed(self.task_types[task_type_combo.currentIndex()]))
-        return task_type_combo
-
-    def create_exe_name_combo(self, current_task, index):
-        exe_name_combo = self.NoScrollComboBox()
-        exe_name_combo.setProperty("button_index", index)
-
-        # Block signals while setting up
-        exe_name_combo.blockSignals(True)
-
-        if current_task["task_type"] == "show_any_window":
-            # For show_any_window, set empty and disabled first
-            exe_name_combo.setEnabled(False)
-            exe_name_combo.setEditable(True)
-            exe_name_combo.clear()
-            exe_name_combo.setCurrentText("")
-        elif current_task["task_type"] == "call_function":
-            # Handle call_function
-            from data.button_functions import ButtonFunctions
-            functions = ButtonFunctions().functions
-            exe_name_combo.setEditable(False)
-            exe_name_combo.setEnabled(True)
-            for func_name, func_data in functions.items():
-                exe_name_combo.addItem(func_data['text_1'], func_name)
-
-            # Set current function if exists
-            current_function = current_task["properties"].get("function_name", "")
-            if current_function:
-                for i in range(exe_name_combo.count()):
-                    if exe_name_combo.itemData(i) == current_function:
-                        exe_name_combo.setCurrentIndex(i)
-                        break
-        else:
-            # Handle other task types
-            exe_name_combo.setEditable(True)
-            exe_name_combo.setEnabled(True)
-            for exe_name, app_name in self.exe_names:
-                display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
-                exe_name_combo.addItem(display_text, exe_name)
-
-            current_exe_name = current_task["properties"].get("exe_name", "")
-            if current_exe_name:
-                # Set existing value
-                for i in range(exe_name_combo.count()):
-                    if exe_name_combo.itemData(i) == current_exe_name:
-                        exe_name_combo.setCurrentIndex(i)
-                        break
-            else:
-                # Set explorer.exe as default
-                for i in range(exe_name_combo.count()):
-                    if exe_name_combo.itemData(i) == "explorer.exe":
-                        exe_name_combo.setCurrentIndex(i)
-                        break
-
-        # Connect signals after setup
-        exe_name_combo.currentIndexChanged.connect(
-            partial(self.on_exe_index_changed, button_index=index, combo=exe_name_combo)
-        )
-        exe_name_combo.editTextChanged.connect(lambda text, idx=index: self.on_exe_name_changed(text, idx))
-
-        # Re-enable signals
-        exe_name_combo.blockSignals(False)
-        return exe_name_combo
-    def create_button_container(self):
-        button_container = QHBoxLayout()
-        reset_button = QPushButton("Reset to Defaults")
-        reset_button.setObjectName("buttonConfigButton")
-        reset_button.clicked.connect(self.reset_to_defaults)
-        button_container.addWidget(reset_button)
-
-        save_button = QPushButton("Save Changes")
-        save_button.setObjectName("buttonConfigButton")
-        save_button.clicked.connect(self.save_changes)
-        button_container.addWidget(save_button)
-        return button_container
-
-    def get_direction(self, row):
-        directions = ["⭡", "⭧", "⭢", "⭨", "⭣", "⭩", "⭠", "⭦"]
-        return directions[row] if row < len(directions) else ""
-
-    def reset_single_frame(self):
-        sender = self.sender()
-        button_index = sender.property("button_index")
-        if button_index is None:
-            return
-
-        button_frame = sender.parent()
-        task_type_combo = button_frame.findChild(QComboBox)
-        if task_type_combo:
-            task_type_combo.setCurrentText("show_any_window")
-            exe_name_combo = button_frame.findChild(QComboBox, None)
-            if exe_name_combo and exe_name_combo != task_type_combo:
-                exe_name_combo.setCurrentText("")
-                exe_name_combo.setEnabled(False)
-            self.button_info.update_button(button_index, {
-                "task_type": "show_any_window",
-                "properties": {"exe_name": ""}
-            })
-        self.update_window_title()
-
     def reset_to_defaults(self):
-        reply = QMessageBox.question(
-            self, "Reset Confirmation",
-            "Are you sure you want to reset all settings to default?\nYou can still discard the changes afterwards.",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        if reply == QMessageBox.StandardButton.Yes:
-            for button_frame in self.findChildren(QFrame, "buttonConfigFrame"):
-                task_type_combo = button_frame.findChild(QComboBox)
-                if task_type_combo:
-                    button_index = task_type_combo.property("button_index")
-                    task_type_combo.setCurrentText("show_any_window")
-                    exe_name_combo = button_frame.findChild(QComboBox, None)
-                    if exe_name_combo and exe_name_combo != task_type_combo:
-                        exe_name_combo.setCurrentText("")
-                        exe_name_combo.setEnabled(False)
-                    self.button_info.update_button(button_index, {
-                        "task_type": "show_any_window",
-                        "properties": {"exe_name": ""}
-                    })
-            self.update_window_title()
+        reset_to_defaults(self.button_info, lambda: update_window_title(self.button_info, self), self)
 
     def update_apps_info(self):
         self.apps_info = JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
@@ -457,12 +279,12 @@ class ButtonInfoEditor(QWidget):
             exe_name_combo.blockSignals(False)
 
             print(f"DEBUG: Final state - enabled: {exe_name_combo.isEnabled()}, text: '{exe_name_combo.currentText()}'")
-            self.update_window_title()
+            update_window_title(self.button_info, self)
 
         except Exception as e:
             logging.error(f"Failed to update task type: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to update task type: {str(e)}")
-            
+
     def on_exe_name_changed(self, new_exe_name, button_index):
         try:
             # Get the current button configuration
@@ -516,7 +338,7 @@ class ButtonInfoEditor(QWidget):
             self.button_info.update_button(button_index, {
                 "properties": updated_properties
             })
-            self.update_window_title()
+            update_window_title(self.button_info, self)
 
         except Exception as e:
             logging.error(f"Failed to update exe name: {str(e)}")
@@ -526,17 +348,11 @@ class ButtonInfoEditor(QWidget):
         value = combo.itemData(idx) or combo.currentText()
         self.on_exe_name_changed(value, button_index)
 
-    def update_window_title(self):
-        title = "Button Info Editor"
-        if self.button_info.has_unsaved_changes:
-            title += " *"
-        self.setWindowTitle(title)
-
     def save_changes(self):
         try:
             self.button_info.save_to_json()
             self.button_info.load_json()
-            self.update_window_title()
+            update_window_title(self.button_info, self)
             QMessageBox.information(self, "Success", "Configuration saved successfully!")
             self.close()
         except Exception as e:
@@ -546,22 +362,3 @@ class ButtonInfoEditor(QWidget):
     class NoScrollComboBox(QComboBox):
         def wheelEvent(self, event):
             event.ignore()
-
-
-def main():
-    import sys
-    app = QApplication(sys.argv)
-    with open(get_resource_path("../../style.qss"), "r") as file:
-        qss_template = file.read()
-    qss = (qss_template
-           .replace("{{accent_color}}", CONFIG.ACCENT_COLOR)
-           .replace("{{accent_muted}}", CONFIG.ACCENT_COLOR_MUTED)
-           .replace("{{bg_color}}", CONFIG.BG_COLOR))
-    app.setStyleSheet(qss)
-    editor = ButtonInfoEditor()
-    editor.show()
-    sys.exit(app.exec())
-
-
-if __name__ == '__main__':
-    main()
