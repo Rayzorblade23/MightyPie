@@ -80,8 +80,12 @@ class ButtonInfoEditor(QWidget):
         reset_button.setObjectName("buttonConfigSingleResetButton")
         reset_button.setProperty("button_index", index)
         reset_button.clicked.connect(
-            lambda: reset_single_frame(reset_button, self.button_info, lambda: update_window_title(self.button_info, self)))
-
+            lambda: reset_single_frame(
+                sender=reset_button,
+                button_info=self.button_info,
+                update_window_title=lambda: update_window_title(self.button_info, self)
+            )
+        )
         reset_layout = QVBoxLayout()
         reset_layout.addStretch()
         reset_layout.addWidget(reset_button, alignment=Qt.AlignmentFlag.AlignCenter)

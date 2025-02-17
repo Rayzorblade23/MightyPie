@@ -6,6 +6,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, QFrame, QScrollArea
 from typing import Callable, List, Tuple, Dict, Any
 
+from data.button_info import ButtonInfo
+
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -65,26 +67,36 @@ def get_direction(row: int) -> str:
     return directions[row] if row < len(directions) else ""
 
 
-def reset_single_frame(sender: QWidget, button_info: Any, update_window_title: Callable[[], None]) -> None:
+def reset_single_frame(sender: QWidget, button_info: ButtonInfo, update_window_title: Callable[[], None]) -> None:
     """Resets the specific button frame to its default state."""
     button_index = sender.property("button_index")
     if button_index is None:
         return
 
-    button_frame = sender.parent()
+    # Find the button frame by traversing up until we find QFrame with correct objectName
+    current_widget = sender
+    while current_widget and (not isinstance(current_widget, QFrame) or
+                              current_widget.objectName() != "buttonConfigFrame"):
+        current_widget = current_widget.parent()
+
+    button_frame = current_widget
+    if not button_frame:
+        return
+
+    # Find the task type dropdown directly for this frame
     task_type_dropdown = button_frame.findChild(QComboBox)
     if task_type_dropdown:
-        task_type_dropdown.setCurrentText("show_any_window")
-        exe_name_dropdown = button_frame.findChild(QComboBox, None)
-        if exe_name_dropdown and exe_name_dropdown != task_type_dropdown:
-            exe_name_dropdown.setCurrentText("")
-            exe_name_dropdown.setEnabled(False)
+        task_type_dropdown.setCurrentText("Show Any Window")
+        exe_name_dropdown = [d for d in button_frame.findChildren(QComboBox) if d != task_type_dropdown]
+        if exe_name_dropdown:
+            exe_name_dropdown[0].setCurrentText("")
+            exe_name_dropdown[0].setEnabled(False)
+
         button_info.update_button(button_index, {
             "task_type": "show_any_window",
             "properties": {"exe_name": ""}
         })
     update_window_title()
-
 
 def reset_to_defaults(parent_widget: QWidget, button_info: Any) -> None:
     """Resets all settings to their default values."""
