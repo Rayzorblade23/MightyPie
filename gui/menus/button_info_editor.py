@@ -9,7 +9,7 @@ from data.config import CONFIG
 from gui.buttons.pie_button import BUTTON_TYPES
 from utils.button_info_editor_utils import (
     update_window_title, create_scroll_area, create_column, get_direction, create_button_container,
-    create_task_type_combo, create_exe_name_combo, create_texts_layout, create_dropdowns_layout, reset_single_frame, reset_to_defaults
+    create_task_type_dropdown, create_exe_name_dropdown, create_texts_layout, create_dropdowns_layout, reset_single_frame, reset_to_defaults
 )
 from utils.icon_utils import get_icon
 from utils.json_utils import JSONManager
@@ -92,20 +92,20 @@ class ButtonInfoEditor(QWidget):
 
         # Container for dropdowns and other content
         content_layout = QHBoxLayout()
-        current_task = self.button_info[index]
+        current_button_info = self.button_info[index]
 
-        task_type_combo, exe_name_combo = self.create_dropdowns(current_task, index)
+        task_type_dropdown, exe_name_dropdown = self.create_dropdowns(current_button_info, index)
         content_layout.addLayout(create_texts_layout())
-        content_layout.addLayout(create_dropdowns_layout(task_type_combo, exe_name_combo))
+        content_layout.addLayout(create_dropdowns_layout(task_type_dropdown, exe_name_dropdown))
 
         frame_layout.addLayout(content_layout)
         return button_frame
 
-    def create_dropdowns(self, current_task: dict, index: int) -> tuple[QComboBox, QComboBox]:
+    def create_dropdowns(self, current_button_info: dict, index: int) -> tuple[QComboBox, QComboBox]:
         """Creates dropdowns for task type and executable name."""
-        task_type_combo = create_task_type_combo(self.task_types, current_task, index, self.on_task_type_changed)
-        exe_name_combo = create_exe_name_combo(self.exe_names, current_task, index, self.on_exe_index_changed, self.on_exe_name_changed)
-        return task_type_combo, exe_name_combo
+        task_type_dropdown = create_task_type_dropdown(self.task_types, current_button_info, index, self.on_task_type_changed)
+        exe_name_dropdown = create_exe_name_dropdown(self.exe_names, current_button_info, index, self.on_exe_index_changed, self.on_exe_name_changed)
+        return task_type_dropdown, exe_name_dropdown
 
     def reset_to_defaults(self) -> None:
         """Resets button configurations to defaults."""
@@ -115,49 +115,49 @@ class ButtonInfoEditor(QWidget):
         """Updates the list of available executables from the JSON."""
         self.apps_info = JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
         self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in self.apps_info.items()])
-        for exe_combo in self.findChildren(QComboBox):
-            if not exe_combo.isEditable():
+        for exe_dropdown in self.findChildren(QComboBox):
+            if not exe_dropdown.isEditable():
                 continue
-            current_text = exe_combo.currentText()
-            exe_combo.blockSignals(True)
-            exe_combo.clear()
+            current_text = exe_dropdown.currentText()
+            exe_dropdown.blockSignals(True)
+            exe_dropdown.clear()
             for exe_name, app_name in self.exe_names:
                 display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
-                exe_combo.addItem(display_text, exe_name)
-            exe_combo.setCurrentText(current_text)
-            exe_combo.blockSignals(False)
+                exe_dropdown.addItem(display_text, exe_name)
+            exe_dropdown.setCurrentText(current_text)
+            exe_dropdown.blockSignals(False)
 
     def restore_values_from_model(self) -> None:
         """Restores values from the model for each button."""
         for button_frame in self.findChildren(QFrame, "buttonConfigFrame"):
-            combos = button_frame.findChildren(QComboBox)
-            if not combos:
+            dropdowns = button_frame.findChildren(QComboBox)
+            if not dropdowns:
                 continue
-            task_type_combo = combos[0]
-            exe_name_combo = combos[1] if len(combos) > 1 else None
-            button_index = task_type_combo.property("button_index")
-            current_task = self.button_info[button_index]
-            task_type_combo.blockSignals(True)
-            task_type_combo.setCurrentText(current_task["task_type"])
-            task_type_combo.blockSignals(False)
-            if exe_name_combo:
-                exe_name_combo.blockSignals(True)
-                if current_task["task_type"] == "show_any_window":
-                    exe_name_combo.setCurrentText("")
-                    exe_name_combo.setEnabled(False)
+            task_type_dropdown = dropdowns[0]
+            exe_name_dropdown = dropdowns[1] if len(dropdowns) > 1 else None
+            button_index = task_type_dropdown.property("button_index")
+            current_button_info = self.button_info[button_index]
+            task_type_dropdown.blockSignals(True)
+            task_type_dropdown.setCurrentText(current_button_info["task_type"])
+            task_type_dropdown.blockSignals(False)
+            if exe_name_dropdown:
+                exe_name_dropdown.blockSignals(True)
+                if current_button_info["task_type"] == "show_any_window":
+                    exe_name_dropdown.setCurrentText("")
+                    exe_name_dropdown.setEnabled(False)
                 else:
-                    exe_name_combo.setEnabled(True)
-                    exe_name = current_task["properties"].get("exe_name", "")
+                    exe_name_dropdown.setEnabled(True)
+                    exe_name = current_button_info["properties"].get("exe_name", "")
                     found_index = -1
-                    for i in range(exe_name_combo.count()):
-                        if exe_name_combo.itemData(i) == exe_name:
+                    for i in range(exe_name_dropdown.count()):
+                        if exe_name_dropdown.itemData(i) == exe_name:
                             found_index = i
                             break
                     if found_index != -1:
-                        exe_name_combo.setCurrentIndex(found_index)
+                        exe_name_dropdown.setCurrentIndex(found_index)
                     else:
-                        exe_name_combo.setCurrentText(exe_name)
-                exe_name_combo.blockSignals(False)
+                        exe_name_dropdown.setCurrentText(exe_name)
+                exe_name_dropdown.blockSignals(False)
 
     def closeEvent(self, event) -> None:
         """Handles closing the editor with unsaved changes."""
@@ -199,30 +199,30 @@ class ButtonInfoEditor(QWidget):
                 print("DEBUG: ERROR - Could not find button frame")
                 return
 
-            exe_combos = [
-                combo for combo in button_frame.findChildren(QComboBox)
-                if (combo.property("button_index") == button_index and combo != sender)
+            exe_dropdowns = [
+                dropdown for dropdown in button_frame.findChildren(QComboBox)
+                if (dropdown.property("button_index") == button_index and dropdown != sender)
             ]
 
-            if not exe_combos:
-                print("DEBUG: ERROR - Could not find matching exe combo box")
+            if not exe_dropdowns:
+                print("DEBUG: ERROR - Could not find matching exe dropdown box")
                 return
 
-            exe_name_combo = exe_combos[0]
-            print(f"DEBUG: Found exe_name_combo with button_index: {exe_name_combo.property('button_index')}")
-            print(f"DEBUG: Current enabled state: {exe_name_combo.isEnabled()}")
-            print(f"DEBUG: Current text: '{exe_name_combo.currentText()}'")
+            exe_name_dropdown = exe_dropdowns[0]
+            print(f"DEBUG: Found exe_name_dropdown with button_index: {exe_name_dropdown.property('button_index')}")
+            print(f"DEBUG: Current enabled state: {exe_name_dropdown.isEnabled()}")
+            print(f"DEBUG: Current text: '{exe_name_dropdown.currentText()}'")
 
-            exe_name_combo.blockSignals(True)
-            print("DEBUG: Clearing combo box")
-            exe_name_combo.clear()
+            exe_name_dropdown.blockSignals(True)
+            print("DEBUG: Clearing dropdown box")
+            exe_name_dropdown.clear()
 
             if new_task_type == "show_any_window":
                 print("DEBUG: Handling show_any_window")
-                exe_name_combo.setEditable(True)
-                exe_name_combo.setCurrentText("")
-                exe_name_combo.setEnabled(False)
-                print(f"DEBUG: After changes - enabled: {exe_name_combo.isEnabled()}, text: '{exe_name_combo.currentText()}'")
+                exe_name_dropdown.setEditable(True)
+                exe_name_dropdown.setCurrentText("")
+                exe_name_dropdown.setEnabled(False)
+                print(f"DEBUG: After changes - enabled: {exe_name_dropdown.isEnabled()}, text: '{exe_name_dropdown.currentText()}'")
 
                 updated_properties = {
                     "app_name": "",
@@ -234,33 +234,33 @@ class ButtonInfoEditor(QWidget):
                 }
             else:
                 print(f"DEBUG: Handling other type: {new_task_type}")
-                exe_name_combo.setEnabled(True)
-                print(f"DEBUG: Set enabled: {exe_name_combo.isEnabled()}")
+                exe_name_dropdown.setEnabled(True)
+                print(f"DEBUG: Set enabled: {exe_name_dropdown.isEnabled()}")
 
                 if new_task_type == "call_function":
                     print("DEBUG: Setting up call_function items")
                     from data.button_functions import ButtonFunctions
                     functions = ButtonFunctions().functions
-                    exe_name_combo.setEditable(False)
+                    exe_name_dropdown.setEditable(False)
                     for func_name, func_data in functions.items():
-                        exe_name_combo.addItem(func_data['text_1'], func_name)
+                        exe_name_dropdown.addItem(func_data['text_1'], func_name)
                     updated_properties = {
-                        "function_name": exe_name_combo.currentData()
+                        "function_name": exe_name_dropdown.currentData()
                     }
                 else:
                     print("DEBUG: Setting up program items")
-                    exe_name_combo.setEditable(True)
+                    exe_name_dropdown.setEditable(True)
                     for exe_name, app_name in self.exe_names:
                         display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
-                        exe_name_combo.addItem(display_text, exe_name)
+                        exe_name_dropdown.addItem(display_text, exe_name)
 
                     if not self.button_info[button_index]["properties"].get("exe_name"):
-                        for i in range(exe_name_combo.count()):
-                            if exe_name_combo.itemData(i) == "explorer.exe":
-                                exe_name_combo.setCurrentIndex(i)
+                        for i in range(exe_name_dropdown.count()):
+                            if exe_name_dropdown.itemData(i) == "explorer.exe":
+                                exe_name_dropdown.setCurrentIndex(i)
                                 break
 
-                    current_exe = exe_name_combo.currentData() or ""
+                    current_exe = exe_name_dropdown.currentData() or ""
                     updated_properties = {
                         "app_name": "",
                         "app_icon_path": "",
@@ -276,9 +276,9 @@ class ButtonInfoEditor(QWidget):
             })
 
             print("DEBUG: Re-enabling signals")
-            exe_name_combo.blockSignals(False)
+            exe_name_dropdown.blockSignals(False)
 
-            print(f"DEBUG: Final state - enabled: {exe_name_combo.isEnabled()}, text: '{exe_name_combo.currentText()}'")
+            print(f"DEBUG: Final state - enabled: {exe_name_dropdown.isEnabled()}, text: '{exe_name_dropdown.currentText()}'")
             update_window_title(self.button_info, self)
 
         except Exception as e:
@@ -342,9 +342,9 @@ class ButtonInfoEditor(QWidget):
             logging.error(f"Failed to update exe name: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to update exe name: {str(e)}")
 
-    def on_exe_index_changed(self, idx: int, button_index: int, combo: QComboBox) -> None:
-        """Handles changes to the executable index in the combo box."""
-        value = combo.itemData(idx) or combo.currentText()
+    def on_exe_index_changed(self, idx: int, button_index: int, dropdown: QComboBox) -> None:
+        """Handles changes to the executable index in the dropdown box."""
+        value = dropdown.itemData(idx) or dropdown.currentText()
         self.on_exe_name_changed(value, button_index)
 
     def save_changes(self) -> None:
@@ -361,5 +361,5 @@ class ButtonInfoEditor(QWidget):
 
     class NoScrollComboBox(QComboBox):
         def wheelEvent(self, event) -> None:
-            """Disables scrolling in the combo box."""
+            """Disables scrolling in the dropdown box."""
             event.ignore()

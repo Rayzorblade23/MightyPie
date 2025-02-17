@@ -72,13 +72,13 @@ def reset_single_frame(sender: QWidget, button_info: Any, update_window_title: C
         return
 
     button_frame = sender.parent()
-    task_type_combo = button_frame.findChild(QComboBox)
-    if task_type_combo:
-        task_type_combo.setCurrentText("show_any_window")
-        exe_name_combo = button_frame.findChild(QComboBox, None)
-        if exe_name_combo and exe_name_combo != task_type_combo:
-            exe_name_combo.setCurrentText("")
-            exe_name_combo.setEnabled(False)
+    task_type_dropdown = button_frame.findChild(QComboBox)
+    if task_type_dropdown:
+        task_type_dropdown.setCurrentText("show_any_window")
+        exe_name_dropdown = button_frame.findChild(QComboBox, None)
+        if exe_name_dropdown and exe_name_dropdown != task_type_dropdown:
+            exe_name_dropdown.setCurrentText("")
+            exe_name_dropdown.setEnabled(False)
         button_info.update_button(button_index, {
             "task_type": "show_any_window",
             "properties": {"exe_name": ""}
@@ -95,14 +95,14 @@ def reset_to_defaults(button_info: Any, update_window_title: Callable[[], None],
     )
     if reply == QMessageBox.StandardButton.Yes:
         for button_frame in parent_widget.findChildren(QFrame, "buttonConfigFrame"):
-            task_type_combo = button_frame.findChild(QComboBox)
-            if task_type_combo:
-                button_index = task_type_combo.property("button_index")
-                task_type_combo.setCurrentText("show_any_window")
-                exe_name_combo = button_frame.findChild(QComboBox, None)
-                if exe_name_combo and exe_name_combo != task_type_combo:
-                    exe_name_combo.setCurrentText("")
-                    exe_name_combo.setEnabled(False)
+            task_type_dropdown = button_frame.findChild(QComboBox)
+            if task_type_dropdown:
+                button_index = task_type_dropdown.property("button_index")
+                task_type_dropdown.setCurrentText("show_any_window")
+                exe_name_dropdown = button_frame.findChild(QComboBox, None)
+                if exe_name_dropdown and exe_name_dropdown != task_type_dropdown:
+                    exe_name_dropdown.setCurrentText("")
+                    exe_name_dropdown.setEnabled(False)
                 button_info.update_button(button_index, {
                     "task_type": "show_any_window",
                     "properties": {"exe_name": ""}
@@ -126,72 +126,72 @@ def create_texts_layout() -> QVBoxLayout:
     return texts_layout
 
 
-def create_dropdowns_layout(task_type_combo: QComboBox, exe_name_combo: QComboBox) -> QVBoxLayout:
+def create_dropdowns_layout(task_type_dropdown: QComboBox, exe_name_dropdown: QComboBox) -> QVBoxLayout:
     """Creates the layout for task type and exe name dropdowns."""
     dropdowns_layout = QVBoxLayout()
-    dropdowns_layout.addWidget(task_type_combo)
-    dropdowns_layout.addWidget(exe_name_combo)
+    dropdowns_layout.addWidget(task_type_dropdown)
+    dropdowns_layout.addWidget(exe_name_dropdown)
     return dropdowns_layout
 
 
-def create_task_type_combo(task_types: List[str], current_task: Dict[str, Any], index: int, on_task_type_changed: Callable[[str], None]) -> QComboBox:
-    """Creates a task type combo box with the available task types."""
-    task_type_combo = QComboBox()
+def create_task_type_dropdown(task_types: List[str], current_button_info: Dict[str, Any], index: int, on_task_type_changed: Callable[[str], None]) -> QComboBox:
+    """Creates a task type dropdown box with the available task types."""
+    task_type_dropdown = QComboBox()
     for task_type in task_types:
         display_text = task_type.replace('_', ' ').title()
-        task_type_combo.addItem(display_text, task_type)
-    current_index = task_types.index(current_task["task_type"])
-    task_type_combo.setCurrentIndex(current_index)
-    task_type_combo.setProperty("button_index", index)
-    task_type_combo.currentTextChanged.connect(lambda text: on_task_type_changed(task_types[task_type_combo.currentIndex()]))
-    return task_type_combo
+        task_type_dropdown.addItem(display_text, task_type)
+    current_index = task_types.index(current_button_info["task_type"])
+    task_type_dropdown.setCurrentIndex(current_index)
+    task_type_dropdown.setProperty("button_index", index)
+    task_type_dropdown.currentTextChanged.connect(lambda text: on_task_type_changed(task_types[task_type_dropdown.currentIndex()]))
+    return task_type_dropdown
 
 
-def create_exe_name_combo(exe_names: List[Tuple[str, str]], current_task: Dict[str, Any], index: int, on_exe_index_changed: Callable[[Dict[str, Any], QComboBox], None], on_exe_name_changed: Callable[[str, int], None]) -> QComboBox:
-    """Creates a combo box for selecting an executable name."""
-    exe_name_combo = QComboBox()
-    exe_name_combo.setProperty("button_index", index)
-    exe_name_combo.blockSignals(True)
+def create_exe_name_dropdown(exe_names: List[Tuple[str, str]], current_button_info: Dict[str, Any], index: int, on_exe_index_changed: Callable[[Dict[str, Any], QComboBox], None], on_exe_name_changed: Callable[[str, int], None]) -> QComboBox:
+    """Creates a dropdown box for selecting an executable name."""
+    exe_name_dropdown = QComboBox()
+    exe_name_dropdown.setProperty("button_index", index)
+    exe_name_dropdown.blockSignals(True)
 
-    if current_task["task_type"] == "show_any_window":
-        exe_name_combo.setEnabled(False)
-        exe_name_combo.setEditable(True)
-        exe_name_combo.clear()
-        exe_name_combo.setCurrentText("")
-    elif current_task["task_type"] == "call_function":
+    if current_button_info["task_type"] == "show_any_window":
+        exe_name_dropdown.setEnabled(False)
+        exe_name_dropdown.setEditable(True)
+        exe_name_dropdown.clear()
+        exe_name_dropdown.setCurrentText("")
+    elif current_button_info["task_type"] == "call_function":
         from data.button_functions import ButtonFunctions
         functions = ButtonFunctions().functions
-        exe_name_combo.setEditable(False)
-        exe_name_combo.setEnabled(True)
+        exe_name_dropdown.setEditable(False)
+        exe_name_dropdown.setEnabled(True)
         for func_name, func_data in functions.items():
-            exe_name_combo.addItem(func_data['text_1'], func_name)
-        current_function = current_task["properties"].get("function_name", "")
+            exe_name_dropdown.addItem(func_data['text_1'], func_name)
+        current_function = current_button_info["properties"].get("function_name", "")
         if current_function:
-            for i in range(exe_name_combo.count()):
-                if exe_name_combo.itemData(i) == current_function:
-                    exe_name_combo.setCurrentIndex(i)
+            for i in range(exe_name_dropdown.count()):
+                if exe_name_dropdown.itemData(i) == current_function:
+                    exe_name_dropdown.setCurrentIndex(i)
                     break
     else:
-        exe_name_combo.setEditable(True)
-        exe_name_combo.setEnabled(True)
+        exe_name_dropdown.setEditable(True)
+        exe_name_dropdown.setEnabled(True)
         for exe_name, app_name in exe_names:
             display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
-            exe_name_combo.addItem(display_text, exe_name)
-        current_exe_name = current_task["properties"].get("exe_name", "")
+            exe_name_dropdown.addItem(display_text, exe_name)
+        current_exe_name = current_button_info["properties"].get("exe_name", "")
         if current_exe_name:
-            for i in range(exe_name_combo.count()):
-                if exe_name_combo.itemData(i) == current_exe_name:
-                    exe_name_combo.setCurrentIndex(i)
+            for i in range(exe_name_dropdown.count()):
+                if exe_name_dropdown.itemData(i) == current_exe_name:
+                    exe_name_dropdown.setCurrentIndex(i)
                     break
         else:
-            for i in range(exe_name_combo.count()):
-                if exe_name_combo.itemData(i) == "explorer.exe":
-                    exe_name_combo.setCurrentIndex(i)
+            for i in range(exe_name_dropdown.count()):
+                if exe_name_dropdown.itemData(i) == "explorer.exe":
+                    exe_name_dropdown.setCurrentIndex(i)
                     break
 
-    exe_name_combo.currentIndexChanged.connect(
-        partial(on_exe_index_changed, button_index=index, combo=exe_name_combo)
+    exe_name_dropdown.currentIndexChanged.connect(
+        partial(on_exe_index_changed, button_index=index, dropdown=exe_name_dropdown)
     )
-    exe_name_combo.editTextChanged.connect(lambda text, idx=index: on_exe_name_changed(text, idx))
-    exe_name_combo.blockSignals(False)
-    return exe_name_combo
+    exe_name_dropdown.editTextChanged.connect(lambda text, idx=index: on_exe_name_changed(text, idx))
+    exe_name_dropdown.blockSignals(False)
+    return exe_name_dropdown
