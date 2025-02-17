@@ -1,7 +1,8 @@
 # button_info_editor.py
 
 import logging
-from PyQt6.QtCore import Qt, QThread
+
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QFrame, QPushButton, QLabel
 
 from data.button_info import ButtonInfo
@@ -20,11 +21,9 @@ logging.basicConfig(level=logging.DEBUG)
 class ButtonInfoEditor(QWidget):
     def __init__(self) -> None:
         """Initializes the ButtonInfoEditor with necessary setups."""
-        print("Starting ButtonInfoEditor init")  # Debug
-        print(f"Current thread: {QThread.currentThread()}")  # Debug
         super().__init__()
         self.button_info = ButtonInfo.get_instance()
-        print(f"ButtonInfo instance: {id(self.button_info)}")  # Debug
+        self.temp_config = TemporaryButtonConfig()  # Add temporary storage
 
         # Available options for dropdowns
         self.task_types = list(BUTTON_TYPES.keys())
@@ -83,7 +82,8 @@ class ButtonInfoEditor(QWidget):
             lambda: reset_single_frame(
                 sender=reset_button,
                 button_info=self.button_info,
-                update_window_title=lambda: update_window_title(self.button_info, self)
+                temp_config=self.temp_config,  # Pass temp_config here
+                update_window_title=lambda: update_window_title(self.temp_config, self)
             )
         )
         reset_layout = QVBoxLayout()
@@ -166,7 +166,7 @@ class ButtonInfoEditor(QWidget):
 
     def closeEvent(self, event) -> None:
         """Handles closing the editor with unsaved changes."""
-        if self.button_info.has_unsaved_changes:
+        if self.temp_config.has_changes():  # Check temp_config instead
             reply = QMessageBox.question(
                 self, 'Unsaved Changes',
                 'You have unsaved changes. Do you want to save before closing?',
@@ -178,6 +178,7 @@ class ButtonInfoEditor(QWidget):
                 self.save_changes()
                 event.accept()
             elif reply == QMessageBox.StandardButton.Discard:
+                self.temp_config.clear()  # Clear temp changes
                 self.button_info.load_json()
                 self.restore_values_from_model()
                 event.accept()
@@ -236,17 +237,18 @@ class ButtonInfoEditor(QWidget):
                 # Set first function as default
                 if value_dropdown.count() > 0:
                     first_function = value_dropdown.itemData(0)
-                    self.button_info.update_button(button_index, {
+                    self.temp_config.update_button(button_index, {  # Use temp_config
                         "task_type": new_task_type,
                         "properties": {"function_name": first_function}
                     })
                     value_dropdown.setCurrentIndex(0)
                     value_dropdown.blockSignals(False)
-                    update_window_title(self.button_info, self)
+                    update_window_title(self.temp_config, self)  # Pass temp_config
                     return
 
-            # Let update_button handle property initialization for other types
-            self.button_info.update_button(button_index, {"task_type": new_task_type})
+            # Use temp_config for other updates
+            self.temp_config.update_button(button_index, {"task_type": new_task_type})
+            update_window_title(self.temp_config, self)
 
             # Set default values after initialization
             if new_task_type in ["show_program_window", "launch_program"]:
@@ -256,7 +258,6 @@ class ButtonInfoEditor(QWidget):
                         break
 
             value_dropdown.blockSignals(False)
-            update_window_title(self.button_info, self)
 
         except Exception as e:
             logging.error(f"Failed to update task type: {str(e)}")
@@ -285,10 +286,10 @@ class ButtonInfoEditor(QWidget):
             elif task_type in ["show_program_window", "launch_program"]:
                 updated_properties["exe_name"] = new_value
 
-            self.button_info.update_button(button_index, {
+            self.temp_config.update_button(button_index, {  # Use temp_config
                 "properties": updated_properties
             })
-            update_window_title(self.button_info, self)
+            update_window_title(self.temp_config, self)
 
         except Exception as e:
             logging.error(f"Failed to update value: {str(e)}")
@@ -302,9 +303,18 @@ class ButtonInfoEditor(QWidget):
     def save_changes(self) -> None:
         """Saves the changes to the button configurations."""
         try:
+            # Apply temporary changes to the button_info instance
+            self.temp_config.apply_changes(self.button_info)
+
+            # Save the updated configuration to JSON
             self.button_info.save_to_json()
-            self.button_info.load_json()
-            update_window_title(self.button_info, self)
+
+            # Clear temporary storage
+            self.temp_config.clear()
+
+            # Update window title
+            update_window_title(self.temp_config, self)
+
             QMessageBox.information(self, "Success", "Configuration saved successfully!")
             self.close()
         except Exception as e:
@@ -315,3 +325,26 @@ class ButtonInfoEditor(QWidget):
         def wheelEvent(self, event) -> None:
             """Disables scrolling in the dropdown box."""
             event.ignore()
+
+
+class TemporaryButtonConfig:
+    """Temporarily stores button configuration changes until saved."""
+
+    def __init__(self):
+        self._temp_changes = {}
+
+    def update_button(self, index: int, changes: dict) -> None:
+        if index not in self._temp_changes:
+            self._temp_changes[index] = {}
+        self._temp_changes[index].update(changes)
+
+    def apply_changes(self, button_info: ButtonInfo) -> None:
+        for index, changes in self._temp_changes.items():
+            button_info.update_button(index, changes)
+        self.clear()
+
+    def clear(self) -> None:
+        self._temp_changes.clear()
+
+    def has_changes(self) -> bool:
+        return bool(self._temp_changes)

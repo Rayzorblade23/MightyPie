@@ -2,9 +2,10 @@
 
 import logging
 from functools import partial
+from typing import Callable, List, Tuple, Dict, Any
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, QFrame, QScrollArea
-from typing import Callable, List, Tuple, Dict, Any
 
 from data.button_info import ButtonInfo
 
@@ -67,36 +68,54 @@ def get_direction(row: int) -> str:
     return directions[row] if row < len(directions) else ""
 
 
-def reset_single_frame(sender: QWidget, button_info: ButtonInfo, update_window_title: Callable[[], None]) -> None:
+def reset_single_frame(sender: QWidget, button_info: ButtonInfo, temp_config: Any, update_window_title: Callable[[], None]) -> None:
     """Resets the specific button frame to its default state."""
-    button_index = sender.property("button_index")
-    if button_index is None:
-        return
+    try:
+        button_index = sender.property("button_index")
+        if button_index is None:
+            return
 
-    # Find the button frame by traversing up until we find QFrame with correct objectName
-    current_widget = sender
-    while current_widget and (not isinstance(current_widget, QFrame) or
-                              current_widget.objectName() != "buttonConfigFrame"):
-        current_widget = current_widget.parent()
+        # Find the button frame
+        button_frame = None
+        current_widget = sender
+        while current_widget:
+            if isinstance(current_widget, QFrame) and current_widget.objectName() == "buttonConfigFrame":
+                button_frame = current_widget
+                break
+            current_widget = current_widget.parent()
 
-    button_frame = current_widget
-    if not button_frame:
-        return
+        if not button_frame:
+            logging.error("Could not find button frame")
+            return
 
-    # Find the task type dropdown directly for this frame
-    task_type_dropdown = button_frame.findChild(QComboBox)
-    if task_type_dropdown:
+        # Find task type dropdown
+        task_type_dropdown = button_frame.findChild(QComboBox)
+        if not task_type_dropdown:
+            logging.error("Could not find task type dropdown")
+            return
+
+        # Find exe name dropdown
+        exe_name_dropdown = None
+        for dropdown in button_frame.findChildren(QComboBox):
+            if dropdown != task_type_dropdown:
+                exe_name_dropdown = dropdown
+                break
+
+        # Update UI
         task_type_dropdown.setCurrentText("Show Any Window")
-        exe_name_dropdown = [d for d in button_frame.findChildren(QComboBox) if d != task_type_dropdown]
         if exe_name_dropdown:
-            exe_name_dropdown[0].setCurrentText("")
-            exe_name_dropdown[0].setEnabled(False)
+            exe_name_dropdown.setCurrentText("")
+            exe_name_dropdown.setEnabled(False)
 
-        button_info.update_button(button_index, {
+        # Update temporary config
+        temp_config.update_button(button_index, {
             "task_type": "show_any_window",
             "properties": {"exe_name": ""}
         })
-    update_window_title()
+        update_window_title()
+
+    except Exception as e:
+        logging.error(f"Error in reset_single_frame: {str(e)}")
 
 def reset_to_defaults(parent_widget: QWidget, button_info: Any) -> None:
     """Resets all settings to their default values."""
@@ -122,10 +141,12 @@ def reset_to_defaults(parent_widget: QWidget, button_info: Any) -> None:
         update_window_title(button_info, parent_widget)
 
 
-def update_window_title(button_info: Any, window: QWidget) -> None:
+def update_window_title(config: Any, window: QWidget) -> None:
     """Updates the window title based on unsaved changes."""
     title = "Button Info Editor"
-    if button_info.has_unsaved_changes:
+    if hasattr(config, 'has_changes') and config.has_changes():
+        title += " *"
+    elif hasattr(config, 'has_unsaved_changes') and config.has_unsaved_changes:
         title += " *"
     window.setWindowTitle(title)
 
@@ -146,7 +167,8 @@ def create_dropdowns_layout(task_type_dropdown: QComboBox, exe_name_dropdown: QC
     return dropdowns_layout
 
 
-def create_task_type_dropdown(task_types: List[str], current_button_info: Dict[str, Any], index: int, on_task_type_changed: Callable[[str], None]) -> QComboBox:
+def create_task_type_dropdown(task_types: List[str], current_button_info: Dict[str, Any], index: int,
+                              on_task_type_changed: Callable[[str], None]) -> QComboBox:
     """Creates a task type dropdown box with the available task types."""
     task_type_dropdown = QComboBox()
     for task_type in task_types:
@@ -160,8 +182,8 @@ def create_task_type_dropdown(task_types: List[str], current_button_info: Dict[s
 
 
 def create_value_dropdown(exe_names: List[Tuple[str, str]], current_button_info: Dict[str, Any], index: int,
-                         on_value_index_changed: Callable[[Dict[str, Any], QComboBox], None],
-                         on_value_changed: Callable[[str, int], None]) -> QComboBox:
+                          on_value_index_changed: Callable[[Dict[str, Any], QComboBox], None],
+                          on_value_changed: Callable[[str, int], None]) -> QComboBox:
     """Creates a dropdown box for selecting either an executable name or a function name."""
     value_dropdown = QComboBox()
     value_dropdown.setProperty("button_index", index)
