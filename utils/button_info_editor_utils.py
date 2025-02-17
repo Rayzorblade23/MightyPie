@@ -2,14 +2,15 @@
 
 import logging
 from functools import partial
-
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, QFrame, QScrollArea
+from typing import Callable, List, Tuple, Dict, Any
 
 logging.basicConfig(level=logging.DEBUG)
 
 
-def create_scroll_area():
+def create_scroll_area() -> Tuple[QScrollArea, QHBoxLayout]:
+    """Creates a scroll area with a layout."""
     scroll = QScrollArea()
     scroll.setWidgetResizable(True)
     scroll_widget = QWidget()
@@ -18,7 +19,8 @@ def create_scroll_area():
     return scroll, scroll_layout
 
 
-def create_column(col, num_buttons, get_direction, create_button_frame):
+def create_column(col: int, num_buttons: int, create_button_frame: Callable[[int, int], QWidget]) -> Tuple[QWidget, QVBoxLayout]:
+    """Creates a column with buttons and a title label."""
     column_widget = QWidget()
     column_layout = QVBoxLayout(column_widget)
 
@@ -42,7 +44,8 @@ def create_column(col, num_buttons, get_direction, create_button_frame):
     return column_widget, column_layout
 
 
-def create_button_container(reset_to_defaults, save_changes):
+def create_button_container(reset_to_defaults: Callable[[], None], save_changes: Callable[[], None]) -> QHBoxLayout:
+    """Creates the layout for the button container with reset and save buttons."""
     button_container = QHBoxLayout()
     reset_button = QPushButton("Reset to Defaults")
     reset_button.setObjectName("buttonConfigButton")
@@ -56,12 +59,14 @@ def create_button_container(reset_to_defaults, save_changes):
     return button_container
 
 
-def get_direction(row):
+def get_direction(row: int) -> str:
+    """Returns the direction symbol for the specified row."""
     directions = ["⭡", "⭧", "⭢", "⭨", "⭣", "⭩", "⭠", "⭦"]
     return directions[row] if row < len(directions) else ""
 
 
-def reset_single_frame(sender, button_info, update_window_title):
+def reset_single_frame(sender: QWidget, button_info: Any, update_window_title: Callable[[], None]) -> None:
+    """Resets the specific button frame to its default state."""
     button_index = sender.property("button_index")
     if button_index is None:
         return
@@ -81,7 +86,8 @@ def reset_single_frame(sender, button_info, update_window_title):
     update_window_title()
 
 
-def reset_to_defaults(button_info, update_window_title, parent_widget):
+def reset_to_defaults(button_info: Any, update_window_title: Callable[[], None], parent_widget: QWidget) -> None:
+    """Resets all settings to their default values."""
     reply = QMessageBox.question(
         None, "Reset Confirmation",
         "Are you sure you want to reset all settings to default?\nYou can still discard the changes afterwards.",
@@ -104,28 +110,32 @@ def reset_to_defaults(button_info, update_window_title, parent_widget):
         update_window_title(button_info, parent_widget)
 
 
-def update_window_title(button_info, window):
+def update_window_title(button_info: Any, window: QWidget) -> None:
+    """Updates the window title based on unsaved changes."""
     title = "Button Info Editor"
     if button_info.has_unsaved_changes:
         title += " *"
     window.setWindowTitle(title)
 
 
-def create_texts_layout():
+def create_texts_layout() -> QVBoxLayout:
+    """Creates the layout for task type and program labels."""
     texts_layout = QVBoxLayout()
     texts_layout.addWidget(QLabel("Task Type:"))
     texts_layout.addWidget(QLabel("Program:"))
     return texts_layout
 
 
-def create_dropdowns_layout(task_type_combo, exe_name_combo):
+def create_dropdowns_layout(task_type_combo: QComboBox, exe_name_combo: QComboBox) -> QVBoxLayout:
+    """Creates the layout for task type and exe name dropdowns."""
     dropdowns_layout = QVBoxLayout()
     dropdowns_layout.addWidget(task_type_combo)
     dropdowns_layout.addWidget(exe_name_combo)
     return dropdowns_layout
 
 
-def create_task_type_combo(task_types, current_task, index, on_task_type_changed):
+def create_task_type_combo(task_types: List[str], current_task: Dict[str, Any], index: int, on_task_type_changed: Callable[[str], None]) -> QComboBox:
+    """Creates a task type combo box with the available task types."""
     task_type_combo = QComboBox()
     for task_type in task_types:
         display_text = task_type.replace('_', ' ').title()
@@ -137,7 +147,8 @@ def create_task_type_combo(task_types, current_task, index, on_task_type_changed
     return task_type_combo
 
 
-def create_exe_name_combo(exe_names, current_task, index, on_exe_index_changed, on_exe_name_changed):
+def create_exe_name_combo(exe_names: List[Tuple[str, str]], current_task: Dict[str, Any], index: int, on_exe_index_changed: Callable[[Dict[str, Any], QComboBox], None], on_exe_name_changed: Callable[[str, int], None]) -> QComboBox:
+    """Creates a combo box for selecting an executable name."""
     exe_name_combo = QComboBox()
     exe_name_combo.setProperty("button_index", index)
     exe_name_combo.blockSignals(True)

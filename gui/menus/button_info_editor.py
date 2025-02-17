@@ -1,7 +1,6 @@
 # button_info_editor.py
 
 import logging
-
 from PyQt6.QtCore import Qt, QThread
 from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QFrame, QPushButton, QLabel
 
@@ -19,7 +18,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class ButtonInfoEditor(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initializes the ButtonInfoEditor with necessary setups."""
         print("Starting ButtonInfoEditor init")  # Debug
         print(f"Current thread: {QThread.currentThread()}")  # Debug
         super().__init__()
@@ -28,15 +28,12 @@ class ButtonInfoEditor(QWidget):
 
         # Available options for dropdowns
         self.task_types = list(BUTTON_TYPES.keys())
-
         self.apps_info = JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
-
-        # Extract exe names (keys in the JSON)
         self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in self.apps_info.items()])
-
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
+        """Sets up the user interface components."""
         self.setWindowTitle('Button Info Editor')
         self.setGeometry(100, 100, 1500, 860)
 
@@ -48,13 +45,14 @@ class ButtonInfoEditor(QWidget):
         buttons_per_column = CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU
 
         for col in range(num_columns):
-            column_widget, column_layout = create_column(col, buttons_per_column, get_direction, self.create_button_frame)
+            column_widget, column_layout = create_column(col, buttons_per_column, self.create_button_frame)
             scroll_layout.addWidget(column_widget)
 
         button_container = create_button_container(self.reset_to_defaults, self.save_changes)
         main_layout.addLayout(button_container)
 
-    def create_button_frame(self, index, row):
+    def create_button_frame(self, index: int, row: int) -> QFrame:
+        """Creates the layout for each button frame."""
         button_frame = QFrame()
         button_frame.setObjectName("buttonConfigFrame")
         button_frame.setFrameStyle(QFrame.Shape.Panel.value | QFrame.Shadow.Raised.value)
@@ -103,15 +101,18 @@ class ButtonInfoEditor(QWidget):
         frame_layout.addLayout(content_layout)
         return button_frame
 
-    def create_dropdowns(self, current_task, index):
+    def create_dropdowns(self, current_task: dict, index: int) -> tuple[QComboBox, QComboBox]:
+        """Creates dropdowns for task type and executable name."""
         task_type_combo = create_task_type_combo(self.task_types, current_task, index, self.on_task_type_changed)
         exe_name_combo = create_exe_name_combo(self.exe_names, current_task, index, self.on_exe_index_changed, self.on_exe_name_changed)
         return task_type_combo, exe_name_combo
 
-    def reset_to_defaults(self):
+    def reset_to_defaults(self) -> None:
+        """Resets button configurations to defaults."""
         reset_to_defaults(self.button_info, lambda: update_window_title(self.button_info, self), self)
 
-    def update_apps_info(self):
+    def update_apps_info(self) -> None:
+        """Updates the list of available executables from the JSON."""
         self.apps_info = JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
         self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in self.apps_info.items()])
         for exe_combo in self.findChildren(QComboBox):
@@ -126,7 +127,8 @@ class ButtonInfoEditor(QWidget):
             exe_combo.setCurrentText(current_text)
             exe_combo.blockSignals(False)
 
-    def restore_values_from_model(self):
+    def restore_values_from_model(self) -> None:
+        """Restores values from the model for each button."""
         for button_frame in self.findChildren(QFrame, "buttonConfigFrame"):
             combos = button_frame.findChildren(QComboBox)
             if not combos:
@@ -157,7 +159,8 @@ class ButtonInfoEditor(QWidget):
                         exe_name_combo.setCurrentText(exe_name)
                 exe_name_combo.blockSignals(False)
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
+        """Handles closing the editor with unsaved changes."""
         if self.button_info.has_unsaved_changes:
             reply = QMessageBox.question(
                 self, 'Unsaved Changes',
@@ -178,24 +181,24 @@ class ButtonInfoEditor(QWidget):
         else:
             event.accept()
 
-    def showEvent(self, event):
+    def showEvent(self, event) -> None:
+        """Handles event when the editor is shown."""
         self.update_apps_info()
         super().showEvent(event)
 
-    def on_task_type_changed(self, new_task_type):
+    def on_task_type_changed(self, new_task_type: str) -> None:
+        """Handles changes to task type in the dropdown."""
         sender = self.sender()
         button_index = sender.property("button_index")
         print(f"\nDEBUG: Task type changed to: {new_task_type}")
         print(f"DEBUG: Button index: {button_index}")
 
         try:
-            # Get the grandparent (button frame)
             button_frame = sender.parent().parent()
             if not button_frame:
                 print("DEBUG: ERROR - Could not find button frame")
                 return
 
-            # Find all combo boxes in this frame that have the same button_index
             exe_combos = [
                 combo for combo in button_frame.findChildren(QComboBox)
                 if (combo.property("button_index") == button_index and combo != sender)
@@ -210,9 +213,7 @@ class ButtonInfoEditor(QWidget):
             print(f"DEBUG: Current enabled state: {exe_name_combo.isEnabled()}")
             print(f"DEBUG: Current text: '{exe_name_combo.currentText()}'")
 
-            # Block signals during updates
             exe_name_combo.blockSignals(True)
-
             print("DEBUG: Clearing combo box")
             exe_name_combo.clear()
 
@@ -233,7 +234,6 @@ class ButtonInfoEditor(QWidget):
                 }
             else:
                 print(f"DEBUG: Handling other type: {new_task_type}")
-                # Enable the combo box first
                 exe_name_combo.setEnabled(True)
                 print(f"DEBUG: Set enabled: {exe_name_combo.isEnabled()}")
 
@@ -285,13 +285,12 @@ class ButtonInfoEditor(QWidget):
             logging.error(f"Failed to update task type: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to update task type: {str(e)}")
 
-    def on_exe_name_changed(self, new_exe_name, button_index):
+    def on_exe_name_changed(self, new_exe_name: str, button_index: int) -> None:
+        """Handles changes to the executable name in the dropdown."""
         try:
-            # Get the current button configuration
             current_config = self.button_info[button_index]
             task_type = current_config["task_type"]
 
-            # Initialize properties based on task_type
             if task_type == "show_any_window":
                 updated_properties = {
                     "app_name": "",
@@ -331,7 +330,6 @@ class ButtonInfoEditor(QWidget):
                 if key in updated_properties:
                     updated_properties[key] = value
 
-            # Update the exe_name
             updated_properties["exe_name"] = new_exe_name
 
             # Update button with all properties
@@ -344,11 +342,13 @@ class ButtonInfoEditor(QWidget):
             logging.error(f"Failed to update exe name: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to update exe name: {str(e)}")
 
-    def on_exe_index_changed(self, idx, button_index, combo):
+    def on_exe_index_changed(self, idx: int, button_index: int, combo: QComboBox) -> None:
+        """Handles changes to the executable index in the combo box."""
         value = combo.itemData(idx) or combo.currentText()
         self.on_exe_name_changed(value, button_index)
 
-    def save_changes(self):
+    def save_changes(self) -> None:
+        """Saves the changes to the button configurations."""
         try:
             self.button_info.save_to_json()
             self.button_info.load_json()
@@ -360,5 +360,6 @@ class ButtonInfoEditor(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to save configuration: {str(e)}")
 
     class NoScrollComboBox(QComboBox):
-        def wheelEvent(self, event):
+        def wheelEvent(self, event) -> None:
+            """Disables scrolling in the combo box."""
             event.ignore()
