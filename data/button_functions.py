@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, Union, Dict
+from typing import Callable, Union, Dict
 
 import pyautogui
 from PyQt6.QtWidgets import QApplication
@@ -12,15 +12,22 @@ from utils.window_utils import (
     focus_all_explorer_windows,
 )
 
-if TYPE_CHECKING:
-    from gui.pie_window import PieWindow
-
 
 class ButtonFunctions:
     """Encapsulates button functions and their metadata."""
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.__initialized = False
+        return cls._instance
 
     def __init__(self) -> None:
-        self.main_window: "PieWindow" = QApplication.instance().property("main_window")
+        if self.__initialized:
+            return
+        self.__initialized = True
+
         self.functions: Dict[str, Dict[str, Union[str, Callable, str]]] = {
             "toggle_maximize_window": {
                 "text_1": "MAXIMIZE",
@@ -56,7 +63,13 @@ class ButtonFunctions:
 
     def _wrap(self, func: Callable) -> Callable[[], None]:
         """Wraps functions to pass the main_window as an argument."""
-        return lambda: func(self.main_window)
+
+        def wrapped():
+            main_window = QApplication.instance().property("main_window")
+            if main_window:
+                return func(main_window)
+
+        return wrapped
 
     def get_function(self, key: str) -> dict:
         """Returns the function metadata for a given key, or raises an error if the key doesn't exist."""

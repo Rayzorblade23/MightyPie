@@ -349,14 +349,9 @@ class LaunchProgramPieButton(PieButton):
         self.setObjectName("launch_program_button")
         self.button_type = "launch_program"
 
-        self.is_setup_finished: bool = False
-
         self.print_button_type()
 
     def update_button(self, properties: dict) -> None:
-        if self.is_setup_finished:
-            return
-
         button_text_2 = "- Launch -"
         exe_path = properties["exe_path"]
         button_text_1 = properties["app_name"]
@@ -375,7 +370,6 @@ class LaunchProgramPieButton(PieButton):
 
         # self.set_middle_click_action()
         self.setEnabled(True)
-        self.is_setup_finished = True
 
 
 class CallFunctionPieButton(PieButton):
@@ -388,15 +382,11 @@ class CallFunctionPieButton(PieButton):
         self.setObjectName("call_function_button")
         self.button_type = "call_function"
 
-        self.is_setup_finished: bool = False
         self.button_functions = ButtonFunctions()
 
         self.print_button_type()
 
     def update_button(self, properties: dict) -> None:
-        if self.is_setup_finished:
-            return
-
         function_metadata = self.button_functions.get_function(properties["function_name"])
 
         # Access the text, icon, and action
@@ -424,7 +414,6 @@ class CallFunctionPieButton(PieButton):
 
         # self.set_middle_click_action()
         self.setEnabled(True)
-        self.is_setup_finished = True
 
 
 BUTTON_TYPES: dict[str, Type[PieButton]] = {

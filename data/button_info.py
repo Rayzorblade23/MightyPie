@@ -59,82 +59,89 @@ class ButtonInfo:
             self.logger.error("Error saving configuration.")
             return False
 
+    def _initialize_button(self, index):
+        """Initialize a button with empty configuration"""
+        return {
+            "task_type": "show_any_window",
+            "properties": {
+                "app_name": "",
+                "app_icon_path": "",
+                "window_title": "",
+                "window_handle": -1,
+                "exe_name": "",
+                "exe_path": ""
+            }
+        }
+
     def update_button(self, index, update_dict):
         """Update a button's configuration (but don't save to file)"""
         try:
-            # If the index doesn't exist, initialize it with default values
+            # If the index doesn't exist, initialize it
             if index not in self.button_info_dict:
                 self.button_info_dict[index] = self._initialize_button(index)
 
-            # Update only the specified fields
-            for key, value in update_dict.items():
-                if isinstance(value, dict):
-                    self.button_info_dict[index][key].update(value)
-                else:
-                    self.button_info_dict[index][key] = value
+            task_type = update_dict.get("task_type", self.button_info_dict[index]["task_type"])
 
-            # Verify the update hasn't broken the structure
+            # Define complete property sets for each task type
+            properties = {
+                "show_any_window": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "window_title": "",
+                    "window_handle": -1,
+                    "exe_name": "explorer.exe",
+                    "exe_path": ""
+            },
+                "show_program_window": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "explorer.exe",
+                    "exe_path": "",
+                    "window_title": "",
+                    "window_handle": -1
+                },
+                "launch_program": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "explorer.exe",
+                    "exe_path": ""
+                },
+                "call_function": {
+                    "function_name": update_dict.get("properties", {}).get("function_name", "")
+                }
+            }
+
+            # Update with complete property set first
+            self.button_info_dict[index] = {
+                "task_type": task_type,
+                "properties": properties[task_type]
+            }
+
+            # Then overlay with any specific updates
+            if "properties" in update_dict:
+                self.button_info_dict[index]["properties"].update(update_dict["properties"])
+
             self._validate_button_config(self.button_info_dict[index])
-
             self.has_unsaved_changes = True
 
         except Exception as e:
             raise e
 
-    def _initialize_button(self, index):
-        """Initialize a button with default values based on its type"""
-        default_config = {
-            "show_any_window": {
-                "task_type": "show_any_window",
-                "properties": {
-                    "app_name": "",
-                    "text_1": "",
-                    "text_2": "",
-                    "window_handle": -1,
-                    "app_icon_path": "",
-                    "exe_name": "",
-                }
-            },
-            "show_program_window": {
-                "task_type": "show_program_window",
-                "properties": {
-                    "app_name": "",
-                    "text_1": "",
-                    "text_2": "",
-                    "window_handle": -1,
-                    "app_icon_path": "",
-                    "exe_name": "",
-                    "exe_path": "",
-                    "window_title": "",
-                }
-            },
-            "launch_program": {
-                "task_type": "launch_program",
-                "properties": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "exe_name": "",
-                    "exe_path": "",
-                }
-            },
-            "call_function": {
-                "task_type": "call_function",
-                "properties": {
-                    "function_name": "",
-                }
-            }
-        }
-        # Default to "show_any_window" if the type is not specified
-        task_type = self.button_info_dict.get(index, {}).get("task_type", "show_any_window")
-        return default_config.get(task_type, default_config["show_any_window"])
-
     def _validate_button_config(self, button_config):
         """Validate button configuration structure"""
         required_keys = {"task_type", "properties"}
         required_properties = {
-            "show_any_window": {"app_name", "text_1", "text_2", "window_handle", "app_icon_path", "exe_name"},
-            "show_program_window": {"app_name", "text_1", "text_2", "window_handle", "app_icon_path", "exe_name", "exe_path", "window_title"},
-            "launch_program": {"app_name", "app_icon_path", "exe_name", "exe_path"},
+            "show_any_window": {
+                "app_name", "app_icon_path", "window_title",
+                "window_handle", "exe_name"
+            },
+            "show_program_window": {
+                "app_name", "app_icon_path", "exe_name", "exe_path",
+                "window_title", "window_handle"
+            },
+            "launch_program": {
+                "app_name", "app_icon_path", "exe_name", "exe_path"
+            },
             "call_function": {"function_name"}
         }
 

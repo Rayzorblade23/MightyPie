@@ -9,7 +9,7 @@ from data.config import CONFIG
 from gui.buttons.pie_button import BUTTON_TYPES
 from utils.button_info_editor_utils import (
     update_window_title, create_scroll_area, create_column, get_direction, create_button_container,
-    create_task_type_dropdown, create_exe_name_dropdown, create_texts_layout, create_dropdowns_layout, reset_single_frame, reset_to_defaults
+    create_task_type_dropdown, create_value_dropdown, create_texts_layout, create_dropdowns_layout, reset_single_frame, reset_to_defaults
 )
 from utils.icon_utils import get_icon
 from utils.json_utils import JSONManager
@@ -102,10 +102,11 @@ class ButtonInfoEditor(QWidget):
         return button_frame
 
     def create_dropdowns(self, current_button_info: dict, index: int) -> tuple[QComboBox, QComboBox]:
-        """Creates dropdowns for task type and executable name."""
+        """Creates dropdowns for task type and value (exe name or function name)."""
         task_type_dropdown = create_task_type_dropdown(self.task_types, current_button_info, index, self.on_task_type_changed)
-        exe_name_dropdown = create_exe_name_dropdown(self.exe_names, current_button_info, index, self.on_exe_index_changed, self.on_exe_name_changed)
-        return task_type_dropdown, exe_name_dropdown
+        value_dropdown = create_value_dropdown(self.exe_names, current_button_info, index, self.on_value_index_changed,
+                                               self.on_value_changed)
+        return task_type_dropdown, value_dropdown
 
     def reset_to_defaults(self) -> None:
         """Resets button configurations to defaults."""
@@ -190,162 +191,109 @@ class ButtonInfoEditor(QWidget):
         """Handles changes to task type in the dropdown."""
         sender = self.sender()
         button_index = sender.property("button_index")
-        print(f"\nDEBUG: Task type changed to: {new_task_type}")
-        print(f"DEBUG: Button index: {button_index}")
 
         try:
             button_frame = sender.parent().parent()
             if not button_frame:
-                print("DEBUG: ERROR - Could not find button frame")
                 return
 
-            exe_dropdowns = [
+            value_dropdowns = [
                 dropdown for dropdown in button_frame.findChildren(QComboBox)
                 if (dropdown.property("button_index") == button_index and dropdown != sender)
             ]
 
-            if not exe_dropdowns:
-                print("DEBUG: ERROR - Could not find matching exe dropdown box")
+            if not value_dropdowns:
                 return
 
-            exe_name_dropdown = exe_dropdowns[0]
-            print(f"DEBUG: Found exe_name_dropdown with button_index: {exe_name_dropdown.property('button_index')}")
-            print(f"DEBUG: Current enabled state: {exe_name_dropdown.isEnabled()}")
-            print(f"DEBUG: Current text: '{exe_name_dropdown.currentText()}'")
+            value_dropdown = value_dropdowns[0]
+            value_dropdown.blockSignals(True)
+            value_dropdown.clear()
 
-            exe_name_dropdown.blockSignals(True)
-            print("DEBUG: Clearing dropdown box")
-            exe_name_dropdown.clear()
-
+            # Update UI based on task type
             if new_task_type == "show_any_window":
-                print("DEBUG: Handling show_any_window")
-                exe_name_dropdown.setEditable(True)
-                exe_name_dropdown.setCurrentText("")
-                exe_name_dropdown.setEnabled(False)
-                print(f"DEBUG: After changes - enabled: {exe_name_dropdown.isEnabled()}, text: '{exe_name_dropdown.currentText()}'")
+                value_dropdown.setEditable(True)
+                value_dropdown.setCurrentText("")
+                value_dropdown.setEnabled(False)
 
-                updated_properties = {
-                    "app_name": "",
-                    "text_1": "",
-                    "text_2": "",
-                    "window_handle": -1,
-                    "app_icon_path": "",
-                    "exe_name": ""
-                }
-            else:
-                print(f"DEBUG: Handling other type: {new_task_type}")
-                exe_name_dropdown.setEnabled(True)
-                print(f"DEBUG: Set enabled: {exe_name_dropdown.isEnabled()}")
+            elif new_task_type in ["show_program_window", "launch_program"]:
+                value_dropdown.setEditable(True)
+                value_dropdown.setEnabled(True)
+                for exe_name, app_name in self.exe_names:
+                    display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
+                    value_dropdown.addItem(display_text, exe_name)
 
-                if new_task_type == "call_function":
-                    print("DEBUG: Setting up call_function items")
-                    from data.button_functions import ButtonFunctions
-                    functions = ButtonFunctions().functions
-                    exe_name_dropdown.setEditable(False)
-                    for func_name, func_data in functions.items():
-                        exe_name_dropdown.addItem(func_data['text_1'], func_name)
-                    updated_properties = {
-                        "function_name": exe_name_dropdown.currentData()
-                    }
-                else:
-                    print("DEBUG: Setting up program items")
-                    exe_name_dropdown.setEditable(True)
-                    for exe_name, app_name in self.exe_names:
-                        display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
-                        exe_name_dropdown.addItem(display_text, exe_name)
+            elif new_task_type == "call_function":
+                from data.button_functions import ButtonFunctions
+                functions = ButtonFunctions().functions
+                value_dropdown.setEditable(False)
+                value_dropdown.setEnabled(True)
+                for func_name, func_data in functions.items():
+                    value_dropdown.addItem(func_data['text_1'], func_name)
+                # Set first function as default
+                if value_dropdown.count() > 0:
+                    first_function = value_dropdown.itemData(0)
+                    self.button_info.update_button(button_index, {
+                        "task_type": new_task_type,
+                        "properties": {"function_name": first_function}
+                    })
+                    value_dropdown.setCurrentIndex(0)
+                    value_dropdown.blockSignals(False)
+                    update_window_title(self.button_info, self)
+                    return
 
-                    if not self.button_info[button_index]["properties"].get("exe_name"):
-                        for i in range(exe_name_dropdown.count()):
-                            if exe_name_dropdown.itemData(i) == "explorer.exe":
-                                exe_name_dropdown.setCurrentIndex(i)
-                                break
+            # Let update_button handle property initialization for other types
+            self.button_info.update_button(button_index, {"task_type": new_task_type})
 
-                    current_exe = exe_name_dropdown.currentData() or ""
-                    updated_properties = {
-                        "app_name": "",
-                        "app_icon_path": "",
-                        "exe_name": current_exe,
-                        "exe_path": "",
-                        "window_title": "" if new_task_type == "show_program_window" else None
-                    }
+            # Set default values after initialization
+            if new_task_type in ["show_program_window", "launch_program"]:
+                for i in range(value_dropdown.count()):
+                    if value_dropdown.itemData(i) == "explorer.exe":
+                        value_dropdown.setCurrentIndex(i)
+                        break
 
-            print("DEBUG: Updating button configuration")
-            self.button_info.update_button(button_index, {
-                "task_type": new_task_type,
-                "properties": updated_properties
-            })
-
-            print("DEBUG: Re-enabling signals")
-            exe_name_dropdown.blockSignals(False)
-
-            print(f"DEBUG: Final state - enabled: {exe_name_dropdown.isEnabled()}, text: '{exe_name_dropdown.currentText()}'")
+            value_dropdown.blockSignals(False)
             update_window_title(self.button_info, self)
 
         except Exception as e:
             logging.error(f"Failed to update task type: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to update task type: {str(e)}")
 
-    def on_exe_name_changed(self, new_exe_name: str, button_index: int) -> None:
-        """Handles changes to the executable name in the dropdown."""
+    def on_value_changed(self, new_value: str, button_index: int) -> None:
+        """Handles changes to the value (exe name or function name) in the dropdown."""
         try:
             current_config = self.button_info[button_index]
             task_type = current_config["task_type"]
 
-            if task_type == "show_any_window":
-                updated_properties = {
-                    "app_name": "",
-                    "text_1": "",
-                    "text_2": "",
-                    "window_handle": -1,
-                    "app_icon_path": "",
-                    "exe_name": new_exe_name
-                }
-            elif task_type == "show_program_window":
-                updated_properties = {
-                    "app_name": "",
-                    "text_1": "",
-                    "text_2": "",
-                    "window_handle": -1,
-                    "app_icon_path": "",
-                    "exe_name": new_exe_name,
-                    "exe_path": "",
-                    "window_title": ""
-                }
-            elif task_type == "launch_program":
-                updated_properties = {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "exe_name": new_exe_name,
-                    "exe_path": ""
-                }
-            elif task_type == "call_function":
-                updated_properties = {
-                    "function_name": ""  # call_function doesn't use exe_name
-                }
-            else:
-                raise ValueError(f"Unknown task type: {task_type}")
+            # Let update_button handle property initialization based on task type
+            updated_properties = {}
 
-            # Preserve existing values for properties that already exist
-            for key, value in current_config.get("properties", {}).items():
-                if key in updated_properties:
-                    updated_properties[key] = value
+            if task_type == "call_function":
+                # Ensure we have a valid function
+                from data.button_functions import ButtonFunctions
+                functions = ButtonFunctions().functions
+                if new_value in functions:
+                    updated_properties["function_name"] = new_value
+                else:
+                    # Set to first available function if invalid
+                    first_function = next(iter(functions.keys()))
+                    updated_properties["function_name"] = first_function
 
-            updated_properties["exe_name"] = new_exe_name
+            elif task_type in ["show_program_window", "launch_program"]:
+                updated_properties["exe_name"] = new_value
 
-            # Update button with all properties
             self.button_info.update_button(button_index, {
                 "properties": updated_properties
             })
             update_window_title(self.button_info, self)
 
         except Exception as e:
-            logging.error(f"Failed to update exe name: {str(e)}")
-            QMessageBox.critical(self, "Error", f"Failed to update exe name: {str(e)}")
+            logging.error(f"Failed to update value: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to update value: {str(e)}")
 
-    def on_exe_index_changed(self, idx: int, button_index: int, dropdown: QComboBox) -> None:
-        """Handles changes to the executable index in the dropdown box."""
+    def on_value_index_changed(self, idx: int, button_index: int, dropdown: QComboBox) -> None:
+        """Handles changes to the value index in the dropdown box."""
         value = dropdown.itemData(idx) or dropdown.currentText()
-        self.on_exe_name_changed(value, button_index)
+        self.on_value_changed(value, button_index)
 
     def save_changes(self) -> None:
         """Saves the changes to the button configurations."""

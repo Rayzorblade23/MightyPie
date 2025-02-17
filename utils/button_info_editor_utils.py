@@ -147,51 +147,53 @@ def create_task_type_dropdown(task_types: List[str], current_button_info: Dict[s
     return task_type_dropdown
 
 
-def create_exe_name_dropdown(exe_names: List[Tuple[str, str]], current_button_info: Dict[str, Any], index: int, on_exe_index_changed: Callable[[Dict[str, Any], QComboBox], None], on_exe_name_changed: Callable[[str, int], None]) -> QComboBox:
-    """Creates a dropdown box for selecting an executable name."""
-    exe_name_dropdown = QComboBox()
-    exe_name_dropdown.setProperty("button_index", index)
-    exe_name_dropdown.blockSignals(True)
+def create_value_dropdown(exe_names: List[Tuple[str, str]], current_button_info: Dict[str, Any], index: int,
+                         on_value_index_changed: Callable[[Dict[str, Any], QComboBox], None],
+                         on_value_changed: Callable[[str, int], None]) -> QComboBox:
+    """Creates a dropdown box for selecting either an executable name or a function name."""
+    value_dropdown = QComboBox()
+    value_dropdown.setProperty("button_index", index)
+    value_dropdown.blockSignals(True)
 
     if current_button_info["task_type"] == "show_any_window":
-        exe_name_dropdown.setEnabled(False)
-        exe_name_dropdown.setEditable(True)
-        exe_name_dropdown.clear()
-        exe_name_dropdown.setCurrentText("")
+        value_dropdown.setEnabled(False)
+        value_dropdown.setEditable(True)
+        value_dropdown.clear()
+        value_dropdown.setCurrentText("")
     elif current_button_info["task_type"] == "call_function":
         from data.button_functions import ButtonFunctions
         functions = ButtonFunctions().functions
-        exe_name_dropdown.setEditable(False)
-        exe_name_dropdown.setEnabled(True)
+        value_dropdown.setEditable(False)
+        value_dropdown.setEnabled(True)
         for func_name, func_data in functions.items():
-            exe_name_dropdown.addItem(func_data['text_1'], func_name)
+            value_dropdown.addItem(func_data['text_1'], func_name)
         current_function = current_button_info["properties"].get("function_name", "")
         if current_function:
-            for i in range(exe_name_dropdown.count()):
-                if exe_name_dropdown.itemData(i) == current_function:
-                    exe_name_dropdown.setCurrentIndex(i)
+            for i in range(value_dropdown.count()):
+                if value_dropdown.itemData(i) == current_function:
+                    value_dropdown.setCurrentIndex(i)
                     break
     else:
-        exe_name_dropdown.setEditable(True)
-        exe_name_dropdown.setEnabled(True)
+        value_dropdown.setEditable(True)
+        value_dropdown.setEnabled(True)
         for exe_name, app_name in exe_names:
             display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
-            exe_name_dropdown.addItem(display_text, exe_name)
+            value_dropdown.addItem(display_text, exe_name)
         current_exe_name = current_button_info["properties"].get("exe_name", "")
         if current_exe_name:
-            for i in range(exe_name_dropdown.count()):
-                if exe_name_dropdown.itemData(i) == current_exe_name:
-                    exe_name_dropdown.setCurrentIndex(i)
+            for i in range(value_dropdown.count()):
+                if value_dropdown.itemData(i) == current_exe_name:
+                    value_dropdown.setCurrentIndex(i)
                     break
         else:
-            for i in range(exe_name_dropdown.count()):
-                if exe_name_dropdown.itemData(i) == "explorer.exe":
-                    exe_name_dropdown.setCurrentIndex(i)
+            for i in range(value_dropdown.count()):
+                if value_dropdown.itemData(i) == "explorer.exe":
+                    value_dropdown.setCurrentIndex(i)
                     break
 
-    exe_name_dropdown.currentIndexChanged.connect(
-        partial(on_exe_index_changed, button_index=index, dropdown=exe_name_dropdown)
+    value_dropdown.currentIndexChanged.connect(
+        partial(on_value_index_changed, button_index=index, dropdown=value_dropdown)
     )
-    exe_name_dropdown.editTextChanged.connect(lambda text, idx=index: on_exe_name_changed(text, idx))
-    exe_name_dropdown.blockSignals(False)
-    return exe_name_dropdown
+    value_dropdown.editTextChanged.connect(lambda text, idx=index: on_value_changed(text, idx))
+    value_dropdown.blockSignals(False)
+    return value_dropdown
