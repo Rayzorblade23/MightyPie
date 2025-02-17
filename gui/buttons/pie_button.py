@@ -122,7 +122,7 @@ class PieButton(QPushButton):
         )
         self.setEnabled(True)
 
-    def clear(self):
+    def clear(self, button_text_2 = ""):
         # Disable the button
         self.set_left_click_action(action=None)
         self.set_middle_click_action(action=None)
@@ -289,21 +289,18 @@ class ShowProgramWindowPieButton(PieButton):
         self.print_button_type()
 
     def update_button(self, properties: dict) -> None:
-        app_info_cache = load_cache()
-
         button_text_1 = properties["window_title"]
         window_handle = properties["window_handle"]
-        exe_name = properties["exe_name"]
-        button_text_2 = app_info_cache.get(exe_name, {}).get("app_name")
-        app_icon_path = app_info_cache.get(exe_name, {}).get("icon_path")
+        exe_path = properties["exe_path"]
+        button_text_2 = properties["app_name"]
+        app_icon_path = properties["app_icon_path"]
 
         if window_handle == -1:
-            self.clear()
+            self.clear(button_text_2)
             return
 
         # Handle reserved button actions that have no open window
         if window_handle == 0:
-            exe_path = app_info_cache.get(exe_name, {}).get("exe_path")
             if exe_path:
                 self.set_left_click_action(
                     lambda captured_exe_path=exe_path: (
@@ -332,6 +329,14 @@ class ShowProgramWindowPieButton(PieButton):
             )
         )
         self.setEnabled(True)
+
+    def clear(self, button_text_2 = ""):
+        # Disable the button
+        self.set_left_click_action(action=None)
+        self.set_middle_click_action(action=None)
+        self.setEnabled(False)  # Disable the button
+
+        self._update_ui("Not launched yet.", button_text_2, "")
 
 
 class LaunchProgramPieButton(PieButton):

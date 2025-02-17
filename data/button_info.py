@@ -108,6 +108,17 @@ class ButtonInfo:
         """Initialize with default configuration"""
         # Pre-defined tasks (example data)
         self.button_info_dict = {
+            0: {
+                "task_type": "show_program_window",
+                "properties": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "vivaldi.exe",
+                    "exe_path": "",
+                    "window_title": "",
+                    "window_handle": -1,
+                }
+            },
             4: {
                 "task_type": "show_program_window",
                 "properties": {
@@ -116,6 +127,50 @@ class ButtonInfo:
                     "exe_name": "spotify.exe",
                     "exe_path": "",
                     "window_title": "Spotify Premium",
+                    "window_handle": -1,
+                }
+            },
+            8: {
+                "task_type": "show_program_window",
+                "properties": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "explorer.exe",
+                    "exe_path": "",
+                    "window_title": "",
+                    "window_handle": -1,
+                }
+            },
+            10: {
+                "task_type": "show_program_window",
+                "properties": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "explorer.exe",
+                    "exe_path": "",
+                    "window_title": "",
+                    "window_handle": -1,
+                }
+            },
+            12: {
+                "task_type": "show_program_window",
+                "properties": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "explorer.exe",
+                    "exe_path": "",
+                    "window_title": "",
+                    "window_handle": -1,
+                }
+            },
+            14: {
+                "task_type": "show_program_window",
+                "properties": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "explorer.exe",
+                    "exe_path": "",
+                    "window_title": "",
                     "window_handle": -1,
                 }
             },
@@ -237,19 +292,13 @@ class ButtonInfo:
         return list(self.button_info_dict.keys())
 
     def filter_buttons(self, attribute: str, value: str) -> Dict[int, dict]:
-        """Filters tasks based on a given attribute and value, returning copies."""
-        filtered: Dict[int, dict] = {}  # Dictionary to hold filtered tasks
-        for task_id, task in self.button_info_dict.items():
-            keys = attribute.split('.')
-            temp = task
-            try:
-                for key in keys:
-                    temp = temp[key]
-                if temp == value:
-                    filtered[task_id] = deepcopy(task)  # Use task_id as the key in the dictionary
-            except KeyError:
-                continue
-        return filtered  # Now returns a dictionary of filtered tasks
+        """Filters tasks based on a given attribute and value, returning a deep copy of both dict and contents."""
+        filtered = {
+            task_id: task
+            for task_id, task in self.button_info_dict.items()
+            if task.get(attribute) == value
+        }
+        return deepcopy(filtered)  # Deep copy the entire filtered dictionary
 
     def get_all_tasks(self) -> Dict[int, Dict[str, Any]]:
         """Returns all tasks."""

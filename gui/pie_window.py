@@ -194,58 +194,109 @@ class PieWindow(QMainWindow):
             print("Cache is being cleared. Skipping update.")
             return
 
-        # Get current state and app infos
+        # Get window state and application metadata
         open_windows_info: Dict[int, tuple[str, str, int]] = self.manager.get_open_windows_info()
         app_info_cache: Dict[str, Dict[str, str]] = load_cache()
 
-        # Create deep copy to avoid modifying original during updates
+        print(open_windows_info)
+
+        # Create working copy of button configurations
         updated_button_config: Dict[int, Dict[str, Any]] = deepcopy(self.button_info.get_all_tasks())
 
-        # Get buttons that can show any window
-        buttons_to_update: Dict[int, Dict[str, Any]] = self.button_info.filter_buttons(
-            "task_type",
-            "show_any_window"
-        )
+        # Track processed buttons
+        processed_buttons: Set[int] = set()
 
-        # Update existing window handles first
-        self._update_existing_handles(buttons_to_update, open_windows_info, app_info_cache)
+        # Get filtered button sets by type
+        show_program_window_buttons = self.button_info.filter_buttons("task_type", "show_program_window")
+        show_any_window_buttons = self.button_info.filter_buttons("task_type", "show_any_window")
 
-        # Then assign remaining windows to free buttons
-        self._assign_free_windows(buttons_to_update, open_windows_info, app_info_cache)
+        # Process program-specific buttons
+        self._update_existing_handles(show_program_window_buttons, open_windows_info, processed_buttons, True)
+        self._assign_free_windows_for_show_program_window_buttons(
+            show_program_window_buttons, open_windows_info, app_info_cache, processed_buttons)
 
-        # Merge updates back into config
-        updated_button_config.update(buttons_to_update)
+        # Process generic window buttons
+        self._update_existing_handles(show_any_window_buttons, open_windows_info, processed_buttons)
+        self._assign_free_windows_for_show_any_window_buttons(
+            show_any_window_buttons, open_windows_info, app_info_cache, processed_buttons)
 
-        # Emit updates to all pie menus
+        # Apply updates and refresh UI
+        updated_button_config.update(show_any_window_buttons)
+        updated_button_config.update(show_program_window_buttons)
         self._emit_button_updates(updated_button_config)
 
     def _update_existing_handles(
             self,
             buttons: Dict[int, Dict[str, Any]],
             windows_info: Dict[int, tuple[str, str, int]],
-            app_info_cache: Dict[str, Dict[str, str]]
+            processed_buttons: Set[int] = None,
+            is_show_program_button: bool = False
     ) -> None:
-        """Updates buttons with existing window handles or clears invalid ones."""
-        for button in buttons.values():
+        """Checks buttons with existing window handles and clears invalid ones."""
+        for button_id, button in buttons.items():
             hwnd: int = button['properties']['window_handle']
             if hwnd in windows_info:
-                title, exe_name, instance = windows_info.pop(hwnd)
-                self._update_button_with_window_info(button, title, exe_name, instance, app_info_cache)
+                windows_info.pop(hwnd)
+                processed_buttons.add(button_id)
             else:
-                self._clear_button_properties(button)
+                if not is_show_program_button:
+                    self._clear_button_properties(button)
 
-    def _assign_free_windows(
+    def _assign_free_windows_for_show_program_window_buttons(
             self,
             buttons: Dict[int, Dict[str, Any]],
             windows_info: Dict[int, tuple[str, str, int]],
-            app_info_cache: Dict[str, Dict[str, str]]
+            app_info_cache: Dict[str, Dict[str, str]],
+            processed_buttons: Set[int]
+    ) -> None:
+        """Maps program-specific windows to their designated buttons."""
+        for button_id, button in buttons.items():
+            if button_id in processed_buttons:
+                continue
+
+            exe_name = button['properties']['exe_name']
+            if exe_name not in app_info_cache:
+                button['properties'].update({
+                    'window_handle': -1,
+                    'app_name': exe_name.rstrip(".exe").capitalize()
+                })
+                continue
+
+            matching_window = None
+            for hwnd, (window_title, exe_name_from_window, instance_id) in windows_info.items():
+                if exe_name_from_window == exe_name:
+                    windows_info.pop(hwnd)
+                    matching_window = (hwnd, window_title, exe_name_from_window, instance_id)
+                    processed_buttons.add(button_id)
+                    break
+
+            if matching_window:
+                hwnd, title, _, instance = matching_window
+                button['properties']['window_handle'] = hwnd
+                self._update_button_with_window_info(
+                    button, title, exe_name, instance, app_info_cache, True)
+            else:
+                button['properties']['window_handle'] = 0
+                self._update_button_with_window_info(
+                    button, "", exe_name, 0, app_info_cache, True)
+
+    def _assign_free_windows_for_show_any_window_buttons(
+            self,
+            buttons: Dict[int, Dict[str, Any]],
+            windows_info: Dict[int, tuple[str, str, int]],
+            app_info_cache: Dict[str, Dict[str, str]],
+            processed_buttons: Set[int]
     ) -> None:
         """Assigns remaining windows to buttons that have no window handle."""
-        for button in buttons.values():
+        for button_id, button in buttons.items():
+            if button_id in processed_buttons:
+                continue
+
             if button['properties']['window_handle'] == -1 and windows_info:
                 hwnd, (title, exe_name, instance) = windows_info.popitem()
                 button['properties']['window_handle'] = hwnd
                 self._update_button_with_window_info(button, title, exe_name, instance, app_info_cache)
+                processed_buttons.add(button_id)
 
     @staticmethod
     def _update_button_with_window_info(
@@ -253,13 +304,15 @@ class PieWindow(QMainWindow):
             title: str,
             exe_name: str,
             instance: int,
-            app_info_cache: Dict[str, Dict[str, str]]
+            app_info_cache: Dict[str, Dict[str, str]],
+            include_exe_path: bool = False
     ) -> None:
         """Updates button properties with window information and app cache data."""
         button['properties'].update({
             'window_title': f"{title} ({instance})" if instance != 0 else title,
             'app_name': app_info_cache.get(exe_name, {}).get('app_name', ''),
-            'app_icon_path': app_info_cache.get(exe_name, {}).get('icon_path', '')
+            'app_icon_path': app_info_cache.get(exe_name, {}).get('icon_path', ''),
+            **({'exe_path': app_info_cache.get(exe_name, {}).get('exe_path', '')} if include_exe_path else {})
         })
 
     @staticmethod
@@ -269,7 +322,7 @@ class PieWindow(QMainWindow):
             'window_handle': -1,
             'window_title': '',
             'app_name': '',
-            'app_icon_path': ''
+            'app_icon_path': '',
         })
 
     def _emit_button_updates(self, updated_config: Dict[int, Dict[str, Any]]) -> None:
