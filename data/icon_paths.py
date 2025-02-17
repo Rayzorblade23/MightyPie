@@ -31,4 +31,5 @@ EXTERNAL_ICON_PATHS = {
     "cake": get_resource_path("external_icons/cake.png"),
     "schedule-time": get_resource_path("external_icons/schedule-time.png"),
     "center": get_resource_path("external_icons/center.png"),
+    "sort": get_resource_path("external_icons/sort.png"),
 }

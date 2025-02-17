@@ -44,6 +44,6 @@ def main_window_hide() -> None:
     main_window.hide()
 
 
-def main_window_auto_refresh() -> None:
+def main_window_auto_refresh(reassign_all_buttons: bool = False) -> None:
     main_window: "PieWindow" = QApplication.instance().property("main_window")
-    main_window.auto_refresh()
+    main_window.auto_refresh(reassign_all_buttons)

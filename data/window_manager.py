@@ -2,6 +2,8 @@ from copy import deepcopy
 from threading import Lock
 from typing import Dict, Tuple, Set, Any
 
+from data.config import CONFIG
+
 
 class WindowManager:
     _instance = None
@@ -67,7 +69,7 @@ class WindowManager:
         """
         return self._window_hwnd_mapping.copy()
 
-    def update_button_window_assignment(self, pie_window, button_info, app_info_cache) -> None:
+    def update_button_window_assignment(self, pie_window, button_info, app_info_cache, reassign_all_buttons: bool = True) -> None:
         """Updates button info with current window information."""
 
         # Create working copy of button configurations
@@ -88,12 +90,21 @@ class WindowManager:
         self._update_launch_program_windows(launch_program_buttons, app_info_cache)
 
         # Process Show (specific) Program Buttons
-        self._update_existing_handles(show_program_window_buttons, windows_info, processed_buttons, True)
+        self._update_existing_handles(
+            show_program_window_buttons,
+            windows_info,
+            processed_buttons,
+            reassign_all_buttons,
+            True)
         self._assign_free_windows_for_show_program_window_buttons(
             show_program_window_buttons, windows_info, app_info_cache, processed_buttons)
 
         # Process Show Any Window Buttons
-        self._update_existing_handles(show_any_window_buttons, windows_info, processed_buttons)
+        self._update_existing_handles(
+            show_any_window_buttons,
+            windows_info,
+            processed_buttons,
+            reassign_all_buttons)
         self._assign_free_windows_for_show_any_window_buttons(
             show_any_window_buttons, windows_info, app_info_cache, processed_buttons)
 
@@ -118,12 +129,15 @@ class WindowManager:
             buttons: Dict[int, Dict[str, Any]],
             windows_info: Dict[int, tuple[str, str, int]],
             processed_buttons: Set[int] = None,
+            reassign_all: bool = False,
             is_show_program_button: bool = False
     ) -> None:
         """Checks buttons with existing window handles and clears invalid ones."""
         for button_id, button in buttons.items():
             hwnd: int = button['properties']['window_handle']
-            if hwnd in windows_info:
+            if (hwnd in windows_info and
+                    # if reassign_all, only do it for certain IDs
+                    not (reassign_all and button_id > CONFIG.REASSIGN_BTN_IDS_HIGHER_THAN)):
                 windows_info.pop(hwnd)
                 processed_buttons.add(button_id)
             else:

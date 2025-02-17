@@ -156,13 +156,18 @@ class PieWindow(QMainWindow):
         else:
             print("No SpecialMenu here...")
 
-    def refresh(self):
+    def refresh(self, reassign_all_buttons: bool = False):
         # Start the background task
         app_info_cache = load_cache()
 
-        threading.Thread(target=self.manager.update_button_window_assignment(self, self.button_info, app_info_cache), daemon=True).start()
+        threading.Thread(
+            target=self.manager.update_button_window_assignment(
+                self, self.button_info, app_info_cache, reassign_all_buttons
+            ),
+            daemon=True
+        ).start()
 
-    def auto_refresh(self):
+    def auto_refresh(self, reassign_all_buttons: bool = False):
         """Automatically monitor and refresh windows periodically in a thread-safe way."""
         # start_time = time.time()
         # Lock access to shared data to ensure thread safety
@@ -173,7 +178,7 @@ class PieWindow(QMainWindow):
             # Compare against WindowManager's last_window_handles
             if current_window_handles != self.manager.last_window_handles:
                 self.manager.last_window_handles = current_window_handles
-                self.refresh()
+                self.refresh(reassign_all_buttons)
 
         # elapsed_time = time.time() - start_time
         # print(f"auto_refresh took {elapsed_time:.3f} seconds")
