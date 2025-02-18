@@ -73,19 +73,19 @@ QPushButton {
 }
 
 #show_any_window_button {
-    background-color: orange;
+    border: 1px solid {{accent_color}};              /* No border */
 }
 
 #show_program_window_button {
-    background-color: red;
+    border: 1px solid #fa9fa4;
 }
 
 #launch_program_button {
-    background-color: blue;
+    border: 1px solid #f37fc0;
 }
 
 #call_function_button {
-    background-color: green;
+    border: 1px solid #71b8ed;
 }
 
 #show_any_window_button[hovered="true"] {
