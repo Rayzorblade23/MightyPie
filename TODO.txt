@@ -1,5 +1,3 @@
-- need to make sure that the menu can't be opened while buttons are being replaced.
-
 - put in more logging to text file. maybe only in window functions
 
 - window control pie menu: implement restart window

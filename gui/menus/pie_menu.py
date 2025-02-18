@@ -147,11 +147,11 @@ class PieMenu(QWidget):
         # Update the pie_buttons list with the new button
         self.pie_buttons[index] = new_button
 
-        # Check if the replacement was successful
-        if self.pie_buttons.get(index) == new_button:
-            print(f"Button at index {index} replaced successfully.")
-        else:
-            print(f"Failed to replace button of type {new_button_class} at index {index}.")
+        # # Check if the replacement was successful
+        # if self.pie_buttons.get(index) == new_button:
+        #     print(f"Button at index {index} replaced successfully.")
+        # else:
+        #     print(f"Failed to replace button of type {new_button_class} at index {index}.")
 
     def create_pie_buttons(self):
         """Create pie menu buttons in a circular pattern."""
@@ -227,6 +227,7 @@ class PieMenu(QWidget):
     @pyqtSlot(dict)
     def update_button_ui(self, updated_button_config):
         """Update button UI in the main thread."""
+        was_visible = self.isVisible()
 
         self.button_info.button_info_dict = updated_button_config
         self.button_info.has_unsaved_changes = True
@@ -245,7 +246,15 @@ class PieMenu(QWidget):
             if updated_button_config[pie_button.index]["task_type"] in BUTTON_TYPES.keys():
                 button_type = updated_button_config[pie_button.index]["task_type"]
                 if pie_button.button_type != button_type:
+                    # Hide the menu if it's visible during replacement
+                    was_visible = self.isVisible()
+                    if was_visible:
+                        self.hide()
                     self.replace_pie_button(pie_button.index % 8, BUTTON_TYPES[button_type])
+
+        # Show the menu again if it was visible before
+        if was_visible:
+            self.show()
 
         for pie_button in self.pie_buttons.values():
             pie_button.update_button(updated_button_config[pie_button.index]['properties'])
