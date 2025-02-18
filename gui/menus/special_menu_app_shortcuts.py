@@ -81,11 +81,13 @@ class AppSettingsMenu(QWidget):
     def open_button_info_editor(self):
         if self.button_config is None:
             self.button_config = ButtonInfoEditor()
+        self.parent().hide()
         self.button_config.show()
 
     def open_settings_window(self):
         if self.app_settings is None:
             self.app_settings = ConfigSettingsWindow()
+        self.parent().hide()
         self.app_settings.show()
 
 

@@ -152,7 +152,7 @@ class PieWindow(QMainWindow):
     def open_special_menu(self):
         if hasattr(self, "special_menu"):
             self.hide()
-            show_special_menu(self.special_menu)
+            self.special_menu.show_menu()
         else:
             print("No SpecialMenu here...")
 
