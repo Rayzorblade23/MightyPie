@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QCom
 from data.button_info import ButtonInfo
 from data.config import CONFIG
 from gui.buttons.pie_button import BUTTON_TYPES
+from gui.elements.button_info_editor_components import ButtonFrame
 from utils.button_info_editor_utils import (
     update_window_title, create_scroll_area, create_column, get_direction, create_button_container,
     create_task_type_dropdown, create_value_dropdown, create_texts_layout, create_dropdowns_layout, reset_single_frame
@@ -52,58 +53,8 @@ class ButtonInfoEditor(QWidget):
 
     def create_button_frame(self, index: int, row: int) -> QFrame:
         """Creates the layout for each button frame."""
-        button_frame = QFrame()
-        button_frame.setObjectName("buttonConfigFrame")
-        button_frame.setFrameStyle(QFrame.Shape.Panel.value | QFrame.Shadow.Raised.value)
-        frame_layout = QHBoxLayout(button_frame)
+        return ButtonFrame(index, row, self)
 
-        # Header with button index
-        the_layout = QVBoxLayout()
-        frame_layout.addLayout(the_layout)
-
-        header_layout = QHBoxLayout()
-        direction = get_direction(row)
-        header_label = QLabel(f" {direction} ")
-        header_label.setObjectName("buttonConfigFrameHeader")
-        header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        header_label.setFixedSize(40, 40)
-        header_layout.addStretch()
-        header_layout.addWidget(header_label)
-        header_layout.addStretch()
-
-        # Add reset button for this frame
-        reset_button = QPushButton()
-        reset_button.setToolTip("Reset")
-        reset_button.setIcon(get_icon("restart", is_inverted=True))
-        reset_button.setFixedSize(24, 20)
-        reset_button.setObjectName("buttonConfigSingleResetButton")
-        reset_button.setProperty("button_index", index)
-        reset_button.clicked.connect(
-            lambda: reset_single_frame(
-                sender=reset_button,
-                button_info=self.button_info,
-                temp_config=self.temp_config,  # Pass temp_config here
-                update_window_title=lambda: update_window_title(self.temp_config, self)
-            )
-        )
-        reset_layout = QVBoxLayout()
-        reset_layout.addStretch()
-        reset_layout.addWidget(reset_button, alignment=Qt.AlignmentFlag.AlignCenter)
-        reset_layout.addStretch()
-
-        the_layout.addLayout(header_layout)
-        the_layout.addLayout(reset_layout)
-
-        # Container for dropdowns and other content
-        content_layout = QHBoxLayout()
-        current_button_info = self.button_info[index]
-
-        task_type_dropdown, exe_name_dropdown = self.create_dropdowns(current_button_info, index)
-        content_layout.addLayout(create_texts_layout())
-        content_layout.addLayout(create_dropdowns_layout(task_type_dropdown, exe_name_dropdown))
-
-        frame_layout.addLayout(content_layout)
-        return button_frame
 
     def create_dropdowns(self, current_button_info: dict, index: int) -> tuple[QComboBox, QComboBox]:
         """Creates dropdowns for task type and value (exe name or function name)."""
