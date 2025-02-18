@@ -8,39 +8,42 @@ from utils.button_info_editor_utils import (
     create_texts_layout, create_dropdowns_layout, get_direction
 )
 from utils.icon_utils import get_icon
+from PyQt6.QtWidgets import (
+    QFrame, QHBoxLayout, QVBoxLayout, QLabel,
+    QComboBox, QPushButton, QMessageBox
+)
+from PyQt6.QtCore import Qt
+import logging
 
+from utils.button_info_editor_utils import (
+    get_direction, create_texts_layout,
+    create_dropdowns_layout, update_window_title
+)
 if TYPE_CHECKING:
     from gui.menus.button_info_editor import ButtonInfoEditor
 
 
 class ButtonFrame(QFrame):
     def __init__(self, index: int, row: int, editor: 'ButtonInfoEditor'):
-        """
-        Initialize a ButtonFrame.
-
-        Args:
-            index: The button index
-            row: The row number
-            editor: The parent ButtonInfoEditor instance
-        """
         super().__init__()
         self.index = index
         self.row = row
         self.editor = editor
+        self.setObjectName("buttonConfigFrame")
         self.init_ui()
 
-    def init_ui(self):
-        self.setObjectName("buttonConfigFrame")
-        self.setFrameStyle(QFrame.Shape.Panel.value | QFrame.Shadow.Raised.value)
+    def init_ui(self) -> None:
+        layout = QHBoxLayout(self)
 
-        frame_layout = QHBoxLayout(self)
-        left_layout = self._create_left_section()
+        # Left side with index and direction
+        index_layout = self._create_index_section()
+        layout.addLayout(index_layout)
+
+        # Content area with dropdowns
         content_layout = self._create_content_section()
+        layout.addLayout(content_layout)
 
-        frame_layout.addLayout(left_layout)
-        frame_layout.addLayout(content_layout)
-
-    def _create_left_section(self):
+    def _create_index_section(self):
         layout = QVBoxLayout()
 
         # Header with direction
@@ -77,7 +80,7 @@ class ButtonFrame(QFrame):
 
     def _create_content_section(self):
         content_layout = QHBoxLayout()
-        current_button_info = self.editor.button_info[self.index]
+        current_button_info = self.editor.config_manager.get_current_config(self.index)
 
         task_type_dropdown, exe_name_dropdown = self.editor.create_dropdowns(
             current_button_info, self.index
@@ -87,11 +90,33 @@ class ButtonFrame(QFrame):
         content_layout.addLayout(create_dropdowns_layout(task_type_dropdown, exe_name_dropdown))
         return content_layout
 
-    def _on_reset_clicked(self):
-        from utils.button_info_editor_utils import reset_single_frame
-        reset_single_frame(
-            sender=self.sender(),
-            button_info=self.editor.button_info,
-            temp_config=self.editor.temp_config,
-            update_window_title=lambda: self.editor.update_window_title()
-        )
+    def _on_reset_clicked(self) -> None:
+        """Handles reset button click."""
+        try:
+            # Reset in config manager
+            self.editor.config_manager.reset_button(self.index)
+
+            # Find and update dropdowns
+            dropdowns = self.findChildren(QComboBox)
+            if len(dropdowns) >= 2:
+                task_type_dropdown = dropdowns[0]
+                value_dropdown = dropdowns[1]
+
+                # Update task type dropdown
+                task_type_dropdown.blockSignals(True)
+                task_type_dropdown.setCurrentText("Show Any Window")
+                task_type_dropdown.blockSignals(False)
+
+                # Update value dropdown
+                value_dropdown.blockSignals(True)
+                value_dropdown.clear()
+                value_dropdown.setEnabled(False)
+                value_dropdown.setCurrentText("")
+                value_dropdown.blockSignals(False)
+
+            # Update window title
+            update_window_title(self.editor.config_manager, self.editor)
+
+        except Exception as e:
+            logging.error(f"Error resetting button {self.index}: {str(e)}")
+            QMessageBox.critical(self.editor, "Error", f"Failed to reset button: {str(e)}")

@@ -4,7 +4,7 @@ import logging
 
 from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QComboBox, QFrame
 
-from data.button_info import ButtonInfo
+from data.button_config_manager import ButtonConfigManager
 from data.config import CONFIG
 from gui.elements.button_info_editor_components import ButtonFrame
 from gui.elements.button_info_editor_dropdowns import ButtonDropdowns
@@ -19,8 +19,8 @@ class ButtonInfoEditor(QWidget):
     def __init__(self) -> None:
         """Initializes the ButtonInfoEditor with necessary setups."""
         super().__init__()
-        self.button_info = ButtonInfo.get_instance()
-        self.temp_config = TemporaryButtonConfig()  # Add temporary storage
+        self.config_manager = ButtonConfigManager()
+        self.button_info = self.config_manager.button_info
         self.dropdowns = ButtonDropdowns(self)
 
         self.init_ui()
@@ -61,24 +61,9 @@ class ButtonInfoEditor(QWidget):
         )
         if reply == QMessageBox.StandardButton.Yes:
             try:
-                # Reset all 40 buttons regardless of UI visibility
-                for button_index in range(40):
-                    self.temp_config.update_button(button_index, {
-                        "task_type": "show_any_window",
-                        "properties": {
-                            "app_name": "",
-                            "app_icon_path": "",
-                            "window_title": "",
-                            "window_handle": -1,
-                            "exe_name": "",
-                            "exe_path": ""
-                        }
-                    })
-
-                # Update visible UI elements
+                self.config_manager.reset_all()
                 self.restore_values_from_model()
-                update_window_title(self.temp_config, self)
-
+                update_window_title(self.config_manager, self)
             except Exception as e:
                 logging.error(f"Error in reset_to_defaults: {str(e)}")
                 QMessageBox.critical(self, "Error", f"Failed to reset configuration: {str(e)}")
@@ -98,11 +83,8 @@ class ButtonInfoEditor(QWidget):
             exe_name_dropdown = dropdowns[1] if len(dropdowns) > 1 else None
             button_index = task_type_dropdown.property("button_index")
 
-            # Check temp_config first, fall back to button_info if no changes
-            if button_index in self.temp_config._temp_changes:
-                current_button_info = self.temp_config._temp_changes[button_index]
-            else:
-                current_button_info = self.button_info[button_index]
+            # Get current config from config manager
+            current_button_info = self.config_manager.get_current_config(button_index)
 
             # Update task type dropdown
             task_type_dropdown.blockSignals(True)
@@ -134,7 +116,7 @@ class ButtonInfoEditor(QWidget):
 
     def closeEvent(self, event) -> None:
         """Handles closing the editor with unsaved changes."""
-        if self.temp_config.has_changes():  # Check temp_config instead
+        if self.config_manager.has_unsaved_changes():
             reply = QMessageBox.question(
                 self, 'Unsaved Changes',
                 'You have unsaved changes. Do you want to save before closing?',
@@ -146,9 +128,7 @@ class ButtonInfoEditor(QWidget):
                 self.save_changes()
                 event.accept()
             elif reply == QMessageBox.StandardButton.Discard:
-                self.temp_config.clear()  # Clear temp changes
-                self.button_info.load_json()
-                self.restore_values_from_model()
+                self.config_manager.discard_changes()
                 event.accept()
             else:
                 event.ignore()
@@ -160,20 +140,14 @@ class ButtonInfoEditor(QWidget):
         self.update_apps_info()
         super().showEvent(event)
 
+    # Update on_task_type_changed
     def on_task_type_changed(self, new_task_type: str) -> None:
-        """Handles changes to task type in the dropdown."""
         sender = self.sender()
         button_index = sender.property("button_index")
 
-        logging.debug(f"on_task_type_changed called with new_task_type: {new_task_type}, button_index: {button_index}")
-
         try:
-            # Convert display text back to internal task type format
             internal_task_type = new_task_type.lower().replace(' ', '_')
-            logging.debug(f"Converted to internal_task_type: {internal_task_type}")
-
-            # Get default properties from ButtonInfo
-            default_properties = ButtonInfo.get_default_properties(internal_task_type)
+            self.config_manager.update_task_type(button_index, internal_task_type)
 
             button_frame = sender.parent().parent()
             if not button_frame:
@@ -183,95 +157,53 @@ class ButtonInfoEditor(QWidget):
                 dropdown for dropdown in button_frame.findChildren(QComboBox)
                 if (dropdown.property("button_index") == button_index and dropdown != sender)
             ]
-
             if not value_dropdowns:
                 return
 
             value_dropdown = value_dropdowns[0]
-            value_dropdown.blockSignals(True)
-            value_dropdown.clear()
-
-            # Update temp config with correct task type and default properties
-            self.temp_config.update_button(button_index, {
-                "task_type": internal_task_type,
-                "properties": default_properties
-            })
-            logging.debug(f"Updated temp config with defaults: {self.temp_config._temp_changes.get(button_index)}")
-
-            # Update UI based on task type
-            if internal_task_type == "show_any_window":
-                value_dropdown.setEditable(True)
-                value_dropdown.setCurrentText("")
-                value_dropdown.setEnabled(False)
-
-            elif internal_task_type in ["show_program_window", "launch_program"]:
-                value_dropdown.setEditable(True)
-                value_dropdown.setEnabled(True)
-                for exe_name, app_name in self.dropdowns.exe_names:
-                    display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
-                    value_dropdown.addItem(display_text, exe_name)
-                # Set explorer.exe as default
-                for i in range(value_dropdown.count()):
-                    if value_dropdown.itemData(i) == "explorer.exe":
-                        value_dropdown.setCurrentIndex(i)
-                        break
-
-            elif internal_task_type == "call_function":
-                from data.button_functions import ButtonFunctions
-                functions = ButtonFunctions().functions
-                value_dropdown.setEditable(False)
-                value_dropdown.setEnabled(True)
-                for func_name, func_data in functions.items():
-                    value_dropdown.addItem(func_data['text_1'], func_name)
-                # Set first function as default
-                if value_dropdown.count() > 0:
-                    first_function = value_dropdown.itemData(0)
-                    self.temp_config.update_button(button_index, {
-                        "task_type": internal_task_type,
-                        "properties": {"function_name": first_function}
-                    })
-
-            value_dropdown.blockSignals(False)
-            logging.debug(f"Final temp config state: {self.temp_config._temp_changes.get(button_index)}")
-            update_window_title(self.temp_config, self)
+            self._update_value_dropdown(value_dropdown, internal_task_type, button_index)
+            update_window_title(self.config_manager, self)
 
         except Exception as e:
             logging.error(f"Failed to update task type: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to update task type: {str(e)}")
 
+    # Add helper method
+    def _update_value_dropdown(self, dropdown: QComboBox, task_type: str, button_index: int) -> None:
+        dropdown.blockSignals(True)
+        dropdown.clear()
+
+        if task_type == "show_any_window":
+            dropdown.setEditable(True)
+            dropdown.setCurrentText("")
+            dropdown.setEnabled(False)
+        elif task_type in ["show_program_window", "launch_program"]:
+            dropdown.setEditable(True)
+            dropdown.setEnabled(True)
+            for exe_name, app_name in self.dropdowns.exe_names:
+                display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
+                dropdown.addItem(display_text, exe_name)
+            # Set explorer.exe as default
+            for i in range(dropdown.count()):
+                if dropdown.itemData(i) == "explorer.exe":
+                    dropdown.setCurrentIndex(i)
+                    break
+        elif task_type == "call_function":
+            from data.button_functions import ButtonFunctions
+            functions = ButtonFunctions().functions
+            dropdown.setEditable(False)
+            dropdown.setEnabled(True)
+            for func_name, func_data in functions.items():
+                dropdown.addItem(func_data['text_1'], func_name)
+
+        dropdown.blockSignals(False)
+
     def on_value_changed(self, new_value: str, button_index: int) -> None:
         """Handles changes to the value (exe name or function name) in the dropdown."""
         logging.debug(f"on_value_changed called with new_value: {new_value}, button_index: {button_index}")
         try:
-            # Get the current config from temp_config first, fall back to button_info
-            current_config = self.temp_config._temp_changes.get(button_index) or self.button_info[button_index]
-            task_type = current_config["task_type"]
-            logging.debug(f"Current task_type from temp_config: {task_type}")
-            logging.debug(f"Current temp config state: {self.temp_config._temp_changes.get(button_index)}")
-
-            # Keep existing properties and update only relevant field
-            current_properties = current_config.get("properties", {}).copy()
-
-            if task_type == "call_function":
-                from data.button_functions import ButtonFunctions
-                functions = ButtonFunctions().functions
-                if new_value in functions:
-                    current_properties["function_name"] = new_value
-                else:
-                    first_function = next(iter(functions.keys()))
-                    current_properties["function_name"] = first_function
-
-            elif task_type in ["show_program_window", "launch_program", "show_any_window"]:
-                current_properties["exe_name"] = new_value
-
-            self.temp_config.update_button(button_index, {
-                "task_type": task_type,
-                "properties": current_properties
-            })
-
-            logging.debug(f"Updated temp config: {self.temp_config._temp_changes.get(button_index)}")
-            update_window_title(self.temp_config, self)
-
+            self.config_manager.update_value(button_index, new_value)
+            update_window_title(self.config_manager, self)
         except Exception as e:
             logging.error(f"Failed to update value: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to update value: {str(e)}")
@@ -284,22 +216,8 @@ class ButtonInfoEditor(QWidget):
     def save_changes(self) -> None:
         """Saves the changes to the button configurations."""
         try:
-            # Apply temporary changes to the button_info instance
-            self.temp_config.apply_changes(self.button_info)
-
-            # Sort the button configuration by index
-            sorted_config = dict(sorted(self.button_info.button_info_dict.items(), key=lambda x: int(x[0])))
-            self.button_info.button_info_dict = sorted_config
-
-            # Save the updated configuration to JSON
-            self.button_info.save_to_json()
-
-            # Clear temporary storage
-            self.temp_config.clear()
-
-            # Update window title
-            update_window_title(self.temp_config, self)
-
+            self.config_manager.save_changes()
+            update_window_title(self.config_manager, self)
             QMessageBox.information(self, "Success", "Configuration saved successfully!")
             self.close()
         except Exception as e:
@@ -310,36 +228,3 @@ class ButtonInfoEditor(QWidget):
         def wheelEvent(self, event) -> None:
             """Disables scrolling in the dropdown box."""
             event.ignore()
-
-
-class TemporaryButtonConfig:
-    """Temporarily stores button configuration changes until saved."""
-
-    def __init__(self):
-        self._temp_changes = {}
-
-    def update_button(self, index: int, changes: dict) -> None:
-        logging.debug(f"TemporaryButtonConfig.update_button called with index: {index}, changes: {changes}")
-        if index not in self._temp_changes:
-            self._temp_changes[index] = {"task_type": "", "properties": {}}
-
-        # Update task_type if provided
-        if "task_type" in changes:
-            self._temp_changes[index]["task_type"] = changes["task_type"]
-
-        # Update or merge properties if provided
-        if "properties" in changes:
-            self._temp_changes[index]["properties"].update(changes["properties"])
-
-        logging.debug(f"Updated temp changes for index {index}: {self._temp_changes[index]}")
-
-    def apply_changes(self, button_info: ButtonInfo) -> None:
-        for index, changes in self._temp_changes.items():
-            button_info.update_button(index, changes)
-        self.clear()
-
-    def clear(self) -> None:
-        self._temp_changes.clear()
-
-    def has_changes(self) -> bool:
-        return bool(self._temp_changes)

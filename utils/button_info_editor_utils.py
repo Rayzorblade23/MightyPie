@@ -67,57 +67,6 @@ def get_direction(row: int) -> str:
     directions = ["⭡", "⭧", "⭢", "⭨", "⭣", "⭩", "⭠", "⭦"]
     return directions[row] if row < len(directions) else ""
 
-
-def reset_single_frame(sender: QWidget, button_info: ButtonInfo, temp_config: Any, update_window_title: Callable[[], None]) -> None:
-    """Resets the specific button frame to its default state."""
-    try:
-        button_index = sender.property("button_index")
-        if button_index is None:
-            return
-
-        # Find the button frame
-        button_frame = None
-        current_widget = sender
-        while current_widget:
-            if isinstance(current_widget, QFrame) and current_widget.objectName() == "buttonConfigFrame":
-                button_frame = current_widget
-                break
-            current_widget = current_widget.parent()
-
-        if not button_frame:
-            logging.error("Could not find button frame")
-            return
-
-        # Find task type dropdown
-        task_type_dropdown = button_frame.findChild(QComboBox)
-        if not task_type_dropdown:
-            logging.error("Could not find task type dropdown")
-            return
-
-        # Find exe name dropdown
-        exe_name_dropdown = None
-        for dropdown in button_frame.findChildren(QComboBox):
-            if dropdown != task_type_dropdown:
-                exe_name_dropdown = dropdown
-                break
-
-        # Update UI
-        task_type_dropdown.setCurrentText("Show Any Window")
-        if exe_name_dropdown:
-            exe_name_dropdown.setCurrentText("")
-            exe_name_dropdown.setEnabled(False)
-
-        # Update temporary config
-        temp_config.update_button(button_index, {
-            "task_type": "show_any_window",
-            "properties": {"exe_name": ""}
-        })
-        update_window_title()
-
-    except Exception as e:
-        logging.error(f"Error in reset_single_frame: {str(e)}")
-
-
 def update_window_title(config: Any, window: QWidget) -> None:
     """Updates the window title based on unsaved changes."""
     title = "Button Info Editor"
