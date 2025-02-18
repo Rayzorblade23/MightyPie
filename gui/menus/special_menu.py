@@ -14,6 +14,7 @@ from gui.elements.toggle_switch import ToggleSwitch
 from data.config import CONFIG
 from events import taskbar_event
 from utils.icon_utils import get_icon
+from utils.program_utils import position_window_at_cursor
 from utils.taskbar_hide_utils import toggle_taskbar, is_taskbar_visible
 from gui.invisible_ui import InvisibleUI
 from gui.menus.special_menu_DF_monitor_selector import MonitorSetupMenu
@@ -389,18 +390,10 @@ class SpecialMenu(QWidget):
             super().keyPressEvent(event)  # Pass other key events to the parent
 
     def show_menu(self):
-        """Show the menu at the cursor position."""
-        # Reset visibility
+        """Show the menu centered at the cursor position."""
         self.setVisible(False)
-
-        # Position window
-        cursor_pos = QCursor.pos()
-        self.move(cursor_pos)
-
-        # Show window
+        position_window_at_cursor(self)
         self.setVisible(True)
-
-        # Force window to top
         self.raise_()
         self.activateWindow()
 

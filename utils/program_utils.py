@@ -5,8 +5,9 @@ import time
 from typing import TYPE_CHECKING
 
 import psutil
-from PyQt6.QtCore import QCoreApplication
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QCoreApplication, QPoint
+from PyQt6.QtGui import QCursor
+from PyQt6.QtWidgets import QApplication, QWidget
 
 if TYPE_CHECKING:
     from gui.pie_window import PieWindow
@@ -47,3 +48,37 @@ def main_window_hide() -> None:
 def main_window_force_refresh(reassign_all_buttons: bool = False) -> None:
     main_window: "PieWindow" = QApplication.instance().property("main_window")
     main_window.force_refresh(reassign_all_buttons)
+
+
+def position_window_at_cursor(window: QWidget, center: bool = True) -> None:
+    """
+    Positions a window relative to the cursor, keeping it within screen bounds.
+
+    Args:
+        window: The window to position
+        center: If True, centers the window on cursor. If False, positions top-left at cursor.
+    """
+    # Get cursor position and window size
+    cursor_pos = QCursor.pos()
+    window_size = window.sizeHint()
+
+    # Get screen geometry for the screen containing the cursor
+    screen = QApplication.screenAt(cursor_pos)
+    if screen is None:
+        screen = QApplication.primaryScreen()
+    screen_geometry = screen.geometry()
+
+    # Calculate initial position
+    if center:
+        x = cursor_pos.x() - (window_size.width() // 2)
+        y = cursor_pos.y() - (window_size.height() // 2)
+    else:
+        x = cursor_pos.x()
+        y = cursor_pos.y()
+
+    # Adjust position to keep within screen bounds
+    x = max(screen_geometry.left(), min(x, screen_geometry.right() - window_size.width()))
+    y = max(screen_geometry.top(), min(y, screen_geometry.bottom() - window_size.height()))
+
+    # Move window
+    window.move(QPoint(x, y))
