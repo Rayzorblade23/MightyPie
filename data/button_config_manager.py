@@ -48,7 +48,7 @@ class ButtonConfigManager:
 
     def get_current_config(self, button_index: int) -> Dict[str, Any]:
         """Gets the current configuration for a button."""
-        return self.temp_config._temp_changes.get(button_index) or self.button_info[button_index]
+        return self.temp_config.get_button_config(button_index) or self.button_info[button_index]
 
     def reset_button(self, button_index: int) -> None:
         """Resets a single button to default configuration."""

@@ -1,13 +1,10 @@
 # button_info_editor_utils.py
 
 import logging
-from functools import partial
-from typing import Callable, List, Tuple, Dict, Any
+from typing import Callable, Tuple, Any
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, QFrame, QScrollArea
-
-from data.button_info import ButtonInfo
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, QFrame, QScrollArea
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -67,6 +64,7 @@ def get_direction(row: int) -> str:
     directions = ["⭡", "⭧", "⭢", "⭨", "⭣", "⭩", "⭠", "⭦"]
     return directions[row] if row < len(directions) else ""
 
+
 def update_window_title(config: Any, window: QWidget) -> None:
     """Updates the window title based on unsaved changes."""
     title = "Button Info Editor"
@@ -91,69 +89,3 @@ def create_dropdowns_layout(task_type_dropdown: QComboBox, exe_name_dropdown: QC
     dropdowns_layout.addWidget(task_type_dropdown)
     dropdowns_layout.addWidget(exe_name_dropdown)
     return dropdowns_layout
-
-
-def create_task_type_dropdown(task_types: List[str], current_button_info: Dict[str, Any], index: int,
-                              on_task_type_changed: Callable[[str], None]) -> QComboBox:
-    """Creates a task type dropdown box with the available task types."""
-    task_type_dropdown = QComboBox()
-    for task_type in task_types:
-        display_text = task_type.replace('_', ' ').title()
-        task_type_dropdown.addItem(display_text, task_type)
-    current_index = task_types.index(current_button_info["task_type"])
-    task_type_dropdown.setCurrentIndex(current_index)
-    task_type_dropdown.setProperty("button_index", index)
-    task_type_dropdown.currentTextChanged.connect(lambda text: on_task_type_changed(task_types[task_type_dropdown.currentIndex()]))
-    return task_type_dropdown
-
-
-def create_value_dropdown(exe_names: List[Tuple[str, str]], current_button_info: Dict[str, Any], index: int,
-                          on_value_index_changed: Callable[[Dict[str, Any], QComboBox], None],
-                          on_value_changed: Callable[[str, int], None]) -> QComboBox:
-    """Creates a dropdown box for selecting either an executable name or a function name."""
-    value_dropdown = QComboBox()
-    value_dropdown.setProperty("button_index", index)
-    value_dropdown.blockSignals(True)
-
-    if current_button_info["task_type"] == "show_any_window":
-        value_dropdown.setEnabled(False)
-        value_dropdown.setEditable(True)
-        value_dropdown.clear()
-        value_dropdown.setCurrentText("")
-    elif current_button_info["task_type"] == "call_function":
-        from data.button_functions import ButtonFunctions
-        functions = ButtonFunctions().functions
-        value_dropdown.setEditable(False)
-        value_dropdown.setEnabled(True)
-        for func_name, func_data in functions.items():
-            value_dropdown.addItem(func_data['text_1'], func_name)
-        current_function = current_button_info["properties"].get("function_name", "")
-        if current_function:
-            for i in range(value_dropdown.count()):
-                if value_dropdown.itemData(i) == current_function:
-                    value_dropdown.setCurrentIndex(i)
-                    break
-    else:
-        value_dropdown.setEditable(True)
-        value_dropdown.setEnabled(True)
-        for exe_name, app_name in exe_names:
-            display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
-            value_dropdown.addItem(display_text, exe_name)
-        current_exe_name = current_button_info["properties"].get("exe_name", "")
-        if current_exe_name:
-            for i in range(value_dropdown.count()):
-                if value_dropdown.itemData(i) == current_exe_name:
-                    value_dropdown.setCurrentIndex(i)
-                    break
-        else:
-            for i in range(value_dropdown.count()):
-                if value_dropdown.itemData(i) == "explorer.exe":
-                    value_dropdown.setCurrentIndex(i)
-                    break
-
-    value_dropdown.currentIndexChanged.connect(
-        partial(on_value_index_changed, button_index=index, dropdown=value_dropdown)
-    )
-    value_dropdown.editTextChanged.connect(lambda text, idx=index: on_value_changed(text, idx))
-    value_dropdown.blockSignals(False)
-    return value_dropdown

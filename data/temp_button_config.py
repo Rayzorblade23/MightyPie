@@ -1,5 +1,7 @@
 # data/temp_button_config.py
 import logging
+from typing import Any, Dict, Optional
+
 from data.button_info import ButtonInfo
 
 class TemporaryButtonConfig:
@@ -7,6 +9,10 @@ class TemporaryButtonConfig:
 
     def __init__(self):
         self._temp_changes = {}
+
+    def get_button_config(self, button_index: int) -> Optional[Dict[str, Any]]:
+        """Gets the temporary configuration for a button."""
+        return self._temp_changes.get(button_index)
 
     def update_button(self, index: int, changes: dict) -> None:
         logging.debug(f"TemporaryButtonConfig.update_button called with index: {index}, changes: {changes}")

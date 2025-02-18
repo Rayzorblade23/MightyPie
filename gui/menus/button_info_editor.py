@@ -140,8 +140,8 @@ class ButtonInfoEditor(QWidget):
         self.update_apps_info()
         super().showEvent(event)
 
-    # Update on_task_type_changed
     def on_task_type_changed(self, new_task_type: str) -> None:
+        """Handles changes to the task type in the dropdown."""
         sender = self.sender()
         button_index = sender.property("button_index")
 
@@ -161,7 +161,7 @@ class ButtonInfoEditor(QWidget):
                 return
 
             value_dropdown = value_dropdowns[0]
-            self._update_value_dropdown(value_dropdown, internal_task_type, button_index)
+            self._update_value_dropdown(value_dropdown, internal_task_type)
             update_window_title(self.config_manager, self)
 
         except Exception as e:
@@ -169,7 +169,8 @@ class ButtonInfoEditor(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to update task type: {str(e)}")
 
     # Add helper method
-    def _update_value_dropdown(self, dropdown: QComboBox, task_type: str, button_index: int) -> None:
+    def _update_value_dropdown(self, dropdown: QComboBox, task_type: str) -> None:
+        """Updates the value dropdown based on the selected task type."""
         dropdown.blockSignals(True)
         dropdown.clear()
 

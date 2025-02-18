@@ -1,29 +1,27 @@
 # gui/menus/button_info_components.py
+import logging
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout, QLabel, QPushButton
-
-from utils.button_info_editor_utils import (
-    create_texts_layout, create_dropdowns_layout, get_direction
-)
-from utils.icon_utils import get_icon
 from PyQt6.QtWidgets import (
     QFrame, QHBoxLayout, QVBoxLayout, QLabel,
     QComboBox, QPushButton, QMessageBox
 )
-from PyQt6.QtCore import Qt
-import logging
 
 from utils.button_info_editor_utils import (
     get_direction, create_texts_layout,
     create_dropdowns_layout, update_window_title
 )
+from utils.icon_utils import get_icon
+
 if TYPE_CHECKING:
     from gui.menus.button_info_editor import ButtonInfoEditor
 
 
 class ButtonFrame(QFrame):
+    class ButtonFrame(QFrame):
+        """Frame containing configuration for a single button in the pie menu."""
+
     def __init__(self, index: int, row: int, editor: 'ButtonInfoEditor'):
         super().__init__()
         self.index = index
@@ -33,6 +31,7 @@ class ButtonFrame(QFrame):
         self.init_ui()
 
     def init_ui(self) -> None:
+        """Initialize the user interface components."""
         layout = QHBoxLayout(self)
 
         # Left side with index and direction
@@ -43,7 +42,8 @@ class ButtonFrame(QFrame):
         content_layout = self._create_content_section()
         layout.addLayout(content_layout)
 
-    def _create_index_section(self):
+    def _create_index_section(self) -> QVBoxLayout:
+        """Create the left section containing direction and reset button."""
         layout = QVBoxLayout()
 
         # Header with direction
@@ -68,7 +68,8 @@ class ButtonFrame(QFrame):
         layout.addLayout(reset_layout)
         return layout
 
-    def _create_reset_button(self):
+    def _create_reset_button(self) -> QPushButton:
+        """Create a reset button with icon and tooltip."""
         reset_button = QPushButton()
         reset_button.setToolTip("Reset")
         reset_button.setIcon(get_icon("restart", is_inverted=True))
@@ -78,7 +79,8 @@ class ButtonFrame(QFrame):
         reset_button.clicked.connect(self._on_reset_clicked)
         return reset_button
 
-    def _create_content_section(self):
+    def _create_content_section(self) -> QHBoxLayout:
+        """Create the main content section with dropdowns."""
         content_layout = QHBoxLayout()
         current_button_info = self.editor.config_manager.get_current_config(self.index)
 
