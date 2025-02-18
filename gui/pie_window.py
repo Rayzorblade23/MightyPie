@@ -167,7 +167,7 @@ class PieWindow(QMainWindow):
             daemon=True
         ).start()
 
-    def auto_refresh(self, reassign_all_buttons: bool = False):
+    def auto_refresh(self):
         """Automatically monitor and refresh windows periodically in a thread-safe way."""
         # start_time = time.time()
         # Lock access to shared data to ensure thread safety
@@ -178,10 +178,19 @@ class PieWindow(QMainWindow):
             # Compare against WindowManager's last_window_handles
             if current_window_handles != self.manager.last_window_handles:
                 self.manager.last_window_handles = current_window_handles
-                self.refresh(reassign_all_buttons)
+                self.refresh()
 
         # elapsed_time = time.time() - start_time
         # print(f"auto_refresh took {elapsed_time:.3f} seconds")
+
+    def force_refresh(self, reassign_all_buttons: bool = False):
+        """Automatically monitor and refresh windows periodically in a thread-safe way."""
+        with self.button_mapping_lock:
+            current_window_handles = [
+                values[0] for values in get_filtered_list_of_windows(self).values()
+            ]
+            self.manager.last_window_handles = current_window_handles
+            self.refresh(reassign_all_buttons)
 
     # endregion
 

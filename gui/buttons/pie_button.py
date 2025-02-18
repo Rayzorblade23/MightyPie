@@ -9,7 +9,7 @@ from data.config import CONFIG
 from data.font_styles import FontStyle
 from gui.elements.scrolling_text_label import ScrollingLabel
 from utils.icon_utils import invert_icon
-from utils.program_utils import main_window_hide, main_window_auto_refresh
+from utils.program_utils import main_window_hide, main_window_force_refresh
 from utils.window_utils import launch_app, focus_window_by_handle, close_window_by_handle
 
 if TYPE_CHECKING:
@@ -117,7 +117,7 @@ class PieButton(QPushButton):
         self.set_middle_click_action(
             lambda hwnd=window_handle: (
                 QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
-                QTimer.singleShot(100, lambda: main_window_auto_refresh),
+                QTimer.singleShot(100, lambda: main_window_force_refresh),
             )
         )
         self.setEnabled(True)
@@ -325,7 +325,7 @@ class ShowProgramWindowPieButton(PieButton):
         self.set_middle_click_action(
             lambda hwnd=window_handle: (
                 QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
-                QTimer.singleShot(100, lambda: main_window_auto_refresh()),
+                QTimer.singleShot(100, lambda: main_window_force_refresh()),
             )
         )
         self.setEnabled(True)

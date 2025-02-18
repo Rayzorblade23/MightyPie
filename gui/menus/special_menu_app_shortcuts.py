@@ -3,7 +3,7 @@ import sys
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
 
-from utils.program_utils import restart_program, quit_program, main_window_auto_refresh
+from utils.program_utils import restart_program, quit_program, main_window_force_refresh
 from gui.menus.button_info_editor import ButtonInfoEditor
 from data.config import CONFIG
 from gui.menus.config_settings_menu import ConfigSettingsWindow
@@ -46,7 +46,7 @@ class AppSettingsMenu(QWidget):
         # (icon_name, tooltip, click_action)
         buttons_data = [
             ("shredder", "Clear App Info Cache", lambda: clear_cache(self)),
-            ("sort", "Re-Assign all Buttons", lambda: main_window_auto_refresh(True)),
+            ("sort", "Re-Assign all Buttons", lambda: main_window_force_refresh(True)),
             ("cake", "Open the Button Config", lambda: self.open_button_info_editor()),
             ("settings", "Open the App Settings", lambda: self.open_settings_window()),
             ("restart", "Restart Program", lambda: restart_program()),

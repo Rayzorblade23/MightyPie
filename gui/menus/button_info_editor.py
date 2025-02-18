@@ -10,7 +10,7 @@ from data.config import CONFIG
 from gui.buttons.pie_button import BUTTON_TYPES
 from utils.button_info_editor_utils import (
     update_window_title, create_scroll_area, create_column, get_direction, create_button_container,
-    create_task_type_dropdown, create_value_dropdown, create_texts_layout, create_dropdowns_layout, reset_single_frame, reset_to_defaults
+    create_task_type_dropdown, create_value_dropdown, create_texts_layout, create_dropdowns_layout, reset_single_frame
 )
 from utils.icon_utils import get_icon
 from utils.json_utils import JSONManager
@@ -113,8 +113,35 @@ class ButtonInfoEditor(QWidget):
         return task_type_dropdown, value_dropdown
 
     def reset_to_defaults(self) -> None:
-        """Resets button configurations to defaults."""
-        reset_to_defaults(self, self.button_info)
+        """Resets all button configurations to defaults in temporary storage."""
+        reply = QMessageBox.question(
+            self, "Reset Confirmation",
+            "Are you sure you want to reset all settings to default?\nYou can still discard the changes afterwards.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                # Reset all 40 buttons regardless of UI visibility
+                for button_index in range(40):
+                    self.temp_config.update_button(button_index, {
+                        "task_type": "show_any_window",
+                        "properties": {
+                            "app_name": "",
+                            "app_icon_path": "",
+                            "window_title": "",
+                            "window_handle": -1,
+                            "exe_name": "",
+                            "exe_path": ""
+                        }
+                    })
+
+                # Update visible UI elements
+                self.restore_values_from_model()
+                update_window_title(self.temp_config, self)
+
+            except Exception as e:
+                logging.error(f"Error in reset_to_defaults: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to reset configuration: {str(e)}")
 
     def update_apps_info(self) -> None:
         """Updates the list of available executables from the JSON."""
@@ -138,30 +165,43 @@ class ButtonInfoEditor(QWidget):
             dropdowns = button_frame.findChildren(QComboBox)
             if not dropdowns:
                 continue
+
             task_type_dropdown = dropdowns[0]
             exe_name_dropdown = dropdowns[1] if len(dropdowns) > 1 else None
             button_index = task_type_dropdown.property("button_index")
-            current_button_info = self.button_info[button_index]
+
+            # Check temp_config first, fall back to button_info if no changes
+            if button_index in self.temp_config._temp_changes:
+                current_button_info = self.temp_config._temp_changes[button_index]
+            else:
+                current_button_info = self.button_info[button_index]
+
+            # Update task type dropdown
             task_type_dropdown.blockSignals(True)
-            task_type_dropdown.setCurrentText(current_button_info["task_type"])
+            if "task_type" in current_button_info:
+                display_text = current_button_info["task_type"].replace('_', ' ').title()
+                task_type_dropdown.setCurrentText(display_text)
             task_type_dropdown.blockSignals(False)
+
+            # Update exe name dropdown
             if exe_name_dropdown:
                 exe_name_dropdown.blockSignals(True)
-                if current_button_info["task_type"] == "show_any_window":
+                if current_button_info.get("task_type") == "show_any_window":
                     exe_name_dropdown.setCurrentText("")
                     exe_name_dropdown.setEnabled(False)
                 else:
                     exe_name_dropdown.setEnabled(True)
-                    exe_name = current_button_info["properties"].get("exe_name", "")
-                    found_index = -1
-                    for i in range(exe_name_dropdown.count()):
-                        if exe_name_dropdown.itemData(i) == exe_name:
-                            found_index = i
-                            break
-                    if found_index != -1:
-                        exe_name_dropdown.setCurrentIndex(found_index)
-                    else:
-                        exe_name_dropdown.setCurrentText(exe_name)
+                    if "properties" in current_button_info:
+                        exe_name = current_button_info["properties"].get("exe_name", "")
+                        found_index = -1
+                        for i in range(exe_name_dropdown.count()):
+                            if exe_name_dropdown.itemData(i) == exe_name:
+                                found_index = i
+                                break
+                        if found_index != -1:
+                            exe_name_dropdown.setCurrentIndex(found_index)
+                        else:
+                            exe_name_dropdown.setCurrentText(exe_name)
                 exe_name_dropdown.blockSignals(False)
 
     def closeEvent(self, event) -> None:
@@ -305,6 +345,10 @@ class ButtonInfoEditor(QWidget):
         try:
             # Apply temporary changes to the button_info instance
             self.temp_config.apply_changes(self.button_info)
+
+            # Sort the button configuration by index
+            sorted_config = dict(sorted(self.button_info.button_info_dict.items(), key=lambda x: int(x[0])))
+            self.button_info.button_info_dict = sorted_config
 
             # Save the updated configuration to JSON
             self.button_info.save_to_json()

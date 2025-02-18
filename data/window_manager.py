@@ -196,6 +196,8 @@ class WindowManager:
 
             if button['properties']['window_handle'] == -1 and windows_info:
                 hwnd, (title, exe_name, instance) = windows_info.popitem()
+                print(button_id, exe_name)
+
                 button['properties']['window_handle'] = hwnd
                 self._update_button_with_window_info(button, title, exe_name, instance, app_info_cache)
                 processed_buttons.add(button_id)

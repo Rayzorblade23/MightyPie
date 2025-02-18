@@ -117,29 +117,6 @@ def reset_single_frame(sender: QWidget, button_info: ButtonInfo, temp_config: An
     except Exception as e:
         logging.error(f"Error in reset_single_frame: {str(e)}")
 
-def reset_to_defaults(parent_widget: QWidget, button_info: Any) -> None:
-    """Resets all settings to their default values."""
-    reply = QMessageBox.question(
-        None, "Reset Confirmation",
-        "Are you sure you want to reset all settings to default?\nYou can still discard the changes afterwards.",
-        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-    )
-    if reply == QMessageBox.StandardButton.Yes:
-        for button_frame in parent_widget.findChildren(QFrame, "buttonConfigFrame"):
-            task_type_combo = button_frame.findChild(QComboBox)
-            if task_type_combo:
-                button_index = task_type_combo.property("button_index")
-                task_type_combo.setCurrentText("show_any_window")
-                exe_name_combo = button_frame.findChild(QComboBox, None)
-                if exe_name_combo and exe_name_combo != task_type_combo:
-                    exe_name_combo.setCurrentText("")
-                    exe_name_combo.setEnabled(False)
-                button_info.update_button(button_index, {
-                    "task_type": "show_any_window",
-                    "properties": {"exe_name": ""}
-                })
-        update_window_title(button_info, parent_widget)
-
 
 def update_window_title(config: Any, window: QWidget) -> None:
     """Updates the window title based on unsaved changes."""
