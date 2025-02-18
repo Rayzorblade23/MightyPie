@@ -10,8 +10,6 @@ IDEA:
 Implement a Delay when opening that can be set via config.
 There is already a setOpacity with singleShot in show_pie_menu_at_mouse_pos
 
-Implement Task Types as Buttons inherited from Pie Button instead
-
 We could run PWAs like YouTube Music via custom run commands. Would need a new type of pie menu button.
 
 Also: reverse buttons via Window Name, instead of App Name
@@ -20,21 +18,15 @@ Collect multiple windows on one button
 
 
 BUGS:
+
+- can't set launch or program window in button editor (only in build?)
+
+- one time: crash no "restore minimized"
+
+- program doesn't refresh DPI when changing monitors (maybe not fixable)
+
 - LaunchApp might not bring app to foreground
 
-- Scrolling not working on Labels of Window Control Pie Menus
-
-- first mouse click in Button Config doesn't do anything except closing Special Menu
-
-- maximize/minimize sometimes works on wrong window
-
 - MightyPie sometimes starts with smaller Pie Menus
-
-- positioning not exactly right
-
-- Spotify text is cut off when title changes (maybe fixed?!)
-
-- window gets an instance increase when a number is included in the title the same way...? as in " (i)"
-
 
 BUGS in BUILD:

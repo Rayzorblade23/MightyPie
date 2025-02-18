@@ -363,6 +363,7 @@ class ButtonInfoEditor(QWidget):
                 current_properties["exe_name"] = new_value
 
             self.temp_config.update_button(button_index, {
+                "task_type": task_type,
                 "properties": current_properties
             })
 
