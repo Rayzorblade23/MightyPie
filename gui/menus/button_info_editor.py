@@ -2,19 +2,15 @@
 
 import logging
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QFrame, QPushButton, QLabel
+from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QComboBox, QFrame
 
 from data.button_info import ButtonInfo
 from data.config import CONFIG
-from gui.buttons.pie_button import BUTTON_TYPES
 from gui.elements.button_info_editor_components import ButtonFrame
+from gui.elements.button_info_editor_dropdowns import ButtonDropdowns
 from utils.button_info_editor_utils import (
-    update_window_title, create_scroll_area, create_column, get_direction, create_button_container,
-    create_task_type_dropdown, create_value_dropdown, create_texts_layout, create_dropdowns_layout, reset_single_frame
+    update_window_title, create_scroll_area, create_column, create_button_container
 )
-from utils.icon_utils import get_icon
-from utils.json_utils import JSONManager
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -25,11 +21,8 @@ class ButtonInfoEditor(QWidget):
         super().__init__()
         self.button_info = ButtonInfo.get_instance()
         self.temp_config = TemporaryButtonConfig()  # Add temporary storage
+        self.dropdowns = ButtonDropdowns(self)
 
-        # Available options for dropdowns
-        self.task_types = list(BUTTON_TYPES.keys())
-        self.apps_info = JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
-        self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in self.apps_info.items()])
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -55,13 +48,9 @@ class ButtonInfoEditor(QWidget):
         """Creates the layout for each button frame."""
         return ButtonFrame(index, row, self)
 
-
     def create_dropdowns(self, current_button_info: dict, index: int) -> tuple[QComboBox, QComboBox]:
-        """Creates dropdowns for task type and value (exe name or function name)."""
-        task_type_dropdown = create_task_type_dropdown(self.task_types, current_button_info, index, self.on_task_type_changed)
-        value_dropdown = create_value_dropdown(self.exe_names, current_button_info, index, self.on_value_index_changed,
-                                               self.on_value_changed)
-        return task_type_dropdown, value_dropdown
+        """Creates dropdowns for task type and value."""
+        return self.dropdowns.create_dropdowns(current_button_info, index)
 
     def reset_to_defaults(self) -> None:
         """Resets all button configurations to defaults in temporary storage."""
@@ -95,20 +84,8 @@ class ButtonInfoEditor(QWidget):
                 QMessageBox.critical(self, "Error", f"Failed to reset configuration: {str(e)}")
 
     def update_apps_info(self) -> None:
-        """Updates the list of available executables from the JSON."""
-        self.apps_info = JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
-        self.exe_names = sorted([(exe_name, app_info["app_name"]) for exe_name, app_info in self.apps_info.items()])
-        for exe_dropdown in self.findChildren(QComboBox):
-            if not exe_dropdown.isEditable():
-                continue
-            current_text = exe_dropdown.currentText()
-            exe_dropdown.blockSignals(True)
-            exe_dropdown.clear()
-            for exe_name, app_name in self.exe_names:
-                display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
-                exe_dropdown.addItem(display_text, exe_name)
-            exe_dropdown.setCurrentText(current_text)
-            exe_dropdown.blockSignals(False)
+        """Updates the list of available executables."""
+        self.dropdowns.update_apps_info()
 
     def restore_values_from_model(self) -> None:
         """Restores values from the model for each button."""
@@ -230,7 +207,7 @@ class ButtonInfoEditor(QWidget):
             elif internal_task_type in ["show_program_window", "launch_program"]:
                 value_dropdown.setEditable(True)
                 value_dropdown.setEnabled(True)
-                for exe_name, app_name in self.exe_names:
+                for exe_name, app_name in self.dropdowns.exe_names:
                     display_text = f"({exe_name})" if not app_name.strip() else f"{app_name}"
                     value_dropdown.addItem(display_text, exe_name)
                 # Set explorer.exe as default
