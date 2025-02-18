@@ -59,64 +59,26 @@ class ButtonInfo:
             self.logger.error("Error saving configuration.")
             return False
 
-    def _initialize_button(self, index):
+    def _initialize_button(self):
         """Initialize a button with empty configuration"""
         return {
             "task_type": "show_any_window",
-            "properties": {
-                "app_name": "",
-                "app_icon_path": "",
-                "window_title": "",
-                "window_handle": -1,
-                "exe_name": "",
-                "exe_path": ""
-            }
+            "properties": self.get_default_properties()
         }
-
     def update_button(self, index, update_dict):
         """Update a button's configuration (but don't save to file)"""
         try:
             # If the index doesn't exist, initialize it
             if index not in self.button_info_dict:
-                self.button_info_dict[index] = self._initialize_button(index)
+                self.button_info_dict[index] = self._initialize_button()
 
             task_type = update_dict.get("task_type", self.button_info_dict[index]["task_type"])
-
-            # Define complete property sets for each task type
-            properties = {
-                "show_any_window": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "window_title": "",
-                    "window_handle": -1,
-                    "exe_name": "explorer.exe",
-                    "exe_path": ""
-            },
-                "show_program_window": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "exe_name": "explorer.exe",
-                    "exe_path": "",
-                    "window_title": "",
-                    "window_handle": -1
-                },
-                "launch_program": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "exe_name": "explorer.exe",
-                    "exe_path": ""
-                },
-                "call_function": {
-                    "function_name": update_dict.get("properties", {}).get("function_name", "")
-                }
-            }
 
             # Update with complete property set first
             self.button_info_dict[index] = {
                 "task_type": task_type,
-                "properties": properties[task_type]
+                "properties": self.get_default_properties(task_type)
             }
-
 
             # Then overlay with any specific updates
             if "properties" in update_dict:
@@ -357,3 +319,35 @@ class ButtonInfo:
     def get_instance(cls):
         """Get the singleton instance of ButtonInfo."""
         return cls()
+
+    @classmethod
+    def get_default_properties(cls, task_type: str = "show_any_window") -> dict:
+        """Returns the default properties for a given task type."""
+        properties = {
+            "show_any_window": {
+                "app_name": "",
+                "app_icon_path": "",
+                "window_title": "",
+                "window_handle": -1,
+                "exe_name": "explorer.exe",
+                "exe_path": ""
+            },
+            "show_program_window": {
+                "app_name": "",
+                "app_icon_path": "",
+                "exe_name": "explorer.exe",
+                "exe_path": "",
+                "window_title": "",
+                "window_handle": -1
+            },
+            "launch_program": {
+                "app_name": "",
+                "app_icon_path": "",
+                "exe_name": "explorer.exe",
+                "exe_path": ""
+            },
+            "call_function": {
+                "function_name": "toggle_maximize_window"
+            }
+        }
+        return properties.get(task_type, properties["show_any_window"]).copy()

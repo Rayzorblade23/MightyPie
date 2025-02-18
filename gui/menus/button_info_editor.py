@@ -244,34 +244,8 @@ class ButtonInfoEditor(QWidget):
             internal_task_type = new_task_type.lower().replace(' ', '_')
             logging.debug(f"Converted to internal_task_type: {internal_task_type}")
 
-            # Initialize default properties based on task type
-            default_properties = {
-                "show_any_window": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "window_title": "",
-                    "window_handle": -1,
-                    "exe_name": "explorer.exe",
-                    "exe_path": ""
-                },
-                "show_program_window": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "exe_name": "explorer.exe",
-                    "exe_path": "",
-                    "window_title": "",
-                    "window_handle": -1
-                },
-                "launch_program": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "exe_name": "explorer.exe",
-                    "exe_path": ""
-                },
-                "call_function": {
-                    "function_name": ""
-                }
-            }
+            # Get default properties from ButtonInfo
+            default_properties = ButtonInfo.get_default_properties(internal_task_type)
 
             button_frame = sender.parent().parent()
             if not button_frame:
@@ -292,7 +266,7 @@ class ButtonInfoEditor(QWidget):
             # Update temp config with correct task type and default properties
             self.temp_config.update_button(button_index, {
                 "task_type": internal_task_type,
-                "properties": default_properties[internal_task_type].copy()
+                "properties": default_properties
             })
             logging.debug(f"Updated temp config with defaults: {self.temp_config._temp_changes.get(button_index)}")
 
