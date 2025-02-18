@@ -82,6 +82,15 @@ class ScrollingLabel(QWidget):
         self.text_scroll_pos = 0  # Reset scroll position
         self._check_text_fit()  # Re-evaluate if scrolling is needed
 
+    def update_v_offset(self, new_offset: int):
+        """Update the vertical offset of the label and refresh its position."""
+        self.v_offset = new_offset
+        rect = self.rect()
+        rect.setWidth(rect.width() - self.label_margins * 2)
+        rect.moveLeft((self.rect().width() - rect.width()) // 2)
+        rect.moveTop(-self.v_offset)
+        self._container.setGeometry(rect)
+
     def _set_font_style(self, font_style: FontStyle):
         """Set the font style based on the font_styles.py enum."""
         font = self.label.font()  # Get the current font

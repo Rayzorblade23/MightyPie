@@ -138,10 +138,13 @@ class PieButton(QPushButton):
     def _set_label_1_text(self, text: str):
         """Change the text of label_1 from outside."""
         self.label_1.update_text(text)
+        if not hasattr(self, 'label_2'):
+            self.label_1.update_v_offset(1)
 
     def _set_label_2_text(self, text: str):
         """Change the text of label_2 from outside."""
         if text:  # If text is not empty or None
+            self.label_1.update_v_offset(-1)
             if hasattr(self, 'label_2'):  # Check if label_2 already exists
                 self.label_2.update_text(text)
             else:
