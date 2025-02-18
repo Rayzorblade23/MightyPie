@@ -117,6 +117,7 @@ class ButtonInfo:
                 "properties": properties[task_type]
             }
 
+
             # Then overlay with any specific updates
             if "properties" in update_dict:
                 self.button_info_dict[index]["properties"].update(update_dict["properties"])

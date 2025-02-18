@@ -147,6 +147,12 @@ class PieMenu(QWidget):
         # Update the pie_buttons list with the new button
         self.pie_buttons[index] = new_button
 
+        # Check if the replacement was successful
+        if self.pie_buttons.get(index) == new_button:
+            print(f"Button at index {index} replaced successfully.")
+        else:
+            print(f"Failed to replace button of type {new_button_class} at index {index}.")
+
     def create_pie_buttons(self):
         """Create pie menu buttons in a circular pattern."""
         num_buttons = CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU
