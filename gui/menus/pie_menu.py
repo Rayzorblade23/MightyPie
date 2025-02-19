@@ -146,6 +146,8 @@ class PieMenu(QWidget):
 
         # Update the pie_buttons list with the new button
         self.pie_buttons[index] = new_button
+        if new_button.index % 8 == 0:
+            print(f"{type(new_button)} {new_button.index} geo after creation: {new_button.geometry()}")
 
         # # Check if the replacement was successful
         # if self.pie_buttons.get(index) == new_button:
@@ -160,48 +162,56 @@ class PieMenu(QWidget):
         button_height = CONFIG.INTERNAL_BUTTON_HEIGHT
         radius = CONFIG.INTERNAL_RADIUS
 
+        # Calculate center position relative to the window
+        center_x = self.width() // 2
+        center_y = self.height() // 2
+
         for i in range(num_buttons):
-            # Calculate button position and offsets using the calculate_offsets function
             offset_x, offset_y = self.calculate_offsets(i, button_width, button_height)
             button_pos_x, button_pos_y = self.calculate_button_pos(i, num_buttons, offset_x, offset_y, radius)
+
+            # Make positions relative to center
+            button_pos_x = center_x + (button_pos_x - center_x)
+            button_pos_y = center_y + (button_pos_y - center_y)
 
             button_name = "Pie_Button" + str(i)
             button_index = CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU * self.pie_menu_index + i
 
-            # Create the pie button
             self.btn = PieButton(button_name, button_index, pos=(button_pos_x, button_pos_y), parent=self)
-
-            # Store the button in the dictionary
             self.pie_buttons[i] = self.btn
 
     def showEvent(self, event):
         super().showEvent(event)
         # Ensure window geometry is set before animations
         self.setGeometry(self.x(), self.y(), self.width(), self.height())
+        print(f"Pie Menu {self.pie_menu_index} geometry: {self.geometry()}")
         # Add a small delay before starting animations
         QTimer.singleShot(10, self.start_animations)
 
     def start_animations(self):
         """Start animations for all buttons after a short delay."""
         for button in self.pie_buttons.values():
-            self.animate_button(button, button.geometry())
 
-    def animate_button_with_delay(self, button: PieButton, rect: QRect, delay=50):  # Use MyButton
-        QTimer.singleShot(delay, lambda: self.animate_button(button, rect))
+            if button.index % 8 == 0:
+                print(f"BEFORE  PM_{self.pie_menu_index} - {button.index} geometry: {button.geometry()}\n")
+            self.animate_button(button, button.geometry())
 
     def animate_button(self, button: PieButton, rect: QRect):
         duration = 100
         center = self.rect().center()
 
-        # Calculate start position relative to the window center
+        # Start position should be at the center of the window
         start_x = center.x() - (CONFIG.INTERNAL_BUTTON_WIDTH // 8)
         start_y = center.y() - (CONFIG.INTERNAL_BUTTON_HEIGHT // 8)
+
+        # End position should be the button's final position
+        end_pos = rect.topLeft()
 
         # Position animation
         pos_animation = QPropertyAnimation(button, b"pos")
         pos_animation.setDuration(duration)
         pos_animation.setStartValue(QPoint(start_x, start_y))
-        pos_animation.setEndValue(rect.topLeft())
+        pos_animation.setEndValue(end_pos)
         pos_animation.setEasingCurve(QEasingCurve.Type.OutCirc)
 
         # Size animation
@@ -225,6 +235,15 @@ class PieMenu(QWidget):
         pos_animation.start()
         size_animation.start()
         opacity_animation.start()
+
+        # Connect finished signal to print the geometry after animation
+        pos_animation.finished.connect(lambda: self.print_geometry(button, "Position"))
+        size_animation.finished.connect(lambda: self.print_geometry(button, "Size"))
+
+    def print_geometry(self, button: PieButton, animation_type: str):
+        """Print the geometry of the button after animation."""
+        if button.index % 8 == 0:
+            print(f"AFTER {animation_type} animation - PM_{self.pie_menu_index} -  {button.index} geometry: {button.geometry()}\n")
 
     @pyqtSlot(dict)
     def update_button_ui(self, updated_button_config):

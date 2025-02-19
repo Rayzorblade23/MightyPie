@@ -19,6 +19,8 @@ Collect multiple windows on one button
 
 BUGS:
 
+- some program icons get cut off when they are saved
+
 - can't set launch or program window in button editor (only in build?)
 
 - one time: crash no "restore minimized"
