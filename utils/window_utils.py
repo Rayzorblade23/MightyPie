@@ -399,7 +399,7 @@ def _get_friendly_app_name(exe_path: str, exe_name: str):
         print(f"Error retrieving file description for {exe_path}: {e}")
         return os.path.splitext(exe_name)[0].capitalize()  # Remove the ".exe" extension
 
-
+# TODO: Investigate cut-off icons
 def _get_window_icon(exe_path, hwnd):
     try:
         if not exe_path:
@@ -421,6 +421,7 @@ def _get_window_icon(exe_path, hwnd):
 
         # Create a bitmap compatible with the main_window's device context
         hbmp = win32ui.CreateBitmap()
+
         hbmp.CreateCompatibleBitmap(hdc, 32, 32)  # Specify 32x32 size
 
         # Create a compatible DC to draw the icon
@@ -428,7 +429,7 @@ def _get_window_icon(exe_path, hwnd):
         memdc.SelectObject(hbmp)
 
         # Draw the icon onto the bitmap
-        memdc.DrawIcon((0, 0), icon_handle)
+        win32gui.DrawIconEx(memdc.GetSafeHdc(), 0, 0, icon_handle, 32, 32, 0, None, win32con.DI_NORMAL)
 
         # Create the project subfolder if it doesn't exist
         icon_folder = 'app_icons'
@@ -445,6 +446,7 @@ def _get_window_icon(exe_path, hwnd):
         # Convert bitmap to PIL Image
         bmpinfo = hbmp.GetInfo()
         bmpstr = hbmp.GetBitmapBits(True)
+
         im = Image.frombuffer(
             'RGBA',
             (32, 32),  # Explicitly set to 32x32
