@@ -15,6 +15,8 @@ class WindowManager:
         self._window_hwnd_mapping: Dict[int, Tuple[str, str, int]] = {}
         self.last_window_handles = []
         self.windowHandles_To_buttonIndexes_map = {}
+        self._app_info_cache: Dict[str, Dict[str, str]] = {}
+        self.windows_info: Dict[int, Tuple[str, str, int]] = {}
 
     @staticmethod
     def get_instance() -> "WindowManager":
@@ -23,6 +25,11 @@ class WindowManager:
                 if WindowManager._instance is None:
                     WindowManager._instance = WindowManager()
         return WindowManager._instance
+
+    def set_app_info_cache(self, cache: Dict[str, Dict[str, str]]) -> None:
+        """Updates the application info cache."""
+        with self._lock:
+            self._app_info_cache = deepcopy(cache)
 
     def update_open_windows_info(self, new_map: Dict[int, Tuple[str, str, int]]) -> None:
         """
@@ -69,11 +76,14 @@ class WindowManager:
         """
         return self._window_hwnd_mapping.copy()
 
-    def update_button_window_assignment(self, pie_window, button_info, app_info_cache, reassign_all_buttons: bool = True) -> None:
+    def update_button_window_assignment(self, pie_window, button_info, reassign_all_buttons: bool = True) -> None:
         """Updates button info with current window information."""
 
         # Create working copy of button configurations
         updated_button_config: Dict[int, Dict[str, Any]] = deepcopy(button_info.get_all_tasks())
+
+        # Get current windows info
+        self.windows_info = self.get_open_windows_info()
 
         # Track processed buttons
         processed_buttons: Set[int] = set()
@@ -83,30 +93,21 @@ class WindowManager:
         show_any_window_buttons = button_info.filter_buttons("task_type", "show_any_window")
         launch_program_buttons = button_info.filter_buttons("task_type", "launch_program")
 
-        # Get current windows info
-        windows_info = self.get_open_windows_info()
-
         # Process Launch Program Buttons
-        self._update_launch_program_windows(launch_program_buttons, app_info_cache)
+        self._update_launch_program_windows(launch_program_buttons)
 
         # Process Show (specific) Program Buttons
         self._update_existing_handles(
             show_program_window_buttons,
-            windows_info,
             processed_buttons,
             reassign_all_buttons,
             True)
         self._assign_free_windows_for_show_program_window_buttons(
-            show_program_window_buttons, windows_info, app_info_cache, processed_buttons)
+            show_program_window_buttons, processed_buttons)
 
         # Process Show Any Window Buttons
-        self._update_existing_handles(
-            show_any_window_buttons,
-            windows_info,
-            processed_buttons,
-            reassign_all_buttons)
-        self._assign_free_windows_for_show_any_window_buttons(
-            show_any_window_buttons, windows_info, app_info_cache, processed_buttons)
+        self._update_existing_handles(show_any_window_buttons, processed_buttons, reassign_all_buttons)
+        self._assign_free_windows_for_show_any_window_buttons(show_any_window_buttons, processed_buttons)
 
         # Update final configuration
         updated_button_config.update(show_any_window_buttons)
@@ -118,27 +119,28 @@ class WindowManager:
     def _update_launch_program_windows(
             self,
             buttons: Dict[int, Dict[str, Any]],
-            app_info_cache: Dict[str, Dict[str, str]],
     ) -> None:
         for _, button in buttons.items():
             exe_name = button['properties']['exe_name']
-            self._update_button_with_window_info(button, "", exe_name, 0, app_info_cache, True)
+            self._update_button_with_window_info(button, "", exe_name, 0, True)
 
     def _update_existing_handles(
             self,
             buttons: Dict[int, Dict[str, Any]],
-            windows_info: Dict[int, tuple[str, str, int]],
             processed_buttons: Set[int] = None,
             reassign_all: bool = False,
             is_show_program_button: bool = False
+
     ) -> None:
         """Checks buttons with existing window handles and clears invalid ones."""
         for button_id, button in buttons.items():
             hwnd: int = button['properties']['window_handle']
-            if (hwnd in windows_info and
+            if (hwnd in self.windows_info and
                     # if reassign_all, only do it for certain IDs
                     not (reassign_all and button_id > CONFIG.REASSIGN_BTN_IDS_HIGHER_THAN)):
-                windows_info.pop(hwnd)
+                title, exe_name, instance = self.windows_info[hwnd]
+                self.windows_info.pop(hwnd)
+                self._update_button_with_window_info(button, title, exe_name, instance, True)
                 processed_buttons.add(button_id)
             else:
                 if not is_show_program_button:
@@ -147,8 +149,6 @@ class WindowManager:
     def _assign_free_windows_for_show_program_window_buttons(
             self,
             buttons: Dict[int, Dict[str, Any]],
-            windows_info: Dict[int, tuple[str, str, int]],
-            app_info_cache: Dict[str, Dict[str, str]],
             processed_buttons: Set[int]
     ) -> None:
         """Maps program-specific windows to their designated buttons."""
@@ -157,7 +157,7 @@ class WindowManager:
                 continue
 
             exe_name = button['properties']['exe_name']
-            if exe_name not in app_info_cache:
+            if exe_name not in self._app_info_cache:
                 button['properties'].update({
                     'window_handle': -1,
                     'app_name': exe_name.rstrip(".exe").capitalize()
@@ -165,9 +165,9 @@ class WindowManager:
                 continue
 
             matching_window = None
-            for hwnd, (window_title, exe_name_from_window, instance_id) in windows_info.items():
+            for hwnd, (window_title, exe_name_from_window, instance_id) in self.windows_info.items():
                 if exe_name_from_window == exe_name:
-                    windows_info.pop(hwnd)
+                    self.windows_info.pop(hwnd)
                     matching_window = (hwnd, window_title, exe_name_from_window, instance_id)
                     processed_buttons.add(button_id)
                     break
@@ -176,17 +176,15 @@ class WindowManager:
                 hwnd, title, _, instance = matching_window
                 button['properties']['window_handle'] = hwnd
                 self._update_button_with_window_info(
-                    button, title, exe_name, instance, app_info_cache, True)
+                    button, title, exe_name, instance, True)
             else:
                 button['properties']['window_handle'] = 0
                 self._update_button_with_window_info(
-                    button, "", exe_name, 0, app_info_cache, True)
+                    button, "", exe_name, 0, True)
 
     def _assign_free_windows_for_show_any_window_buttons(
             self,
             buttons: Dict[int, Dict[str, Any]],
-            windows_info: Dict[int, tuple[str, str, int]],
-            app_info_cache: Dict[str, Dict[str, str]],
             processed_buttons: Set[int]
     ) -> None:
         """Assigns remaining windows to buttons that have no window handle."""
@@ -194,29 +192,25 @@ class WindowManager:
             if button_id in processed_buttons:
                 continue
 
-            if button['properties']['window_handle'] == -1 and windows_info:
-                hwnd, (title, exe_name, instance) = windows_info.popitem()
-                print(button_id, exe_name)
-
+            if button['properties']['window_handle'] == -1 and self.windows_info:
+                hwnd, (title, exe_name, instance) = self.windows_info.popitem()
                 button['properties']['window_handle'] = hwnd
-                self._update_button_with_window_info(button, title, exe_name, instance, app_info_cache)
+                self._update_button_with_window_info(button, title, exe_name, instance)
                 processed_buttons.add(button_id)
 
-    @staticmethod
-    def _update_button_with_window_info(
-            button: Dict[str, Any],
-            title: str,
-            exe_name: str,
-            instance: int,
-            app_info_cache: Dict[str, Dict[str, str]],
-            include_exe_path: bool = False
-    ) -> None:
+    def _update_button_with_window_info(self,
+                                        button: Dict[str, Any],
+                                        title: str,
+                                        exe_name: str,
+                                        instance: int,
+                                        include_exe_path: bool = False
+                                        ) -> None:
         """Updates button properties with window information and app cache data."""
         button['properties'].update({
             'window_title': f"{title} ({instance})" if instance != 0 else title,
-            'app_name': app_info_cache.get(exe_name, {}).get('app_name', ''),
-            'app_icon_path': app_info_cache.get(exe_name, {}).get('icon_path', ''),
-            **({'exe_path': app_info_cache.get(exe_name, {}).get('exe_path', '')} if include_exe_path else {})
+            'app_name': self._app_info_cache.get(exe_name, {}).get('app_name', ''),
+            'app_icon_path': self._app_info_cache.get(exe_name, {}).get('icon_path', ''),
+            **({'exe_path': self._app_info_cache.get(exe_name, {}).get('exe_path', '')} if include_exe_path else {})
         })
 
     @staticmethod

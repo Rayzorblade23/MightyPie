@@ -159,10 +159,11 @@ class PieWindow(QMainWindow):
     def refresh(self, reassign_all_buttons: bool = False):
         # Start the background task
         app_info_cache = load_cache()
+        self.manager.set_app_info_cache(app_info_cache)
 
         threading.Thread(
             target=self.manager.update_button_window_assignment(
-                self, self.button_info, app_info_cache, reassign_all_buttons
+                self, self.button_info, reassign_all_buttons
             ),
             daemon=True
         ).start()
