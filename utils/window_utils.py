@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 from ctypes import windll
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, TypeAlias, Any
 
 import psutil
 import pyautogui
@@ -103,6 +103,12 @@ manager = WindowManager.get_instance()
 
 # List to store HWNDs to exclude
 hwnds_to_exclude = []
+EXCLUDED_CLASS_NAMES = {"Progman", "AutoHotkeyGUI"}
+DWM_WINDOW_CLOAKED_STATE = 14
+
+# Custom type aliases
+WindowInfo: TypeAlias = Tuple[str, str, int]  # (title, exe_name, instance)
+WindowMapping: TypeAlias = Dict[int, WindowInfo]
 
 
 def add_hwnd_to_exclude(widget: QWidget):
@@ -113,67 +119,31 @@ def add_hwnd_to_exclude(widget: QWidget):
     hwnds_to_exclude.append(hwnd)
 
 
-def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple[str, str, int]]:
-    """Enumerate and retrieve a list of visible windows
+def get_filtered_list_of_windows(this_window: Optional[QWidget] = None) -> WindowMapping:
+    temp_window_hwnds_mapping: WindowMapping = {}
+    this_program_hwnd = int(this_window.winId()) if this_window else 0
 
-    This is the window info, where:
-        - The key is the HWND (int).
-        - The values are a tuple containing:
-            1. Window title (str): The title of the window.
-            2. Exe name (str): The human-friendly name of the executable.
-            3. Instance number (int): A unique instance number for this window.
-    """
-    temp_window_hwnds_mapping: Dict[int, Tuple[str, str, int]] = {}
-    if this_window is not None:
-        this_program_hwnd = int(this_window.winId())  # Exclude this program from the Switcher
-    else:
-        this_program_hwnd = 0
+    def enum_windows_callback(hwnd: int, _lparam: Any) -> None:
+        if not win32gui.IsWindowVisible(hwnd):
+            return
 
-    def enum_windows_callback(hwnd, lparam):
-        # Check if the main_window is visible
-        if win32gui.IsWindowVisible(hwnd):
+        window_title = win32gui.GetWindowText(hwnd)
+        class_name = win32gui.GetClassName(hwnd)
 
-            raw_window_title = win32gui.GetWindowText(hwnd)
-            class_name = win32gui.GetClassName(hwnd)
+        # Check window cloaked state
+        is_cloaked = ctypes.c_int(0)
+        ctypes.WinDLL("dwmapi").DwmGetWindowAttribute(
+            hwnd, DWM_WINDOW_CLOAKED_STATE, ctypes.byref(is_cloaked), ctypes.sizeof(is_cloaked)
+        )
 
-            # print(f"hwnd: {hwnd} and main_window title: {window_title}. This is the main_window utils script \n")
-
-            # Check if the main_window is cloaked (hidden or transparent)
-            isCloaked = ctypes.c_int(0)
-            ctypes.WinDLL("dwmapi").DwmGetWindowAttribute(
-                hwnd, 14, ctypes.byref(isCloaked), ctypes.sizeof(isCloaked)
-            )
-            # Apply filtering conditions to determine if we want to include this main_window
-
-            if (
-                    win32gui.IsWindowVisible(hwnd)  # Window must be visible
-                    and isCloaked.value == 0  # Window must not be cloaked (hidden)
-                    and raw_window_title.strip()  # Window must have a non-empty title
-                    and class_name != "Progman"  # Exclude system windows like "Progman"
-                    and class_name != "AutoHotkeyGUI"  # Exclude "AutoHotkey" windows
-                    # # and class_name != "TaskManagerWindow"  # Exclude Taskmanager
-                    and hwnd != this_program_hwnd  # Exclude this program
-                    and hwnd not in hwnds_to_exclude
-
-            ):
-                # entry for temp_window_hwnds_mapping
-                entry, app_name = _get_window_info(hwnd)
-                # Remove the app_name from window_title if it is there
-                for _hwnd, (_window_title, _exe_name, _) in entry.items():
-                    _window_title = (
-                        _window_title
-                        if f" - {app_name}" not in _window_title
-                        else _window_title.replace(f" - {app_name}", "")
-                    )
-                    # Now window_title is updated without the app_name suffix if applicable
-                    temp_window_hwnds_mapping[hwnd] = _window_title, _exe_name, 0
+        if _should_include_window(hwnd, window_title, class_name, is_cloaked.value, this_program_hwnd):
+            entry, app_name = _get_window_info(hwnd)
+            _clean_window_titles(temp_window_hwnds_mapping, entry, app_name)
 
     # Enumerate all top-level windows and pass each main_window's handle to the callback
     try:
         win32gui.EnumWindows(enum_windows_callback, None)
-
-        # print(temp_window_hwnds_mapping)
-        # print("###############\n")
+        # Assign instance numbers if windows have the same title
         temp_window_hwnds_mapping = assign_instance_numbers(temp_window_hwnds_mapping)
 
         # Update the main mapping dictionary with the filtered main_window handles
@@ -182,7 +152,37 @@ def get_filtered_list_of_windows(this_window: QWidget = None) -> Dict[int, Tuple
         return manager.get_open_windows_info()
     except Exception as e:
         print(f"Error getting windows: {e}")
-        return []
+        return {}
+
+
+def _should_include_window(
+        hwnd: int,
+        window_title: str,
+        class_name: str,
+        is_cloaked: int,
+        this_program_hwnd: int
+) -> bool:
+    """Check if a window should be included in the filtered list."""
+    return all([
+        win32gui.IsWindowVisible(hwnd),
+        is_cloaked == 0,
+        window_title.strip(),
+        class_name not in EXCLUDED_CLASS_NAMES,
+        hwnd != this_program_hwnd,
+        hwnd not in hwnds_to_exclude
+    ])
+
+
+def _clean_window_titles(mapping: WindowMapping, entry: WindowMapping, app_name: str) -> None:
+    """Update window titles in the mapping, removing unnecessary suffixes."""
+    for hwnd, (window_title, exe_name, _) in entry.items():
+        clean_title = window_title
+        if exe_name == "explorer.exe" and " - File Explorer" in window_title:
+            clean_title = window_title.replace(" - File Explorer", "")
+        elif f" - {app_name}" in window_title:
+            clean_title = window_title.replace(f" - {app_name}", "")
+
+        mapping[hwnd] = (clean_title, exe_name, 0)
 
 
 def assign_instance_numbers(temp_window_hwnds_mapping: Dict[int, Tuple[str, str, int]]) -> Dict[int, Tuple[str, str, int]]:

@@ -97,13 +97,8 @@ class WindowManager:
         self._update_launch_program_windows(launch_program_buttons)
 
         # Process Show (specific) Program Buttons
-        self._update_existing_handles(
-            show_program_window_buttons,
-            processed_buttons,
-            reassign_all_buttons,
-            True)
-        self._assign_free_windows_for_show_program_window_buttons(
-            show_program_window_buttons, processed_buttons)
+        self._update_existing_handles(show_program_window_buttons, processed_buttons, reassign_all_buttons,True)
+        self._assign_free_windows_for_show_program_window_buttons(show_program_window_buttons, processed_buttons)
 
         # Process Show Any Window Buttons
         self._update_existing_handles(show_any_window_buttons, processed_buttons, reassign_all_buttons)
@@ -116,10 +111,7 @@ class WindowManager:
 
         self._emit_button_updates(updated_button_config, pie_window)
 
-    def _update_launch_program_windows(
-            self,
-            buttons: Dict[int, Dict[str, Any]],
-    ) -> None:
+    def _update_launch_program_windows(self, buttons: Dict[int, Dict[str, Any]]) -> None:
         for _, button in buttons.items():
             exe_name = button['properties']['exe_name']
             self._update_button_with_window_info(button, "", exe_name, 0, True)
