@@ -770,6 +770,9 @@ def launch_app(exe_path):
 
             subprocess.run(['start', 'spotify:'], shell=True)
 
+        elif "explorer" in exe_path.lower():
+            pyautogui.hotkey('win', 'e')
+
         else:
             # Redirect output to suppress terminal spam
             with open(os.devnull, 'w') as devnull:
