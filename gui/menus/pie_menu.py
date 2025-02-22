@@ -146,8 +146,6 @@ class PieMenu(QWidget):
 
         # Update the pie_buttons list with the new button
         self.pie_buttons[index] = new_button
-        if new_button.index % 8 == 0:
-            print(f"{type(new_button)} {new_button.index} geo after creation: {new_button.geometry()}")
 
         # # Check if the replacement was successful
         # if self.pie_buttons.get(index) == new_button:
@@ -184,16 +182,12 @@ class PieMenu(QWidget):
         super().showEvent(event)
         # Ensure window geometry is set before animations
         self.setGeometry(self.x(), self.y(), self.width(), self.height())
-        print(f"Pie Menu {self.pie_menu_index} geometry: {self.geometry()}")
         # Add a small delay before starting animations
         QTimer.singleShot(10, self.start_animations)
 
     def start_animations(self):
         """Start animations for all buttons after a short delay."""
         for button in self.pie_buttons.values():
-
-            if button.index % 8 == 0:
-                print(f"BEFORE  PM_{self.pie_menu_index} - {button.index} geometry: {button.geometry()}\n")
             self.animate_button(button, button.geometry())
 
     def animate_button(self, button: PieButton, rect: QRect):
@@ -236,9 +230,9 @@ class PieMenu(QWidget):
         size_animation.start()
         opacity_animation.start()
 
-        # Connect finished signal to print the geometry after animation
-        pos_animation.finished.connect(lambda: self.print_geometry(button, "Position"))
-        size_animation.finished.connect(lambda: self.print_geometry(button, "Size"))
+        # # Connect finished signal to print the geometry after animation
+        # pos_animation.finished.connect(lambda: self.print_geometry(button, "Position"))
+        # size_animation.finished.connect(lambda: self.print_geometry(button, "Size"))
 
     def print_geometry(self, button: PieButton, animation_type: str):
         """Print the geometry of the button after animation."""

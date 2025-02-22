@@ -4,10 +4,12 @@ import ctypes
 import os
 import subprocess
 import sys
-from typing import Dict, Tuple
+from ctypes import windll
+from typing import Dict, Tuple, Optional
 
 import psutil
 import pyautogui
+import pythoncom
 import win32api
 import win32con
 import win32gui
@@ -19,8 +21,8 @@ from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QWidget, QMessageBox
 
 from data.config import CONFIG
-from utils.json_utils import JSONManager
 from data.window_manager import WindowManager
+from utils.json_utils import JSONManager
 
 cache_being_cleared = False
 last_minimized_hwnd = 0
@@ -399,71 +401,90 @@ def _get_friendly_app_name(exe_path: str, exe_name: str):
         print(f"Error retrieving file description for {exe_path}: {e}")
         return os.path.splitext(exe_name)[0].capitalize()  # Remove the ".exe" extension
 
-# TODO: Investigate cut-off icons
-def _get_window_icon(exe_path, hwnd):
+
+def hicon_to_image(icon_handle: int, size: tuple[int, int] = (32, 32)) -> Image.Image:
+    """Converts an HICON to a PIL Image."""
+    # Get a device context for the screen.
+    screen_dc = win32gui.GetDC(0)
+    device_context = win32ui.CreateDCFromHandle(screen_dc)
+    memory_dc = device_context.CreateCompatibleDC()
+    bitmap = win32ui.CreateBitmap()
+    bitmap.CreateCompatibleBitmap(device_context, size[0], size[1])
+    memory_dc.SelectObject(bitmap)
+
+    # Draw the icon into the memory DC.
+    win32gui.DrawIconEx(memory_dc.GetSafeHdc(), 0, 0, icon_handle, size[0], size[1], 0, None, win32con.DI_NORMAL)
+
+    bitmap_info = bitmap.GetInfo()
+    bitmap_bits = bitmap.GetBitmapBits(True)
+
+    image = Image.frombuffer('RGBA', (bitmap_info['bmWidth'], bitmap_info['bmHeight']),
+                             bitmap_bits, 'raw', 'BGRA', 0, 1)
+
+    # Clean up resources.
     try:
-        if not exe_path:
-            print(f"Executable path not found for hwnd: {hwnd}")
-            return ""
+        memory_dc.DeleteDC()
+        device_context.DeleteDC()
+        win32gui.ReleaseDC(0, screen_dc)
+        win32gui.DestroyIcon(icon_handle)
+    except Exception as e:
+        print(f"[DEBUG] Error during cleanup: {e}")
 
-        # Extract the icon from the executable
-        large, small = win32gui.ExtractIconEx(exe_path, 0)
+    return image
 
-        if not large and not small:
-            print(f"No icon found for executable: {exe_path}")
-            return ""
 
-        # Use the large icon (if available), else fallback to small
-        icon_handle = large[0] if large else small[0]
-
-        # Create a device context (DC)
-        hdc = win32ui.CreateDCFromHandle(win32gui.GetDC(hwnd))
-
-        # Create a bitmap compatible with the main_window's device context
-        hbmp = win32ui.CreateBitmap()
-
-        hbmp.CreateCompatibleBitmap(hdc, 32, 32)  # Specify 32x32 size
-
-        # Create a compatible DC to draw the icon
-        memdc = hdc.CreateCompatibleDC()
-        memdc.SelectObject(hbmp)
-
-        # Draw the icon onto the bitmap
-        win32gui.DrawIconEx(memdc.GetSafeHdc(), 0, 0, icon_handle, 32, 32, 0, None, win32con.DI_NORMAL)
-
-        # Create the project subfolder if it doesn't exist
-        icon_folder = 'app_icons'
+def _get_window_icon(exe_path: str, hwnd: int) -> Optional[str]:
+    """Gets the icon for an open window using exe_path first, then WM_GETICON as fallback."""
+    try:
+        pythoncom.CoInitialize()
+        icon_folder = "app_icons"
         if not os.path.exists(icon_folder):
             os.makedirs(icon_folder)
 
-        # Get the name of the executable without the ".exe" extension
-        exe_name = os.path.basename(exe_path)
-        icon_filename = os.path.splitext(exe_name)[0] + '.png'  # Changed to .png
+        # Try using exe_path method first
+        if exe_path and os.path.exists(exe_path):
+            try:
+                large, small = win32gui.ExtractIconEx(exe_path, 0)
+                if large or small:
+                    icon_handle = large[0] if large else small[0]
+                    image = hicon_to_image(icon_handle, size=(32, 32))
+                    exe_name = os.path.basename(exe_path)
+                    icon_filename = os.path.splitext(exe_name)[0] + '.png'
+                    icon_path = os.path.join(icon_folder, icon_filename)
+                    image.save(icon_path, format='PNG')
+                    return icon_path
+                else:
+                    print(f"[DEBUG] No icon found in exe_path: {exe_path}")
+            except Exception as e:
+                print(f"[DEBUG] Error extracting icon from exe_path: {e}")
+        else:
+            print(f"[DEBUG] exe_path not provided or doesn't exist for hwnd {hwnd}")
 
-        # Save the icon to the subfolder using PIL
-        icon_path = os.path.join(icon_folder, icon_filename)
+        # Fallback: try using WM_GETICON method.
+        print(f"[DEBUG] Falling back to WM_GETICON method for hwnd {hwnd}")
+        icon_handle = win32gui.SendMessage(hwnd, win32con.WM_GETICON, win32con.ICON_BIG, 0)
+        if icon_handle == 0:
+            icon_handle = win32gui.SendMessage(hwnd, win32con.WM_GETICON, win32con.ICON_SMALL, 0)
+        if icon_handle == 0:
+            try:
+                icon_handle = win32gui.GetClassLong(hwnd, win32con.GCL_HICON)
+            except Exception:
+                icon_handle = windll.user32.GetClassLongPtrW(hwnd, win32con.GCL_HICON)
 
-        # Convert bitmap to PIL Image
-        bmpinfo = hbmp.GetInfo()
-        bmpstr = hbmp.GetBitmapBits(True)
+        if icon_handle == 0:
+            print(f"[DEBUG] No icon found using WM_GETICON method for hwnd {hwnd}")
+            return None
 
-        im = Image.frombuffer(
-            'RGBA',
-            (32, 32),  # Explicitly set to 32x32
-            bmpstr, 'raw', 'BGRA', 0, 1
-        )
-
-        # Save as PNG
-        im.save(icon_path, format='PNG')
-
-        # Cleanup the resources
-        win32gui.DestroyIcon(icon_handle)
-
-        print(f"Icon saved as {icon_path}.")
+        image = hicon_to_image(icon_handle, size=(32, 32))
+        exe_name = os.path.basename(exe_path)  # Get exe_name for fallback case
+        exe_name_no_ext = os.path.splitext(exe_name)[0]  # Remove .exe extension
+        icon_path = os.path.join(icon_folder, f"{exe_name_no_ext}.png")  # Use exe_name without extension
+        image.save(icon_path, format="PNG")
+        print(f"[DEBUG] Icon extracted using WM_GETICON method saved as {icon_path}")
         return icon_path
 
     except Exception as e:
-        print(f"Error fetching icon: {e}")
+        print(f"[DEBUG] Error in _get_window_icon for hwnd {hwnd}: {e}")
         return None
 
 
