@@ -1,8 +1,8 @@
 import sys
 from typing import Optional
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QPainter
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QEvent
+from PyQt6.QtGui import QPainter, QCursor
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout
 
 from data.config import CONFIG
@@ -36,7 +36,6 @@ class SpecialMenu(QWidget):
         # Taskbar toggle
         self.taskbar_toggle = self.setup_taskbar_toggle()
         self.toggles_layout.addWidget(self.taskbar_toggle)
-
 
         # Initialize the taskbar visibility based on current state
         self.initialize_taskbar_toggle()
@@ -84,6 +83,13 @@ class SpecialMenu(QWidget):
         self.resize(self.sizeHint())  # Resize based on the sizeHint of the widget
         self.view.setGeometry(0, 0, self.width(), self.height())
         self.scene.setSceneRect(0, 0, self.width(), self.height())
+
+    #     # Hook mouse events globally
+    #     mouse.hook(self.on_mouse_event)
+    #
+    # def on_mouse_event(self, event):
+    #     """Handles global mouse events."""
+    #     print(f"Mouse event detected: {event}")
 
     def setup_taskbar_toggle(self) -> ToggleSwitch:
         """Sets up the taskbar toggle switch."""
@@ -193,9 +199,10 @@ class SpecialMenu(QWidget):
 
         self.setWindowTitle("Special Menu")
         # For a popup, do not assign a parent (i.e. parent should be None)
-        self.setWindowFlags(Qt.WindowType.Popup |
-                            Qt.WindowType.FramelessWindowHint |
-                            Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            # Qt.WindowType.Popup |
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
     def closeEvent(self, event):
@@ -203,15 +210,14 @@ class SpecialMenu(QWidget):
         self.hide()
         event.ignore()  # Prevent the default close behavior
 
-    def mousePressEvent(self, event):
-        """
-        Override mousePressEvent to detect clicks outside the window and hide it.
-        """
-        if not self.rect().contains(self.mapFromGlobal(event.globalPosition().toPoint())):
-            self.hide()  # Hide menu when clicked outside
-        else:
-            # Do nothing when clicked inside
-            event.ignore()
+    def event(self, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.WindowDeactivate:
+            local_cursor_pos = self.mapFromGlobal(QCursor.pos())  # Convert global to local
+            is_inside = self.rect().contains(local_cursor_pos)  # Check against widget's local rect
+            if not is_inside:
+                self.hide()
+
+        return super().event(event)
 
     def show_menu(self) -> None:
         """Show the menu centered at the cursor."""
