@@ -1,8 +1,9 @@
 import sys
 from typing import Optional
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QEvent
-from PyQt6.QtGui import QPainter, QCursor
+import mouse
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QRect
+from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout
 
 from data.config import CONFIG
@@ -84,12 +85,7 @@ class SpecialMenu(QWidget):
         self.view.setGeometry(0, 0, self.width(), self.height())
         self.scene.setSceneRect(0, 0, self.width(), self.height())
 
-    #     # Hook mouse events globally
-    #     mouse.hook(self.on_mouse_event)
-    #
-    # def on_mouse_event(self, event):
-    #     """Handles global mouse events."""
-    #     print(f"Mouse event detected: {event}")
+        self.mouse_hook_active = False  # Track hook state
 
     def setup_taskbar_toggle(self) -> ToggleSwitch:
         """Sets up the taskbar toggle switch."""
@@ -205,26 +201,56 @@ class SpecialMenu(QWidget):
             Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-    def closeEvent(self, event):
-        """Hide the window instead of closing it."""
-        self.hide()
-        event.ignore()  # Prevent the default close behavior
-
-    def event(self, event: QEvent) -> bool:
-        if event.type() == QEvent.Type.WindowDeactivate:
-            local_cursor_pos = self.mapFromGlobal(QCursor.pos())  # Convert global to local
-            is_inside = self.rect().contains(local_cursor_pos)  # Check against widget's local rect
-            if not is_inside:
-                self.hide()
-
-        return super().event(event)
-
     def show_menu(self) -> None:
         """Show the menu centered at the cursor."""
         position_window_at_cursor(self)
         self.show()
         self.raise_()
         self.activateWindow()
+
+    def closeEvent(self, event):
+        """Hide the window instead of closing it."""
+        self.hide()
+        event.ignore()  # Prevent the default close behavior
+
+    def is_click_within_bounds(self, mouse_x: int, mouse_y: int) -> bool:
+        """Check if the click coordinates are within the bounds of the widget."""
+        widget_rect = self.rect()  # Get the widget's bounding rectangle
+        widget_x, widget_y = self.mapToGlobal(widget_rect.topLeft()).x(), self.mapToGlobal(widget_rect.topLeft()).y()
+        # Check if the mouse click is within the widget's bounds
+        return QRect(widget_x, widget_y, widget_rect.width(), widget_rect.height()).contains(mouse_x, mouse_y)
+
+    def showEvent(self, event):
+        """Called when the widget is shown (activates mouse hook)."""
+        if not self.mouse_hook_active:
+            mouse.hook(self.on_mouse_event)
+            self.mouse_hook_active = True
+
+    def on_mouse_event(self, event):
+        """Handles global mouse events (only if active)."""
+        print(f"Handling event: {event}")  # Debug: print the event type
+
+        if isinstance(event, mouse.ButtonEvent):
+            # Get current mouse position for ButtonEvent
+            current_x, current_y = mouse.get_position()
+
+            if event.event_type in ['down', 'up', 'double']:  # Check for down, up, or double events
+                # Check if the click happened inside the widget's bounds
+                if not self.is_click_within_bounds(current_x, current_y):
+                    # Defer hiding the widget to allow event processing to finish
+                    QTimer.singleShot(0, self.hide_and_deactivate_hook)  # Delay hiding
+
+    def hide_and_deactivate_hook(self):
+        """Hide the widget and deactivate the mouse hook."""
+        self.hide()  # Hide the widget
+        self.deactivate_mouse_hook()  # Explicitly deactivate the mouse hook after hiding
+
+    def deactivate_mouse_hook(self):
+        """Deactivate mouse hook manually."""
+        if self.mouse_hook_active:
+            mouse.unhook(self.on_mouse_event)
+            self.mouse_hook_active = False
+            print("Mouse hook deactivated")
 
 
 if __name__ == "__main__":
