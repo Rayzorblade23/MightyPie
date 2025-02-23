@@ -228,8 +228,6 @@ class SpecialMenu(QWidget):
 
     def on_mouse_event(self, event):
         """Handles global mouse events (only if active)."""
-        print(f"Handling event: {event}")  # Debug: print the event type
-
         if isinstance(event, mouse.ButtonEvent):
             # Get current mouse position for ButtonEvent
             current_x, current_y = mouse.get_position()
