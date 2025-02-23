@@ -61,7 +61,7 @@ class PieWindow(QMainWindow):
         """Set up all UI components and data structures."""
         self.scene = QGraphicsScene(self)
         self.view = QGraphicsView(self.scene, self)
-        self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None, main_window=self)
+        self.special_menu = SpecialMenu(obj_name="SpecialMenu", parent=None)
         self.create_pie_menus(CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY, CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY)
 
     def setup_window(self):
