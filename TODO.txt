@@ -19,11 +19,6 @@ Collect multiple windows on one button
 
 BUGS:
 
-- some program icons get cut off when they are saved
-probably DPI stuff here _get_window_icon. Try creating icons on TV.
-
-- can't set launch or program window in button editor (only in build?)
-
 - one time: crash no "restore minimized"
 
 - program doesn't refresh DPI when changing monitors (maybe not fixable)

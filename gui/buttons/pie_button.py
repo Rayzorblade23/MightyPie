@@ -117,7 +117,7 @@ class PieButton(QPushButton):
         self.set_middle_click_action(
             lambda hwnd=window_handle: (
                 QTimer.singleShot(0, lambda: close_window_by_handle(hwnd)),
-                QTimer.singleShot(100, lambda: main_window_force_refresh),
+                QTimer.singleShot(100, lambda: main_window_force_refresh()),
             )
         )
         self.setEnabled(True)
