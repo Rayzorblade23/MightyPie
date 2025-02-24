@@ -45,6 +45,13 @@ def main_window_hide() -> None:
     main_window.hide()
 
 
+# def open_pie_menu() -> None:
+#     main_window: "PieWindow" = QApplication.instance().property("main_window")
+#     main_window.active_child = 3
+#     pie_menu = main_window.pie_menus_primary[main_window.active_child - 1]
+#     show_event = ShowWindowEvent(main_window, pie_menu)
+#     QApplication.postEvent(main_window, show_event)
+
 def main_window_force_refresh(reassign_all_buttons: bool = False) -> None:
     main_window: "PieWindow" = QApplication.instance().property("main_window")
     main_window.force_refresh(reassign_all_buttons)

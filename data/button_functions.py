@@ -59,6 +59,11 @@ class ButtonFunctions:
                 "action": self._wrap(center_window_at_cursor),
                 "icon": EXTERNAL_ICON_PATHS.get("center"),
             },
+            # "open_pie_menu": {
+            #     "text_1": "Open Pie",
+            #     "action": open_pie_menu,
+            #     "icon": EXTERNAL_ICON_PATHS.get("center"),
+            # },
         }
 
     def _wrap(self, func: Callable) -> Callable[[], None]:
