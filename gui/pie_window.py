@@ -15,7 +15,7 @@ from events import ShowWindowEvent, HotkeyReleaseEvent
 from gui.buttons.pie_button import PieButton
 from gui.menus.pie_menu import PieMenu, PrimaryPieMenu, SecondaryPieMenu
 from gui.menus.special_menu import SpecialMenu
-from utils.window_utils import get_filtered_list_of_windows, show_special_menu, load_cache
+from utils.window_utils import get_filtered_list_of_windows, load_cache
 
 
 class PieWindow(QMainWindow):
@@ -42,6 +42,7 @@ class PieWindow(QMainWindow):
 
         self.active_child = 1
         self.is_window_open = False
+        self.cursor_displacement = (0, 0)  # Track how much the cursor has been moved
 
         self.initialize_ui()
         self.setup_window()
@@ -259,20 +260,34 @@ class PieWindow(QMainWindow):
         return None
 
     def show_pie_menu_at_mouse_pos(self, pie_menu):
-        """Display the main window and bring it to the foreground."""
+        """Display the pie menu at the corrected position near the cursor."""
         try:
-            # get Pie Window handle
+            # Get the Pie Window handle and cursor position
             hwnd = int(self.winId())
             cursor_pos = QCursor.pos()
             screen, screen_geometry = self.get_screen_bounds(cursor_pos)
+
+            # Calculate the corrected position for the pie menu and move it
             corrected_x, corrected_y = self.calculate_corrected_pie_menu_position(cursor_pos, pie_menu, screen_geometry)
+            pie_menu.move(corrected_x, corrected_y)
 
-            if pie_menu:
-                pie_menu.move(corrected_x, corrected_y)
+            # Calculate the cursor center position relative to the screen
+            pie_menu_center_x = corrected_x + pie_menu.width() // 2
+            pie_menu_center_y = corrected_y + pie_menu.height() // 2
+            cursor_pos_on_screen_x = screen_geometry.left() + pie_menu_center_x
+            cursor_pos_on_screen_y = screen_geometry.top() + pie_menu_center_y
 
+            # Store the cursor displacement
+            self.cursor_displacement = (
+                cursor_pos_on_screen_x - cursor_pos.x(),
+                cursor_pos_on_screen_y - cursor_pos.y()
+            )
+
+            # Teleport the cursor to the center of the pie menu
+            QCursor.setPos(cursor_pos_on_screen_x, cursor_pos_on_screen_y)
+
+            # Adjust the pie menu to the screen's bounds and display it
             self.adjust_pie_window_to_screen(screen_geometry)
-
-            # prevent flicker at the last Pie Menu Position
             self.setWindowOpacity(0)
             self.show()
             QTimer.singleShot(1, lambda: self.setWindowOpacity(1))
@@ -282,9 +297,10 @@ class PieWindow(QMainWindow):
             return cursor_pos
 
         except Exception as e:
-            print(f"Error showing the main window: {e}")
+            print(f"Error showing the pie menu: {e}")
 
     def adjust_pie_window_to_screen(self, screen_geometry):
+        """Adjust the pie window to fit the screen geometry."""
         self.move(screen_geometry.topLeft())
         self.setFixedSize(screen_geometry.width(), screen_geometry.height())
         self.view.setFixedSize(screen_geometry.width(), screen_geometry.height())
@@ -294,8 +310,7 @@ class PieWindow(QMainWindow):
     def get_screen_bounds(cursor_pos):
         """Retrieve the screen and its available geometry based on the cursor position."""
         screen = QGuiApplication.screenAt(cursor_pos)
-        screen_geometry = screen.availableGeometry()
-        return screen, screen_geometry
+        return screen, screen.availableGeometry()
 
     @staticmethod
     def calculate_corrected_pie_menu_position(cursor_pos, pie_menu, screen_geometry):

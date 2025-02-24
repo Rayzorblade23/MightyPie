@@ -28,3 +28,10 @@ BUGS:
 - MightyPie sometimes starts with smaller Pie Menus
 
 BUGS in BUILD:
+
+
+WOULD HAVE DONE DIFFERENTLY:
+Pie Menu are always shown with their parent, the window spanning transparent Pie Window
+This is because mouse events are not registered outside PyQt windows
+It's possible though as now implemented in Special Menu.
+This would have saved a lot of trouble, but it works fine as is.

@@ -65,12 +65,15 @@ class HotkeyListener:
         """Handles hotkey release events."""
         # Get current mouse position
         current_mouse_pos = QCursor.pos()
-        # Do nothing if the mouse has not moved beyond a threshold
-        if (self.initial_mouse_pos is not None and
-                (abs(current_mouse_pos.x() - self.initial_mouse_pos.x()) <= 35) and
-                (abs(current_mouse_pos.y() - self.initial_mouse_pos.y()) <= 35)):
-            # print("Mouse released without movement.")
-            self.can_open_window = True
+
+        # Calculate the movement, factoring in the cursor displacement
+        displacement_x = current_mouse_pos.x() - self.initial_mouse_pos.x() - self.main_window.cursor_displacement[0]
+        displacement_y = current_mouse_pos.y() - self.initial_mouse_pos.y() - self.main_window.cursor_displacement[1]
+
+        # If the displacement is below the threshold, it's considered a click, not a drag
+        if abs(displacement_x) <= 35 and abs(displacement_y) <= 35:
+            self.can_open_window = True  # Allow reopening the window
+
 
         # Else we invoke the drag-to-select functionality
         else:
