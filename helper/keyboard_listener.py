@@ -63,6 +63,12 @@ class HotkeyListener:
 
     def on_release(self, hotkey_name: str):
         """Handles hotkey release events."""
+        # Ensure cursor_displacement is valid (i.e., has been set)
+        if self.main_window.cursor_displacement is None:
+            print("Error: cursor_displacement is not set. Skipping drag check.")
+            self.can_open_window = True  # Allow reopening window
+            return
+
         # Get current mouse position
         current_mouse_pos = QCursor.pos()
 
