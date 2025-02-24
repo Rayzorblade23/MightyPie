@@ -3,7 +3,7 @@ from typing import Optional
 
 from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QSize, pyqtSignal, pyqtSlot, QTimer, QPoint
 from PyQt6.QtGui import QPainter
-from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget
+from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QGraphicsOpacityEffect
 
 from data.button_info import ButtonInfo
 from data.config import CONFIG
@@ -189,6 +189,7 @@ class PieMenu(QWidget):
         """Start animations for all buttons after a short delay."""
         for button in self.pie_buttons.values():
             self.animate_button(button, button.geometry())
+        self.animate_widget(self.indicator)
 
     def animate_button(self, button: PieButton, rect: QRect):
         duration = 100
@@ -222,17 +223,54 @@ class PieMenu(QWidget):
         opacity_animation.setEndValue(1.0)
         opacity_animation.setEasingCurve(QEasingCurve.Type.Linear)
 
+        # Set initial opacity to 0 (transparent)
+        button.opacity_effect.setOpacity(0.0)
+
         # Store animations to prevent garbage collection
         self.animations.extend([pos_animation, size_animation, opacity_animation])
 
-        # Start animations
-        pos_animation.start()
-        size_animation.start()
-        opacity_animation.start()
+        # Delay in milliseconds
+        delay = 1  # 500ms delay before animations start
+
+        # Start animations after the delay
+        QTimer.singleShot(delay, lambda: self.go_animations(pos_animation, size_animation, opacity_animation))
 
         # # Connect finished signal to print the geometry after animation
         # pos_animation.finished.connect(lambda: self.print_geometry(button, "Position"))
         # size_animation.finished.connect(lambda: self.print_geometry(button, "Size"))
+
+    def go_animations(self, pos_animation, size_animation, opacity_animation):
+        pos_animation.start()
+        size_animation.start()
+        opacity_animation.start()
+
+
+    def animate_widget(self, widget: SVGIndicatorButton):
+        duration = 100  # Duration of the opacity animation
+
+        # Create an opacity effect for the widget
+        opacity_effect = QGraphicsOpacityEffect(widget)
+        widget.setGraphicsEffect(opacity_effect)
+
+        # Set the initial opacity to 0 (transparent)
+        opacity_effect.setOpacity(0.0)
+
+        # Opacity animation
+        opacity_animation = QPropertyAnimation(opacity_effect, b"opacity")
+        opacity_animation.setDuration(duration // 4)
+        opacity_animation.setStartValue(0.0)  # Start with full transparency
+        opacity_animation.setEndValue(1.0)  # Fade in to full opacity
+        opacity_animation.setEasingCurve(QEasingCurve.Type.Linear)
+
+        # Store animation to prevent garbage collection
+        self.animations.append(opacity_animation)
+
+        # Delay in milliseconds (500ms delay before animation starts)
+        delay = 1  # 500ms delay before animation starts
+
+        # Start animation after the delay
+        QTimer.singleShot(delay, lambda: opacity_animation.start())
+
 
     def print_geometry(self, button: PieButton, animation_type: str):
         """Print the geometry of the button after animation."""
