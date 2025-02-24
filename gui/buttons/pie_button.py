@@ -15,6 +15,9 @@ from utils.window_utils import launch_app, focus_window_by_handle, close_window_
 if TYPE_CHECKING:
     from gui.menus.pie_menu import PieMenu
 
+NO_HWND_ASSIGNED = -1
+PROGRAM_NOT_YET_REGISTERED = -1
+READY_TO_OPEN_PROGRAM = 0
 
 class PieButton(QPushButton):
     """Custom Button with text animation for long text."""
@@ -91,16 +94,12 @@ class PieButton(QPushButton):
 
     def update_button(self, properties: dict) -> None:
         """Update the whole button UI and functionality"""
-        # TODO: the app_info_cache should later be in button assignment only
-        #       that means the exe_name, button_text_2 and app_icon path
-        #       should all appear in ButtonInfo properties
-
         button_text_1 = properties["window_title"]
         window_handle = properties["window_handle"]
         button_text_2 = properties["app_name"]
         app_icon_path = properties["app_icon_path"]
 
-        if window_handle == -1:
+        if window_handle == NO_HWND_ASSIGNED:
             self.clear()
             return
 
@@ -298,12 +297,12 @@ class ShowProgramWindowPieButton(PieButton):
         button_text_2 = properties["app_name"]
         app_icon_path = properties["app_icon_path"]
 
-        if window_handle == -1:
+        if window_handle == PROGRAM_NOT_YET_REGISTERED:
             self.clear(button_text_2)
             return
 
         # Handle reserved button actions that have no open window
-        if window_handle == 0:
+        if window_handle == READY_TO_OPEN_PROGRAM:
             if exe_path:
                 self.set_left_click_action(
                     lambda captured_exe_path=exe_path: (

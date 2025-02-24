@@ -41,7 +41,6 @@ class ButtonInfo:
 
         if loaded_dict:
             self.button_info_dict = {int(k): v for k, v in loaded_dict.items()}
-            self.logger.info("Successfully loaded configuration.")
         else:
             self._initialize_tasks()
             self.logger.info("Config file not found. Initialized with default configuration.")
@@ -53,7 +52,6 @@ class ButtonInfo:
 
         if JSONManager.save(self.program_name, self.button_config_filename, self.button_info_dict):
             self.has_unsaved_changes = False
-            self.logger.info("Configuration saved successfully.")
             return True
         else:
             self.logger.error("Error saving configuration.")
