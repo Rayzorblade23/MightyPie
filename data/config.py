@@ -23,6 +23,7 @@ class BaseConfig:
     # Runtime configuration fields
     SHOW_SETTINGS_AT_STARTUP: bool = True
     REFRESH_INTERVAL: int = 3000
+    PIE_MENU_VIS_DELAY: int = 0
     TASKBAR_OPACITY: int = 150
     HOTKEY_PRIMARY: str = "F14"
     HOTKEY_SECONDARY: str = "F13"

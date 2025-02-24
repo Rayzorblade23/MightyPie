@@ -101,7 +101,7 @@ class PieWindow(QMainWindow):
         if isinstance(event, ShowWindowEvent):
             pie_menu: PieMenu = event.child_window
             if pie_menu is not None:
-                print(f"Showing Pie Menu {pie_menu.pie_menu_index} - {pie_menu.view.objectName()}")
+                # print(f"Showing Pie Menu {pie_menu.pie_menu_index} - {pie_menu.view.objectName()}")
                 # Hide siblings of class PieMenuTaskSwitcher
                 for sibling in self.children():
                     if sibling is not pie_menu and isinstance(sibling, PieMenu):

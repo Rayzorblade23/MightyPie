@@ -259,6 +259,7 @@ def _get_pid_from_window_handle(hwnd):
 
 def focus_window_by_handle(hwnd):
     """Bring a main_window to the foreground and restore/maximize as needed."""
+    print(f"FOCUSING WINDOW {hwnd}")
     class_name = win32gui.GetClassName(hwnd)
 
     if class_name == "TaskManagerWindow":
@@ -671,21 +672,17 @@ def minimize_window_by_hwnd(hwnd):
     window_handle = hwnd
 
     if window_handle and window_handle != win32gui.GetDesktopWindow():
-        print("Valid window found")
         root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
-        print(f"Root window handle: {root_handle}")
 
         window_title = win32gui.GetWindowText(root_handle)
-        print(f"Window title: {window_title}")
+        print(f"Minimizing {window_title}")
 
-        print("Attempting to minimize window...")
         win32gui.ShowWindow(root_handle, win32con.SW_MINIMIZE)
 
         global last_minimized_hwnd
         last_minimized_hwnd = root_handle
-        print("Window minimized successfully")
     else:
-        print("No valid window found under cursor")
+        print("No valid window found.")
 
 
 def restore_last_minimized_window():
