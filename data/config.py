@@ -56,6 +56,10 @@ class BaseConfig:
     BG_COLOR: str = "#3b3b3b"
     RING_FILL: str = "#202020"
     RING_STROKE: str = "#303030"
+    SHOW_ANY_WINDOW_BUTTON_BORDER_COLOR: str = "#5a14b7"
+    SHOW_PROGRAM_BUTTON_BORDER_COLOR: str = "#fa9fa4"
+    LAUNCH_PROGRAM_BUTTON_BORDER_COLOR: str = "#f37fc0"
+    CALL_FUNCTION_BUTTON_BORDER_COLOR: str = "#71b8ed"
 
 
 @dataclass

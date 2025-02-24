@@ -112,6 +112,10 @@ if __name__ == "__main__":
     qss = (qss_template
            .replace("{{accent_color}}", CONFIG.ACCENT_COLOR)
            .replace("{{accent_muted}}", CONFIG.ACCENT_COLOR_MUTED)
+           .replace("{{any_btn_color}}", CONFIG.SHOW_ANY_WINDOW_BUTTON_BORDER_COLOR)
+           .replace("{{prog_btn_color}}", CONFIG.SHOW_PROGRAM_BUTTON_BORDER_COLOR)
+           .replace("{{launch_btn_color}}", CONFIG.LAUNCH_PROGRAM_BUTTON_BORDER_COLOR)
+           .replace("{{call_func_color}}", CONFIG.CALL_FUNCTION_BUTTON_BORDER_COLOR)
            .replace("{{bg_color}}", CONFIG.BG_COLOR))
 
     # Apply the QSS to the application or widgets

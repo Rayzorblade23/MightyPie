@@ -248,7 +248,6 @@ class SpecialMenu(QWidget):
         if self.mouse_hook_active:
             mouse.unhook(self.on_mouse_event)
             self.mouse_hook_active = False
-            print("Mouse hook deactivated")
 
 
 if __name__ == "__main__":
