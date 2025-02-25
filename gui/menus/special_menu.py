@@ -1,8 +1,6 @@
-import sys
 from typing import Optional
 
-import mouse
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QRect
+from PyQt6.QtCore import Qt, pyqtSignal, QRect, QTimer, QPoint
 from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout
 
@@ -84,8 +82,6 @@ class SpecialMenu(QWidget):
         self.resize(self.sizeHint())  # Resize based on the sizeHint of the widget
         self.view.setGeometry(0, 0, self.width(), self.height())
         self.scene.setSceneRect(0, 0, self.width(), self.height())
-
-        self.mouse_hook_active = False  # Track hook state
 
     def setup_taskbar_toggle(self) -> ToggleSwitch:
         """Sets up the taskbar toggle switch."""
@@ -203,71 +199,112 @@ class SpecialMenu(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
     def show_menu(self) -> None:
-        """Show the menu centered at the cursor."""
+        """Show the menu centered at the cursor with a screen-covering overlay."""
         position_window_at_cursor(self)
         self.show()
+
+        # Wait a bit to ensure the window is positioned correctly before creating the overlay
+        QTimer.singleShot(50, self._create_overlay)
+
         self.raise_()
         self.activateWindow()
 
+    def _create_overlay(self):
+        """Create and show the screen cover on the correct monitor."""
+        # Ensure any existing overlay is removed
+        if hasattr(self, 'screen_cover') and self.screen_cover is not None:
+            self.screen_cover.hide()
+            self.screen_cover.deleteLater()
+
+        # Create new overlay
+        self.screen_cover = ScreenCoverWidget(self)
+        self.screen_cover.clicked_outside.connect(self.hide)
+        self.screen_cover.show()
+
+        # Ensure our menu stays on top of the overlay
+        self.raise_()
+
+    def hide(self) -> None:
+        """Hide both the menu and screen cover."""
+        if hasattr(self, 'screen_cover') and self.screen_cover is not None:
+            self.screen_cover.hide()
+            self.screen_cover.deleteLater()
+            self.screen_cover = None
+        super().hide()
+
     def closeEvent(self, event):
         """Hide the window instead of closing it."""
-        self.deactivate_mouse_hook()
         self.hide()
         event.ignore()  # Prevent the default close behavior
 
-    def hideEvent(self, event):
-        self.deactivate_mouse_hook()
+    def showEvent(self, event) -> None:
+        """Install the global mouse filter when SpecialMenu is shown."""
+        super().showEvent(event)
+
+    def hideEvent(self, event) -> None:
+        """Remove the global mouse filter when SpecialMenu is hidden."""
         super().hideEvent(event)
-        print("HIDE!")
 
     def is_click_within_bounds(self, mouse_x: int, mouse_y: int) -> bool:
-        """Check if the click coordinates are within the bounds of the widget."""
-        widget_rect = self.rect()  # Get the widget's bounding rectangle
-        widget_x, widget_y = self.mapToGlobal(widget_rect.topLeft()).x(), self.mapToGlobal(widget_rect.topLeft()).y()
-        # Check if the mouse click is within the widget's bounds
-        return QRect(widget_x, widget_y, widget_rect.width(), widget_rect.height()).contains(mouse_x, mouse_y)
-
-    def showEvent(self, event):
-        """Called when the widget is shown (activates mouse hook)."""
-        if not self.mouse_hook_active:
-            mouse.hook(self.on_mouse_event)
-            self.mouse_hook_active = True
-
-    def on_mouse_event(self, event):
-        """Handles global mouse events (only if active)."""
-        if isinstance(event, mouse.ButtonEvent):
-            # Get current mouse position for ButtonEvent
-            current_x, current_y = mouse.get_position()
-
-            if event.event_type in ['down', 'up', 'double']:  # Check for down, up, or double events
-                # Check if the click happened inside the widget's bounds
-                if not self.is_click_within_bounds(current_x, current_y):
-                    # Defer hiding the widget to allow event processing to finish
-                    QTimer.singleShot(0, self.hide)  # Delay hiding
-
-    def deactivate_mouse_hook(self):
-        """Deactivate mouse hook manually."""
-        if self.mouse_hook_active:
-            mouse.unhook(self.on_mouse_event)
-            print("UNHOOKED")
-            self.mouse_hook_active = False
+        """Return True if the click at (mouse_x, mouse_y) is within the widget's global bounds."""
+        widget_rect = self.rect()
+        top_left = self.mapToGlobal(widget_rect.topLeft())
+        global_rect = QRect(top_left, widget_rect.size())
+        return global_rect.contains(mouse_x, mouse_y)
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
+class ScreenCoverWidget(QWidget):
+    """A transparent widget that covers all screens to catch mouse events."""
 
-    # Load the QSS template
-    with open("../../style.qss", "r") as file:
-        qss_template = file.read()
+    clicked_outside = pyqtSignal(QPoint)  # Signal emitted when clicked outside target area
 
-    qss = (qss_template
-           .replace("{{accent_color}}", CONFIG.ACCENT_COLOR)
-           .replace("{{accent_muted}}", CONFIG.ACCENT_COLOR_MUTED)
-           .replace("{{bg_color}}", CONFIG.BG_COLOR))
+    def __init__(self, target_widget):
+        super().__init__(None)  # No parent - it's a top-level window
+        self.target_widget = target_widget
 
-    app.setStyleSheet(qss)
+        self.scene = QGraphicsScene(self)
+        self.view = QGraphicsView(self.scene, self)
 
-    special_menu = SpecialMenu("SpecialMenu")
-    special_menu.show()  # Show SpecialMenu as a standalone window
+        # Get the combined geometry of all screens
+        virtual_geometry = self._get_virtual_geometry()
 
-    sys.exit(app.exec())
+        # Set the position and size to cover all screens
+        self.setGeometry(virtual_geometry)
+        self.view.setGeometry(0, 0, virtual_geometry.width(), virtual_geometry.height())
+        self.view.setObjectName("Overlay")
+        self.scene.setSceneRect(0, 0, virtual_geometry.width(), virtual_geometry.height())
+
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+
+    @staticmethod
+    def _get_virtual_geometry():
+        """Calculate the bounding rectangle that contains all screens."""
+        # Start with an empty rectangle
+        virtual_geometry = QRect()
+
+        # Iterate through all screens and unite their geometries
+        for screen in QApplication.screens():
+            screen_geo = screen.geometry()
+            if virtual_geometry.isEmpty():
+                virtual_geometry = screen_geo
+            else:
+                virtual_geometry = virtual_geometry.united(screen_geo)
+
+        return virtual_geometry
+
+    def mousePressEvent(self, event):
+        # Get global position
+        global_pos = event.globalPosition().toPoint()
+
+        # Get target widget's global geometry
+        target_rect = QRect(
+            self.target_widget.mapToGlobal(QPoint(0, 0)),
+            self.target_widget.size()
+        )
+
+        # Check if click is outside target widget
+        if not target_rect.contains(global_pos):
+            self.clicked_outside.emit(global_pos)
+
+        super().mousePressEvent(event)

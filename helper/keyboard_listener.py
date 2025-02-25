@@ -65,13 +65,11 @@ class HotkeyListener:
         """Handles hotkey release events."""
         # Ensure cursor_displacement is valid (i.e., has been set)
         if self.main_window.cursor_displacement is None:
-            print("Error: cursor_displacement is not set. Skipping drag check.")
             self.can_open_window = True  # Allow reopening window
             return
 
         # Ensure initial_mouse_pos is not None
         if self.initial_mouse_pos is None:
-            print("Error: initial_mouse_pos is not set. Skipping drag calculation.")
             return
 
         # Get current mouse position
