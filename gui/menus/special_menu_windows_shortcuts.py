@@ -42,7 +42,7 @@ class WindowsSettingsMenu(QWidget):
             ("audio", "Open Audio Settings", lambda: open_audio_settings(self, hide_parent=True)),
             ("network", "Open Network Settings", lambda: open_network_settings(self, hide_parent=True)),
             ("projection", "Open Projection Settings", lambda: open_projection_settings(self, hide_parent=True)),
-            ("folder", "Open File Explorer", lambda: open_explorer_window(self, hide_parent=False)),
+            ("folder", "Open File Explorer", lambda: open_explorer_window(self, hide_parent=True)),
         ]
 
         # Create and store buttons

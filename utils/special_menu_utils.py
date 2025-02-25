@@ -129,17 +129,17 @@ def create_folder_buttons(parent: QWidget) -> QHBoxLayout:
     task_scheduler_button = QPushButton(" Task Scheduler", parent)
     task_scheduler_button.setToolTip("Open Task Scheduler")
     task_scheduler_button.setIcon(get_icon("schedule-time", is_inverted=True))
-    task_scheduler_button.clicked.connect(open_task_scheduler)
+    task_scheduler_button.clicked.connect(lambda: [open_task_scheduler(), parent.hide()])
     # Button to open App Data Folder
     app_config_folder_button = QPushButton(" App Data", parent)
     app_config_folder_button.setToolTip(f"Open {CONFIG.INTERNAL_PROGRAM_NAME} App Data Folder")
     app_config_folder_button.setIcon(get_icon("folder-settings", is_inverted=True))
-    app_config_folder_button.clicked.connect(open_app_data_directory)
+    app_config_folder_button.clicked.connect(lambda: [open_app_data_directory(), parent.hide()])
     # Button to open the Program Folder
     program_folder_button = QPushButton(" Program", parent)
     program_folder_button.setToolTip(f"Open {CONFIG.INTERNAL_PROGRAM_NAME} Program Folder")
     program_folder_button.setIcon(get_icon("folder-star", is_inverted=True))
-    program_folder_button.clicked.connect(open_program_folder)
+    program_folder_button.clicked.connect(lambda: [open_program_folder(), parent.hide()])
 
     layout_app_folders = QHBoxLayout()
     layout_app_folders.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Ensure left alignment

@@ -1,15 +1,9 @@
 - put in more logging to text file. maybe only in window functions
 
-- window control pie menu: implement restart window
-
 - clear for fullscreen applications?
 
 
 IDEA:
-
-Implement a Delay when opening that can be set via config.
-There is already a setOpacity with singleShot in show_pie_menu_at_mouse_pos
-
 We could run PWAs like YouTube Music via custom run commands. Would need a new type of pie menu button.
 
 Also: reverse buttons via Window Name, instead of App Name
@@ -29,9 +23,7 @@ BUGS:
 
 BUGS in BUILD:
 
-
-WOULD HAVE DONE DIFFERENTLY:
-Pie Menu are always shown with their parent, the window spanning transparent Pie Window
-This is because mouse events are not registered outside PyQt windows
-It's possible though as now implemented in Special Menu.
-This would have saved a lot of trouble, but it works fine as is.
+NUISANCE:
+The App Info Cache informs what programs can be chosen for the Show Program Buttons.
+But it accumulates all kinds of stuff you would never want to launch.
+Maybe compare the .exes to something that says it's a more permanent thing?
