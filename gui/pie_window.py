@@ -4,7 +4,7 @@ from typing import Dict, Tuple, Optional, Type, List
 
 import win32con
 import win32gui
-from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QTimer
+from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QTimer, QRect
 from PyQt6.QtGui import QKeyEvent, QCursor, QGuiApplication
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
 
@@ -70,14 +70,15 @@ class PieWindow(QMainWindow):
         self.setWindowTitle(f"{CONFIG.INTERNAL_PROGRAM_NAME} - Main")
         # Set the default cursor (normal arrow cursor)
         self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Set the normal cursor
-        # Get the primary screen geometry
-        screen_geometry = QApplication.primaryScreen().geometry()
-        screen_width = screen_geometry.width()
-        screen_height = screen_geometry.height()
-        self.setGeometry(0, 0, screen_width, screen_height)
-        self.view.setGeometry(0, 0, screen_width, screen_height)
+        # Get the combined geometry of all screens
+        virtual_geometry = self._get_virtual_geometry()
+
+        # Set the position and size to cover all screens
+        self.setGeometry(virtual_geometry)
+        self.view.setGeometry(0, 0, virtual_geometry.width(), virtual_geometry.height())
+        self.scene.setSceneRect(0, 0, virtual_geometry.width(), virtual_geometry.height())
+
         self.view.setObjectName("PieWindow")
-        self.scene.setSceneRect(0, 0, screen_width, screen_height)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
@@ -138,17 +139,34 @@ class PieWindow(QMainWindow):
         event.ignore()  # Prevent the default close behavior
 
     def handle_geometry_change(self):
-        screen = QApplication.primaryScreen()
-        geometry = screen.geometry()
+        # Get the combined geometry of all screens
+        virtual_geometry = self._get_virtual_geometry()
 
         # Update the main window size based on the screen geometry
-        self.setGeometry(0, 0, geometry.width(), geometry.height())
+        self.setGeometry(virtual_geometry)
 
         # Update the QGraphicsView size to match the new screen size
-        self.view.setGeometry(0, 0, geometry.width(), geometry.height())
+        self.view.setGeometry(0, 0, virtual_geometry.width(), virtual_geometry.height())
 
         # Update the QGraphicsScene size to match the new screen size
-        self.scene.setSceneRect(0, 0, geometry.width(), geometry.height())
+        self.scene.setSceneRect(0, 0, virtual_geometry.width(), virtual_geometry.height())
+
+
+    @staticmethod
+    def _get_virtual_geometry():
+        """Calculate the bounding rectangle that contains all screens."""
+        # Start with an empty rectangle
+        virtual_geometry = QRect()
+
+        # Iterate through all screens and unite their geometries
+        for screen in QApplication.screens():
+            screen_geo = screen.geometry()
+            if virtual_geometry.isEmpty():
+                virtual_geometry = screen_geo
+            else:
+                virtual_geometry = virtual_geometry.united(screen_geo)
+
+        return virtual_geometry
 
     def open_special_menu(self):
         if hasattr(self, "special_menu"):
@@ -265,29 +283,37 @@ class PieWindow(QMainWindow):
             # Get the Pie Window handle and cursor position
             hwnd = int(self.winId())
             cursor_pos = QCursor.pos()
+
             screen, screen_geometry = self.get_screen_bounds(cursor_pos)
+
+            virtual_geometry = self._get_virtual_geometry()
 
             # Calculate the corrected position for the pie menu and move it
             corrected_x, corrected_y = self.calculate_corrected_pie_menu_position(cursor_pos, pie_menu, screen_geometry)
+
+            # Ensure that the corrected position is relative to the current screen
+            corrected_x += screen_geometry.left()
+            corrected_y += screen_geometry.top()
+
+            # Move the pie menu to the calculated corrected position
             pie_menu.move(corrected_x, corrected_y)
 
             # Calculate the cursor center position relative to the screen
             pie_menu_center_x = corrected_x + pie_menu.width() // 2
             pie_menu_center_y = corrected_y + pie_menu.height() // 2
-            cursor_pos_on_screen_x = screen_geometry.left() + pie_menu_center_x
-            cursor_pos_on_screen_y = screen_geometry.top() + pie_menu_center_y
+
 
             # Store the cursor displacement
             self.cursor_displacement = (
-                cursor_pos_on_screen_x - cursor_pos.x(),
-                cursor_pos_on_screen_y - cursor_pos.y()
+                pie_menu_center_x - cursor_pos.x(),
+                pie_menu_center_y - cursor_pos.y()
             )
 
             # Teleport the cursor to the center of the pie menu
-            QCursor.setPos(cursor_pos_on_screen_x, cursor_pos_on_screen_y)
+            QCursor.setPos(pie_menu_center_x, pie_menu_center_y)
 
             # Adjust the pie menu to the screen's bounds and display it
-            self.adjust_pie_window_to_screen(screen_geometry)
+            self.adjust_pie_window_to_screen(virtual_geometry)
             self.setWindowOpacity(0)
             self.show()
             QTimer.singleShot(1, lambda: self.setWindowOpacity(1))
@@ -299,12 +325,12 @@ class PieWindow(QMainWindow):
         except Exception as e:
             print(f"Error showing the pie menu: {e}")
 
-    def adjust_pie_window_to_screen(self, screen_geometry):
+    def adjust_pie_window_to_screen(self, virtual_geometry):
         """Adjust the pie window to fit the screen geometry."""
-        self.move(screen_geometry.topLeft())
-        self.setFixedSize(screen_geometry.width(), screen_geometry.height())
-        self.view.setFixedSize(screen_geometry.width(), screen_geometry.height())
-        self.scene.setSceneRect(0, 0, screen_geometry.width(), screen_geometry.height())
+        self.setGeometry(virtual_geometry)
+        self.view.setGeometry(virtual_geometry)
+        self.scene.setSceneRect(0, 0, virtual_geometry.width(), virtual_geometry.height())
+
 
     @staticmethod
     def get_screen_bounds(cursor_pos):
