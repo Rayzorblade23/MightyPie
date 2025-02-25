@@ -13,7 +13,7 @@ def adjust_saturation(hex_color, saturation_factor=0.8):
     h, l, s = colorsys.rgb_to_hls(r, g, b)
 
     # Adjust saturation
-    s = max(0, min(1, s * saturation_factor))  # Ensure saturation stays within [0, 1]
+    s = max(0.0, min(1.0, s * saturation_factor))  # Ensure saturation stays within [0, 1]
 
     # Convert HSL back to RGB
     r, g, b = colorsys.hls_to_rgb(h, l, s)

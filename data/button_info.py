@@ -88,7 +88,8 @@ class ButtonInfo:
         except Exception as e:
             raise e
 
-    def _validate_button_config(self, button_config):
+    @staticmethod
+    def _validate_button_config(button_config):
         """Validate button configuration structure"""
         required_keys = {"task_type", "properties"}
         required_properties = {

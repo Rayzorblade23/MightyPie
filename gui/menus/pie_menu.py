@@ -90,7 +90,8 @@ class PieMenu(QWidget):
 
         self.create_pie_buttons()
 
-    def calculate_offsets(self, i: int, button_width: int, button_height: int) -> tuple[float, float]:
+    @staticmethod
+    def calculate_offsets(i: int, button_width: int, button_height: int) -> tuple[float, float]:
         """Calculate the offset for button position based on its index."""
         nudge_x = button_width / 2 - button_height / 2
         nudge_y = button_height / 2
@@ -196,17 +197,17 @@ class PieMenu(QWidget):
         self.setGeometry(self.x(), self.y(), self.width(), self.height())
 
         # Add a small delay before starting animations
-        QTimer.singleShot(10, self.start_animations)
+        QTimer.singleShot(10, self.initiate_animations)
 
-    def start_animations(self):
+    def initiate_animations(self):
         """Start animations for all buttons after a short delay."""
         for button in self.pie_buttons.values():
             button.setVisible(True)
 
-        self.animate_button()
-        self.animate_widget(self.indicator)
+        self.setup_button_animations()
+        self.setup_widget_animations(self.indicator)
 
-    def animate_button(self):
+    def setup_button_animations(self):
         if self.timer.isActive():
             self.timer.stop()
 
@@ -260,14 +261,14 @@ class PieMenu(QWidget):
 
         for button in self.pie_buttons.values():
             button.setVisible(True)
-            self.go_animations(button)
+            self.start_button_animations(button)
 
-    def go_animations(self, button: PieButton):
+    def start_button_animations(self, button: PieButton):
         """Starts the stored animations for a button."""
         for animation in button.animations:
             animation.start()
 
-    def animate_widget(self, widget: SVGIndicatorButton):
+    def setup_widget_animations(self, widget: SVGIndicatorButton):
         duration = 100  # Duration of the opacity animation
 
         # Create an opacity effect for the widget

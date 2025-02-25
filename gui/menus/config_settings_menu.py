@@ -141,7 +141,8 @@ class ConfigSettingsWindow(QMainWindow):
 
         return row_layout
 
-    def update_color_preview(self, input_widget, color_picker_button):
+    @staticmethod
+    def update_color_preview(input_widget, color_picker_button):
         """Updates the color preview button when the QLineEdit text changes."""
         color_text = input_widget.text()
         if color_text.startswith("#"):  # Only update if the text is a valid hex code
@@ -203,7 +204,8 @@ class ConfigSettingsWindow(QMainWindow):
 
             QMessageBox.information(self, 'Reset Complete', 'Settings have been reset to default values.')
 
-    def reset_single_setting(self, widget, setting_name):
+    @staticmethod
+    def reset_single_setting(widget, setting_name):
         """Resets the given setting to its default value."""
         default_config = DefaultConfig()
         default_value = getattr(default_config, setting_name)
@@ -219,7 +221,8 @@ class ConfigSettingsWindow(QMainWindow):
         CONFIG.update_setting(setting_name, default_value)
         CONFIG.save_config()  # Optionally save after resetting
 
-    def _get_widget_value(self, widget):
+    @staticmethod
+    def _get_widget_value(widget):
         if isinstance(widget, QCheckBox):
             return widget.isChecked()
         elif isinstance(widget, NoScrollSpinBox):

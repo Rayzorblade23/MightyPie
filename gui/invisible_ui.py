@@ -88,11 +88,13 @@ class InvisibleUI(QWidget):
         super().resizeEvent(event)
         self.position_buttons()
 
-    def on_button_left_clicked(self):
+    @staticmethod
+    def on_button_left_clicked():
         """Print message when the left button is clicked."""
         print("Left button clicked!")
 
-    def on_button_right_clicked(self):
+    @staticmethod
+    def on_button_right_clicked():
         """Print message when the right button is clicked."""
         print("Right button clicked!")
 

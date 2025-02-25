@@ -8,7 +8,7 @@ from PyQt6.sip import isdeleted
 class GlobalMouseFilter(QObject):
     def __init__(self, main_window):
         super().__init__()
-        self.main_window = main_window  # Reference to the main pie_window or specific widgets
+        self.main_window = main_window  # Reference to the main main_window or specific widgets
         self.area_button = None
         self.pie_menu: Any | None = None  # Initially, no PieMenu is selected
         self.last_active_child = None  # Track the last active_child value

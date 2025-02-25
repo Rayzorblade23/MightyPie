@@ -19,7 +19,8 @@ class ButtonDropdowns:
         self.apps_info = self._load_apps_info()
         self.exe_names = self._get_sorted_exe_names()
 
-    def _load_apps_info(self) -> Dict:
+    @staticmethod
+    def _load_apps_info() -> Dict:
         """Load applications info from cache."""
         return JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
 
@@ -80,14 +81,16 @@ class ButtonDropdowns:
 
         return dropdown
 
-    def _setup_any_window_dropdown(self, dropdown: QComboBox) -> None:
+    @staticmethod
+    def _setup_any_window_dropdown(dropdown: QComboBox) -> None:
         """Setup dropdown for 'show_any_window' type."""
         dropdown.setEnabled(False)
         dropdown.setEditable(True)
         dropdown.clear()
         dropdown.setCurrentText("")
 
-    def _setup_function_dropdown(self, dropdown: QComboBox, current_button_info: Dict) -> None:
+    @staticmethod
+    def _setup_function_dropdown(dropdown: QComboBox, current_button_info: Dict) -> None:
         """Setup dropdown for 'call_function' type."""
         functions = ButtonFunctions().functions
         dropdown.setEditable(False)

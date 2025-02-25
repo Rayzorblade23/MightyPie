@@ -66,7 +66,8 @@ class ButtonFunctions:
             # },
         }
 
-    def _wrap(self, func: Callable) -> Callable[[], None]:
+    @staticmethod
+    def _wrap(func: Callable) -> Callable[[], None]:
         """Wraps functions to pass the main_window as an argument."""
 
         def wrapped():

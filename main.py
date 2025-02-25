@@ -53,7 +53,8 @@ class SingleInstance:
             except IOError:
                 self._show_messagebox()
 
-    def _show_messagebox(self):
+    @staticmethod
+    def _show_messagebox():
         app = QApplication.instance()  # Check if QApplication already exists
         if not app:  # Create only if needed
             app = QApplication(sys.argv)

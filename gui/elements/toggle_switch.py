@@ -170,37 +170,3 @@ class ToggleSwitch(QWidget):
 
     def sizeHint(self):
         return self.container.sizeHint()  # Make sure the main widget returns the size of the container
-
-
-class MainWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-
-        # Main layout for the window
-        layout = QVBoxLayout()
-
-        # Create the ToggleSwitch with a label
-        toggle = ToggleSwitch(
-            on_action=self.on_toggle,
-            off_action=self.off_toggle,
-            label_text="Enable Feature"
-        )
-
-        # Add the ToggleSwitch widget to the layout
-        layout.addWidget(toggle)
-
-        self.setLayout(layout)
-        self.setWindowTitle("Toggle Switch Example")
-        self.show()
-
-    def on_toggle(self):
-        print("The taskbar_toggle is ON!")
-
-    def off_toggle(self):
-        print("The taskbar_toggle is OFF!")
-
-
-if __name__ == '__main__':
-    app = QApplication([])
-    window = MainWindow()
-    app.exec()

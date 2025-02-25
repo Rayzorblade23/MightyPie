@@ -165,7 +165,8 @@ class SpecialMenu(QWidget):
         else:
             self.taskbar_toggle.toggle.setCheckedWithoutAction(False)  # Taskbar is hidden, toggle should be off
 
-    def toggle_taskbar_action(self):
+    @staticmethod
+    def toggle_taskbar_action():
         """Action to toggle the taskbar visibility."""
         toggle_taskbar()  # Call the function that toggles the taskbar visibility
 

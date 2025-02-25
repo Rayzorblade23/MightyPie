@@ -637,42 +637,14 @@ def toggle_maximize_window_at_cursor(pie_window: QWidget):
         print("No valid window found under cursor")
 
 
-def minimize_window_at_cursor(pie_window: QWidget):
-    if not hasattr(pie_window, 'pie_menu_pos'):
-        return
+def minimize_window_by_hwnd(hwnd: int):
+    """Minimizes the specified window."""
+    if hwnd and hwnd != win32gui.GetDesktopWindow():
+        root_handle = win32gui.GetAncestor(hwnd, win32con.GA_ROOT)
 
-    cursor_pos = (pie_window.pie_menu_pos.x(), pie_window.pie_menu_pos.y())
-
-    window_handle = win32gui.WindowFromPoint(cursor_pos)
-
-    valid_hwnds = set(manager.get_open_windows_info().keys())
-
-    if window_handle and window_handle != win32gui.GetDesktopWindow():
-        print("Valid window found")
-        root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
-        print(f"Root window handle: {root_handle}")
-        if root_handle not in valid_hwnds:
-            print(f"Hwnd is not among valid windows")
+        if root_handle not in set(manager.get_open_windows_info().keys()):
+            print("Hwnd is not among valid windows")
             return
-
-        window_title = win32gui.GetWindowText(root_handle)
-        print(f"Window title: {window_title}")
-
-        print("Attempting to minimize window...")
-        win32gui.ShowWindow(root_handle, win32con.SW_MINIMIZE)
-
-        global last_minimized_hwnd
-        last_minimized_hwnd = root_handle
-        print("Window minimized successfully")
-    else:
-        print("No valid window found under cursor")
-
-
-def minimize_window_by_hwnd(hwnd):
-    window_handle = hwnd
-
-    if window_handle and window_handle != win32gui.GetDesktopWindow():
-        root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
 
         window_title = win32gui.GetWindowText(root_handle)
         print(f"Minimizing {window_title}")
@@ -683,6 +655,17 @@ def minimize_window_by_hwnd(hwnd):
         last_minimized_hwnd = root_handle
     else:
         print("No valid window found.")
+
+def minimize_window_at_cursor(main_window: QWidget):
+    """Minimizes the window at the cursor position."""
+    if not hasattr(main_window, 'pie_menu_pos'):
+        return
+
+    cursor_pos = (main_window.pie_menu_pos.x(), main_window.pie_menu_pos.y())
+    window_handle = win32gui.WindowFromPoint(cursor_pos)
+
+    minimize_window_by_hwnd(window_handle)
+
 
 
 def restore_last_minimized_window():
