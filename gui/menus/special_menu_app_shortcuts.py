@@ -1,6 +1,6 @@
 import sys
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, Qt, QTimer
 from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
 
 from utils.program_utils import restart_program, quit_program, main_window_force_refresh
@@ -49,7 +49,7 @@ class AppSettingsMenu(QWidget):
             ("sort", "Re-Assign all Buttons", lambda: main_window_force_refresh(True)),
             ("cake", "Open the Button Config", lambda: self.open_button_info_editor()),
             ("settings", "Open the App Settings", lambda: self.open_settings_window()),
-            ("restart", "Restart Program", lambda: restart_program()),
+            ("restart", "Restart Program", lambda: [self.parent().hide(), QTimer.singleShot(100, restart_program)]),
             ("quit", "Quit Program", lambda: quit_program()),
         ]
 

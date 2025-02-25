@@ -210,8 +210,14 @@ class SpecialMenu(QWidget):
 
     def closeEvent(self, event):
         """Hide the window instead of closing it."""
+        self.deactivate_mouse_hook()
         self.hide()
         event.ignore()  # Prevent the default close behavior
+
+    def hideEvent(self, event):
+        self.deactivate_mouse_hook()
+        super().hideEvent(event)
+        print("HIDE!")
 
     def is_click_within_bounds(self, mouse_x: int, mouse_y: int) -> bool:
         """Check if the click coordinates are within the bounds of the widget."""
@@ -236,17 +242,13 @@ class SpecialMenu(QWidget):
                 # Check if the click happened inside the widget's bounds
                 if not self.is_click_within_bounds(current_x, current_y):
                     # Defer hiding the widget to allow event processing to finish
-                    QTimer.singleShot(0, self.hide_and_deactivate_hook)  # Delay hiding
-
-    def hide_and_deactivate_hook(self):
-        """Hide the widget and deactivate the mouse hook."""
-        self.hide()  # Hide the widget
-        self.deactivate_mouse_hook()  # Explicitly deactivate the mouse hook after hiding
+                    QTimer.singleShot(0, self.hide)  # Delay hiding
 
     def deactivate_mouse_hook(self):
         """Deactivate mouse hook manually."""
         if self.mouse_hook_active:
             mouse.unhook(self.on_mouse_event)
+            print("UNHOOKED")
             self.mouse_hook_active = False
 
 

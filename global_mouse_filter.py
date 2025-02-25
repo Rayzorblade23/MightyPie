@@ -2,6 +2,7 @@ from typing import Any
 
 from PyQt6.QtCore import QObject, QEvent, Qt
 from PyQt6.QtGui import QMouseEvent
+from PyQt6.sip import isdeleted
 
 
 class GlobalMouseFilter(QObject):
@@ -36,6 +37,9 @@ class GlobalMouseFilter(QObject):
 
     def eventFilter(self, obj, filtered_event):
         """Filter mouse events and handle accordingly."""
+        if isdeleted(self.main_window):
+            return False
+
         self._update_pie_menu()
 
         # Skip processing if the main window or task switcher is hidden or disabled
