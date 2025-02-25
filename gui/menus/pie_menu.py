@@ -1,7 +1,7 @@
 import math
 from typing import Optional
 
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSize, pyqtSignal, pyqtSlot, QTimer, QPoint
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSize, pyqtSignal, pyqtSlot, QTimer, QPoint, QAbstractAnimation
 from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QGraphicsOpacityEffect
 
@@ -12,6 +12,7 @@ from gui.buttons.pie_button import PieButton, BUTTON_TYPES
 from gui.buttons.pie_menu_middle_button import PieMenuMiddleButton
 from gui.elements.svg_indicator_button import SVGIndicatorButton
 
+ANIMATION_DURATION = 150
 
 class PieMenu(QWidget):
     update_buttons_signal = pyqtSignal(dict)
@@ -27,7 +28,7 @@ class PieMenu(QWidget):
         self.view = None
         self.btn = None
         self.pie_buttons: dict[int, PieButton] = {}
-        self.animations = []
+        self.animations: list[QAbstractAnimation] = []
 
         self.hotkey = CONFIG.HOTKEY_PRIMARY
 
@@ -192,112 +193,108 @@ class PieMenu(QWidget):
             }
 
     def showEvent(self, event):
-        super().showEvent(event)
+        # Configure button animations
+        for button in self.pie_buttons.values():
+            button.setVisible(False)
         # Ensure window geometry is set before animations
         self.setGeometry(self.x(), self.y(), self.width(), self.height())
 
         # Add a small delay before starting animations
         QTimer.singleShot(10, self.initiate_animations)
+        super().showEvent(event)
 
-    def initiate_animations(self):
+    def initiate_animations(self) -> None:
         """Start animations for all buttons after a short delay."""
-        for button in self.pie_buttons.values():
-            button.setVisible(True)
+        # Set up animations but don't start them yet
+        self.setup_animations()
 
-        self.setup_button_animations()
-        self.setup_widget_animations(self.indicator)
-
-    def setup_button_animations(self):
+        # Start the timer to trigger showing and animating the buttons
         if self.timer.isActive():
             self.timer.stop()
+        self.timer.start(CONFIG.PIE_MENU_VIS_DELAY)
 
+    def setup_animations(self) -> None:
+        """Set up all animations for buttons and indicator."""
+        self.animations = []  # Clear any previous animations
+        center = self.rect().center()
+
+        # Configure button animations
         for button in self.pie_buttons.values():
-            duration = 100
-            center = self.rect().center()
+            # Set initial state (hidden and transparent)
+            button.opacity_effect.setOpacity(0.0)
 
-            # Start position should be at the center of the window
+            # Configure start values
             start_x = center.x() - (CONFIG.INTERNAL_BUTTON_WIDTH // 8)
             start_y = center.y() - (CONFIG.INTERNAL_BUTTON_HEIGHT // 8)
-
             end_pos = self.button_initial_states.get(button.index)["pos"]
 
-            # Position animation
+            # Add position animation
             pos_animation = QPropertyAnimation(button, b"pos")
-            pos_animation.setDuration(duration)
+            pos_animation.setDuration(ANIMATION_DURATION)
             pos_animation.setStartValue(QPoint(start_x, start_y))
             pos_animation.setEndValue(end_pos)
             pos_animation.setEasingCurve(QEasingCurve.Type.OutCirc)
 
-            # Size animation
+            # Add size animation
             size_animation = QPropertyAnimation(button, b"size")
-            size_animation.setDuration(duration)
+            size_animation.setDuration(ANIMATION_DURATION)
             size_animation.setStartValue(QSize(CONFIG.INTERNAL_BUTTON_WIDTH // 4, CONFIG.INTERNAL_BUTTON_HEIGHT // 4))
             size_animation.setEndValue(QSize(CONFIG.INTERNAL_BUTTON_WIDTH, CONFIG.INTERNAL_BUTTON_HEIGHT))
             size_animation.setEasingCurve(QEasingCurve.Type.OutCurve)
 
-            # Opacity animation
+            # Add opacity animation
             opacity_animation = QPropertyAnimation(button.opacity_effect, b"opacity")
-            opacity_animation.setDuration(duration // 4)
+            opacity_animation.setDuration(ANIMATION_DURATION // 4)
             opacity_animation.setStartValue(0.0)
             opacity_animation.setEndValue(1.0)
             opacity_animation.setEasingCurve(QEasingCurve.Type.Linear)
 
-            # Set initial opacity to 0 and hide the button to avoid an initial flash
-            button.opacity_effect.setOpacity(0.0)
-            button.setVisible(False)
-
             # Store animations
-            button.animations = [pos_animation, size_animation, opacity_animation]
+            self.animations.extend([pos_animation, size_animation, opacity_animation])
 
-            # Connect signals for prints
-            pos_animation.finished.connect(lambda: self.print_geometry(button, "Position"))
-            size_animation.finished.connect(lambda: self.print_geometry(button, "Size"))
+        # Add indicator animation
+        indicator_animation = self.create_opacity_animation(self.indicator)
+        middle_button_animation = self.create_opacity_animation(self.middle_button)
 
-        # First, after the delay, show the button without starting the animation.
-        self.timer.start(CONFIG.PIE_MENU_VIS_DELAY)
+        self.animations.append(indicator_animation)
+        self.animations.append(middle_button_animation)
 
-    def show_buttons(self):
+    def show_buttons(self) -> None:
+        """Timer callback: show buttons and start animations."""
         self.timer.stop()
 
+        # Make buttons visible first
         for button in self.pie_buttons.values():
             button.setVisible(True)
-            self.start_button_animations(button)
 
-    def start_button_animations(self, button: PieButton):
-        """Starts the stored animations for a button."""
-        for animation in button.animations:
+        # Then start all animations
+        self.start_animations()
+
+    def start_animations(self):
+        """Start all stored animations."""
+        for animation in self.animations:
             animation.start()
 
-    def setup_widget_animations(self, widget: SVGIndicatorButton):
-        duration = 100  # Duration of the opacity animation
+    @staticmethod
+    def create_opacity_animation(widget: QWidget) -> QAbstractAnimation:
+        """Create and return an opacity animation for the given widget."""
+        # Create an opacity effect if not already present
+        if not hasattr(widget, 'opacity_effect'):
+            opacity_effect = QGraphicsOpacityEffect(widget)
+            widget.setGraphicsEffect(opacity_effect)
+            widget.opacity_effect = opacity_effect
 
-        # Create an opacity effect for the widget
-        opacity_effect = QGraphicsOpacityEffect(widget)
-        widget.setGraphicsEffect(opacity_effect)
+        # Set initial opacity
+        widget.opacity_effect.setOpacity(0.0)
 
-        # Set the initial opacity to 0 (transparent)
-        opacity_effect.setOpacity(0.0)
-
-        # Opacity animation
-        opacity_animation = QPropertyAnimation(opacity_effect, b"opacity")
-        opacity_animation.setDuration(duration // 4)
-        opacity_animation.setStartValue(0.0)  # Start with full transparency
-        opacity_animation.setEndValue(1.0)  # Fade in to full opacity
+        # Create animation
+        opacity_animation = QPropertyAnimation(widget.opacity_effect, b"opacity")
+        opacity_animation.setDuration(ANIMATION_DURATION // 4)  # duration // 4
+        opacity_animation.setStartValue(0.0)
+        opacity_animation.setEndValue(1.0)
         opacity_animation.setEasingCurve(QEasingCurve.Type.Linear)
 
-        # Store animation to prevent garbage collection
-        self.animations.append(opacity_animation)
-
-        # Delay in milliseconds (500ms delay before animation starts)
-        delay = CONFIG.PIE_MENU_VIS_DELAY  # 500ms delay before animation starts
-
-        # Start animation after the delay
-        QTimer.singleShot(delay, lambda: opacity_animation.start())
-
-    def print_geometry(self, button: PieButton, animation_type: str):
-        """Print the geometry of the button after animation."""
-        if button.index % 8 == 0:
-            print(f"AFTER {animation_type} animation - PM_{self.pie_menu_index} -  {button.index} geometry: {button.geometry()}\n")
+        return opacity_animation
 
     @pyqtSlot(dict)
     def update_button_ui(self, updated_button_config):
@@ -307,14 +304,6 @@ class PieMenu(QWidget):
         self.button_info.button_info_dict = updated_button_config
         self.button_info.has_unsaved_changes = True
         self.button_info.save_to_json()
-
-        # print("BUTTON THINGS")
-        # for i in range(0, 8):
-        #     print(f"Update {i}:")
-        #     print(updated_button_config[i]['task_type'])
-        #     print("  Properties:")
-        #     for prop_name, prop_value in updated_button_config[i]['properties'].items():
-        #         print(f"  {prop_name}: {prop_value}")
 
         # Directly update each pie_button with the properties from button_info
         for pie_button in list(self.pie_buttons.values()):

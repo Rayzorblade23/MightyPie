@@ -1,14 +1,10 @@
 import ast
-import json
-import os
-from dataclasses import fields
-from typing import Any, List
+from dataclasses import fields, dataclass
+from typing import Any, List, Tuple
 
 from utils.color_utils import adjust_saturation
 from utils.json_utils import JSONManager  # Assuming the previous JSONManager is saved as json_utils.py
 
-from dataclasses import dataclass
-from typing import Tuple
 
 @dataclass
 class BaseConfig:
@@ -160,6 +156,7 @@ class ConfigManager(BaseConfig):
 
 
 CONFIG = ConfigManager()
+
 
 class DefaultConfig(BaseConfig):
     """Holds the default configuration values."""
