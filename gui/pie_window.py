@@ -15,7 +15,7 @@ from events import ShowWindowEvent, HotkeyReleaseEvent
 from gui.buttons.pie_button import PieButton
 from gui.menus.pie_menu import PieMenu, PrimaryPieMenu, SecondaryPieMenu
 from gui.menus.special_menu import SpecialMenu
-from utils.window_utils import get_filtered_list_of_windows, load_cache
+from utils.window_utils import get_filtered_list_of_windows, load_cache, update_icon_paths_in_cache
 
 
 class PieWindow(QMainWindow):
@@ -43,6 +43,9 @@ class PieWindow(QMainWindow):
         self.active_child = 1
         self.is_window_open = False
         self.cursor_displacement = (0, 0)  # Track how much the cursor has been moved
+
+        # Check if the icons still exist, otherwise delete entries so they can update again
+        update_icon_paths_in_cache()
 
         self.initialize_ui()
         self.setup_window()

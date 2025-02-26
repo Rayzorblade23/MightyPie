@@ -111,6 +111,18 @@ WindowInfo: TypeAlias = Tuple[str, str, int]  # (title, exe_name, instance)
 WindowMapping: TypeAlias = Dict[int, WindowInfo]
 
 
+def update_icon_paths_in_cache():
+    """Update the cache by removing entries with invalid or missing icon paths."""
+    invalid_entries = [exe_name for exe_name, app_data in app_cache.items()
+                       if not app_data.get('icon_path') or not os.path.exists(app_data['icon_path'])]
+
+    for exe_name in invalid_entries:
+        del app_cache[exe_name]
+        print(f"Removed entry for {exe_name} due to invalid or missing icon path.")
+
+    save_cache(app_cache)
+
+
 def add_hwnd_to_exclude(widget: QWidget):
     """Adds the HWND of the given QWidget to the exclusion list."""
     global hwnds_to_exclude
@@ -371,6 +383,7 @@ def _get_window_info(window_handle):
                     app_name = _get_friendly_app_name(exe_path, exe_name)
                     app_cache[exe_name] = {"app_name": app_name, "icon_path": _get_window_icon(exe_path, window_handle),
                                            "exe_path": exe_path}
+                    print(app_cache)
                     save_cache(app_cache)
 
                 result[window_handle] = (window_title, exe_name, 0)
@@ -656,6 +669,7 @@ def minimize_window_by_hwnd(hwnd: int):
     else:
         print("No valid window found.")
 
+
 def minimize_window_at_cursor(main_window: QWidget):
     """Minimizes the window at the cursor position."""
     if not hasattr(main_window, 'pie_menu_pos'):
@@ -665,7 +679,6 @@ def minimize_window_at_cursor(main_window: QWidget):
     window_handle = win32gui.WindowFromPoint(cursor_pos)
 
     minimize_window_by_hwnd(window_handle)
-
 
 
 def restore_last_minimized_window():
