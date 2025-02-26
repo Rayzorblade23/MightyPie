@@ -1,7 +1,7 @@
 from typing import Optional
 
 from PyQt6.QtCore import Qt, pyqtSignal, QRect, QTimer, QPoint
-from PyQt6.QtGui import QPainter
+from PyQt6.QtGui import QPainter, QKeyEvent
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QWidget, QVBoxLayout, QHBoxLayout
 
 from data.config import CONFIG
@@ -232,6 +232,13 @@ class SpecialMenu(QWidget):
             self.screen_cover = None
         super().hide()
 
+    def keyPressEvent(self, event: QKeyEvent):
+        """Close the main_window on pressing the Escape key."""
+        if event.key() == Qt.Key.Key_Escape:
+            self.hide()
+        else:
+            super().keyPressEvent(event)  # Pass other key events to the
+
     def closeEvent(self, event):
         """Hide the window instead of closing it."""
         self.hide()
@@ -308,3 +315,10 @@ class ScreenCoverWidget(QWidget):
             self.clicked_outside.emit(global_pos)
 
         super().mousePressEvent(event)
+
+    def keyPressEvent(self, event: QKeyEvent):
+        """Close the main_window on pressing the Escape key."""
+        if event.key() == Qt.Key.Key_Escape:
+            self.target_widget.hide()
+        else:
+            super().keyPressEvent(event)  # Pass other key events to the
