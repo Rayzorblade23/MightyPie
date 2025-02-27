@@ -59,6 +59,11 @@ class ButtonFunctions:
                 "action": lambda: pyautogui.hotkey("win", "v"),
                 "icon": EXTERNAL_ICON_PATHS.get("clipboard-search"),
             },
+            "fullscreen_11": {
+                "text_1": "Fullscreen (F11)",
+                "action": lambda: pyautogui.press('f11'),
+                "icon": EXTERNAL_ICON_PATHS.get("clipboard-search"),
+            },
             "focus_all_explorer_windows": {
                 "text_1": "Get All Expl. Win.",
                 "action": focus_all_explorer_windows,
