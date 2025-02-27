@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QApplication
 
 from data.icon_paths import EXTERNAL_ICON_PATHS
 from utils.functions_utils import close_window_at_cursor, restore_last_minimized_window, minimize_window_at_cursor, \
-    toggle_maximize_window_at_cursor, center_window_at_cursor, focus_all_explorer_windows
+    toggle_maximize_window_at_cursor, center_window_at_cursor, focus_all_explorer_windows, restart_explorer
 
 
 class ButtonFunctions:
@@ -58,6 +58,11 @@ class ButtonFunctions:
                 "text_1": "Close Window",
                 "action": self._wrap(close_window_at_cursor),
                 "icon": EXTERNAL_ICON_PATHS.get("quit"),
+            },
+            "restart_explorer": {
+                "text_1": "Restart Explorer",
+                "action": restart_explorer,
+                "icon": EXTERNAL_ICON_PATHS.get("restart"),
             },
             # "open_pie_menu": {
             #     "text_1": "Open Pie",
