@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt, QPropertyAnimation, QPoint, QEasingCurve, pyqtProperty, QTimer
 from PyQt6.QtGui import QPainter, QColor, QBrush, QPen, QFont
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QHBoxLayout, QPushButton, QVBoxLayout
+from PyQt6.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton
 
 from data.config import CONFIG
 
@@ -133,7 +133,8 @@ class Toggle(QPushButton):
 
 
 class ToggleSwitch(QWidget):
-    def __init__(self, object_name="", size=(CONFIG.INTERNAL_BUTTON_HEIGHT, int(CONFIG.INTERNAL_BUTTON_HEIGHT * 4 / 7)), on_action=None, off_action=None,
+    def __init__(self, object_name="", size=(CONFIG.INTERNAL_BUTTON_HEIGHT, int(CONFIG.INTERNAL_BUTTON_HEIGHT * 4 / 7)), on_action=None,
+                 off_action=None,
                  label_text="", parent=None):
         super().__init__(parent)
 

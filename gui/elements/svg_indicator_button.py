@@ -1,7 +1,6 @@
-import os
-from typing import *
 import math
 from pathlib import Path
+from typing import *
 
 from PyQt6.QtCore import QPointF, QSize, Qt, QRectF, QPoint, QByteArray
 from PyQt6.QtGui import QPainter, QTransform
@@ -32,7 +31,6 @@ class SVGIndicatorButton(QPushButton):
                replace("{ring_fill}", CONFIG.RING_FILL).
                replace("{ring_stroke}", CONFIG.RING_STROKE))
 
-
         # self.svg_renderer = QSvgRenderer(str(svg_path))
         self.svg_renderer = QSvgRenderer(QByteArray(svg.encode("utf-8")))
 
@@ -53,7 +51,6 @@ class SVGIndicatorButton(QPushButton):
         self.setFixedSize(self.button_size, self.button_size)
         self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-
 
     def sizeHint(self):
         """Override sizeHint to ensure the button is the correct size."""
@@ -76,7 +73,6 @@ class SVGIndicatorButton(QPushButton):
         """Paint the SVG with the current rotation."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
 
         # Set up transform for rotation
         transform = QTransform()

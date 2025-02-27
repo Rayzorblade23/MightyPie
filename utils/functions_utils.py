@@ -1,5 +1,6 @@
 import os
 import subprocess
+from typing import TYPE_CHECKING
 
 import pyautogui
 import win32api
@@ -13,6 +14,9 @@ from PyQt6.QtWidgets import QWidget
 from data.config import CONFIG
 from data.window_manager import WindowManager
 from utils.window_utils import _get_window_title
+
+if TYPE_CHECKING:
+    from gui.pie_window import PieWindow
 
 last_minimized_hwnd = 0
 
@@ -117,7 +121,7 @@ def restore_last_minimized_window():
         print("No valid window found.")
 
 
-def minimize_window_at_cursor(main_window: QWidget):
+def minimize_window_at_cursor(main_window: "PieWindow"):
     """Minimizes the window at the cursor position."""
     if not hasattr(main_window, 'pie_menu_pos'):
         return
@@ -148,7 +152,7 @@ def minimize_window_by_hwnd(hwnd: int):
         print("No valid window found.")
 
 
-def toggle_maximize_window_at_cursor(pie_window: QWidget):
+def toggle_maximize_window_at_cursor(pie_window: "PieWindow"):
     if not hasattr(pie_window, 'pie_menu_pos'):
         return
 
@@ -221,7 +225,7 @@ def toggle_maximize_window_at_cursor(pie_window: QWidget):
         print("No valid window found under cursor")
 
 
-def center_window_at_cursor(pie_window: QWidget):
+def center_window_at_cursor(pie_window: "PieWindow"):
     """Centers the window under the cursor to the middle of its current monitor at 50% size."""
     if not hasattr(pie_window, 'pie_menu_pos'):
         return
@@ -376,13 +380,12 @@ def focus_all_explorer_windows():
             focus_window_by_handle(hwnd)
 
 
-def close_window_at_cursor(main_window: QWidget) -> None:
+def close_window_at_cursor(main_window: "PieWindow") -> None:
     """Closes the window at the cursor position."""
     if not hasattr(main_window, 'pie_menu_pos'):
         return
 
     cursor_pos = (main_window.pie_menu_pos.x(), main_window.pie_menu_pos.y())
-    print(cursor_pos)
 
     window_handle = win32gui.WindowFromPoint(cursor_pos)
 
