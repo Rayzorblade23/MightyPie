@@ -39,6 +39,26 @@ class ButtonFunctions:
                 "action": lambda: pyautogui.hotkey("alt", "right"),
                 "icon": EXTERNAL_ICON_PATHS.get("arrow-right"),
             },
+            "navigation_backwards": {
+                "text_1": "Backwards",
+                "action": lambda: pyautogui.hotkey("alt", "left"),
+                "icon": EXTERNAL_ICON_PATHS.get("arrow-left"),
+            },
+            "copy": {
+                "text_1": "Copy",
+                "action": lambda: pyautogui.hotkey("ctrl", "c"),
+                "icon": EXTERNAL_ICON_PATHS.get("copy"),
+            },
+            "paste": {
+                "text_1": "Paste",
+                "action": lambda: pyautogui.hotkey("ctrl", "v"),
+                "icon": EXTERNAL_ICON_PATHS.get("clipboard"),
+            },
+            "clipboard": {
+                "text_1": "Clipboard",
+                "action": lambda: pyautogui.hotkey("win", "v"),
+                "icon": EXTERNAL_ICON_PATHS.get("clipboard-search"),
+            },
             "focus_all_explorer_windows": {
                 "text_1": "Get All Expl. Win.",
                 "action": focus_all_explorer_windows,

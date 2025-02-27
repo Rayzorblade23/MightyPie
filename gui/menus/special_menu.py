@@ -241,7 +241,6 @@ class SpecialMenu(QWidget):
 
     def closeEvent(self, event):
         """Hide the window instead of closing it."""
-        self.hide()
         event.ignore()  # Prevent the default close behavior
 
     def showEvent(self, event) -> None:
