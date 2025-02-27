@@ -64,6 +64,26 @@ class ButtonFunctions:
                 "action": lambda: pyautogui.press('f11'),
                 "icon": EXTERNAL_ICON_PATHS.get("clipboard-search"),
             },
+            "media_play_pause": {
+                "text_1": "Play/Pause",
+                "action": lambda: pyautogui.press('playpause'),
+                "icon": EXTERNAL_ICON_PATHS.get("media-play"),
+            },
+            "media_skip_forward": {
+                "text_1": "Next Track",
+                "action": lambda: pyautogui.press('nexttrack'),
+                "icon": EXTERNAL_ICON_PATHS.get("media-skip-forward"),
+            },
+            "media_skip_backward": {
+                "text_1": "Previous Track",
+                "action": lambda: pyautogui.press('prevtrack'),
+                "icon": EXTERNAL_ICON_PATHS.get("media-skip-backward"),
+            },
+            "media_mute": {
+                "text_1": "Mute",
+                "action": lambda: pyautogui.press('volumemute'),
+                "icon": EXTERNAL_ICON_PATHS.get("media-mute"),
+            },
             "focus_all_explorer_windows": {
                 "text_1": "Get All Expl. Win.",
                 "action": focus_all_explorer_windows,

@@ -37,6 +37,7 @@ EXTERNAL_ICON_PATHS = {
     "media-pause": get_resource_path("external_icons/pause.png"),
     "media-skip-forward": get_resource_path("external_icons/skip-forward.png"),
     "media-skip-backward": get_resource_path("external_icons/skip-backward.png"),
+    "media-mute": get_resource_path("external_icons/media-mute.png"),
     "copy": get_resource_path("external_icons/copy.png"),
     "clipboard": get_resource_path("external_icons/clipboard.png"),
     "clipboard-search": get_resource_path("external_icons/clipboard-search.png"),
