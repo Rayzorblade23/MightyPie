@@ -4,13 +4,8 @@ import pyautogui
 from PyQt6.QtWidgets import QApplication
 
 from data.icon_paths import EXTERNAL_ICON_PATHS
-from utils.window_utils import (
-    toggle_maximize_window_at_cursor,
-    minimize_window_at_cursor,
-    center_window_at_cursor,
-    restore_last_minimized_window,
-    focus_all_explorer_windows,
-)
+from utils.functions_utils import close_window_at_cursor, restore_last_minimized_window, minimize_window_at_cursor, \
+    toggle_maximize_window_at_cursor, center_window_at_cursor, focus_all_explorer_windows
 
 
 class ButtonFunctions:
@@ -58,6 +53,11 @@ class ButtonFunctions:
                 "text_1": "Center Window",
                 "action": self._wrap(center_window_at_cursor),
                 "icon": EXTERNAL_ICON_PATHS.get("center"),
+            },
+            "close_window": {
+                "text_1": "Close Window",
+                "action": self._wrap(close_window_at_cursor),
+                "icon": EXTERNAL_ICON_PATHS.get("quit"),
             },
             # "open_pie_menu": {
             #     "text_1": "Open Pie",

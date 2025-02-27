@@ -1,8 +1,6 @@
 import atexit
 import ctypes
-import subprocess
 import sys
-import time
 
 import win32con
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget
@@ -97,11 +95,6 @@ def is_taskbar_visible():
 #         time.sleep(5)
 #     finally:
 #         winreg.CloseKey(reg_key)
-
-
-def restart_explorer():
-    subprocess.run("taskkill /f /im explorer.exe", shell=True)
-    subprocess.run("start explorer.exe", shell=True)
 
 
 def get_taskbar_handle():

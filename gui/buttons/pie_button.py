@@ -10,7 +10,7 @@ from data.font_styles import FontStyle
 from gui.elements.scrolling_text_label import ScrollingLabel
 from utils.icon_utils import invert_icon
 from utils.program_utils import main_window_hide, main_window_force_refresh
-from utils.window_utils import launch_app, focus_window_by_handle, close_window_by_handle
+from utils.functions_utils import close_window_by_handle, launch_app, focus_window_by_handle
 
 if TYPE_CHECKING:
     from gui.menus.pie_menu import PieMenu
