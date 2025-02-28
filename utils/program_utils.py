@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import psutil
 from PyQt6.QtCore import QCoreApplication, QPoint
-from PyQt6.QtGui import QCursor
+from PyQt6.QtGui import QCursor, QScreen, QGuiApplication
 from PyQt6.QtWidgets import QApplication, QWidget
 
 if TYPE_CHECKING:
@@ -89,3 +89,15 @@ def position_window_at_cursor(window: QWidget, center: bool = True) -> None:
 
     # Move window
     window.move(QPoint(x, y))
+
+def get_active_setup_screen() -> QScreen:
+    """Return the screen with the largest available area (heuristic primary)."""
+    screens = QGuiApplication.screens()
+    if not screens:
+        raise RuntimeError("No screens found")
+    # Choose the screen with the maximum available area.
+    return max(screens, key=lambda s: s.availableGeometry().width() * s.availableGeometry().height())
+
+def get_screen_dpi(screen: QScreen) -> float:
+    """Return the screen's logical and physical DPI as a tuple."""
+    return screen.physicalDotsPerInch()

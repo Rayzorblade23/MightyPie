@@ -5,7 +5,7 @@ from typing import Dict, Tuple, Optional, Type, List
 import win32con
 import win32gui
 from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QTimer, QRect
-from PyQt6.QtGui import QKeyEvent, QCursor, QGuiApplication
+from PyQt6.QtGui import QKeyEvent, QCursor, QGuiApplication, QScreen
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
 
 from data.button_info import ButtonInfo
@@ -15,6 +15,7 @@ from events import ShowWindowEvent, HotkeyReleaseEvent
 from gui.buttons.pie_button import PieButton
 from gui.menus.pie_menu import PieMenu, PrimaryPieMenu, SecondaryPieMenu
 from gui.menus.special_menu import SpecialMenu
+from utils.program_utils import restart_program, get_active_setup_screen, get_screen_dpi
 from utils.window_utils import get_filtered_list_of_windows, load_cache, update_icon_paths_in_cache
 
 
@@ -40,6 +41,9 @@ class PieWindow(QMainWindow):
         self.pie_menu_pos = QPoint()
         self.button_mapping_lock = Lock()
 
+        self.primary_screen: QScreen = get_active_setup_screen()
+        self.last_dpi: float = get_screen_dpi(self.primary_screen)
+
         self.active_child = 1
         self.is_window_open = False
         self.cursor_displacement = (0, 0)  # Track how much the cursor has been moved
@@ -57,6 +61,7 @@ class PieWindow(QMainWindow):
         # Start auto-refreshing every REFRESH_INTERVAL milliseconds
         self.auto_refresh_timer = QTimer(self)
         self.auto_refresh_timer.timeout.connect(self.auto_refresh)
+        self.auto_refresh_timer.timeout.connect(self.handle_monitor_setup_change)
         self.auto_refresh_timer.start(CONFIG.REFRESH_INTERVAL)  # Periodic refresh
         screen = QApplication.primaryScreen()
         screen.geometryChanged.connect(self.handle_geometry_change)
@@ -100,6 +105,15 @@ class PieWindow(QMainWindow):
     # endregion
 
     # region Event Handling
+    def handle_monitor_setup_change(self):
+        """Detect DPI changes and restart the UI."""
+        new_screen: QScreen = get_active_setup_screen()
+        new_dpi = get_screen_dpi(new_screen)
+
+        if new_dpi != self.last_dpi:
+            print(f"DPI change detected: {self.last_dpi} -> {new_dpi}. Restarting program...")
+            restart_program()
+
     def event(self, event):
         """Handle the custom filtered_event to show the main_window."""
         if isinstance(event, ShowWindowEvent):
@@ -153,7 +167,6 @@ class PieWindow(QMainWindow):
 
         # Update the QGraphicsScene size to match the new screen size
         self.scene.setSceneRect(0, 0, virtual_geometry.width(), virtual_geometry.height())
-
 
     @staticmethod
     def _get_virtual_geometry():
@@ -305,7 +318,6 @@ class PieWindow(QMainWindow):
             pie_menu_center_x = corrected_x + pie_menu.width() // 2
             pie_menu_center_y = corrected_y + pie_menu.height() // 2
 
-
             # Store the cursor displacement
             self.cursor_displacement = (
                 pie_menu_center_x - cursor_pos.x(),
@@ -333,7 +345,6 @@ class PieWindow(QMainWindow):
         self.setGeometry(virtual_geometry)
         self.view.setGeometry(virtual_geometry)
         self.scene.setSceneRect(0, 0, virtual_geometry.width(), virtual_geometry.height())
-
 
     @staticmethod
     def get_screen_bounds(cursor_pos):
