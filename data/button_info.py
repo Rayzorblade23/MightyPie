@@ -140,6 +140,50 @@ class ButtonInfo:
                     "window_handle": -1
                 }
             },
+            8: {
+                "task_type": "show_program_window",
+                "properties": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "explorer.exe",
+                    "exe_path": "",
+                    "window_title": "",
+                    "window_handle": -1
+                }
+            },
+            10: {
+                "task_type": "show_program_window",
+                "properties": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "explorer.exe",
+                    "exe_path": "",
+                    "window_title": "",
+                    "window_handle": -1
+                }
+            },
+            12: {
+                "task_type": "show_program_window",
+                "properties": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "explorer.exe",
+                    "exe_path": "",
+                    "window_title": "",
+                    "window_handle": -1
+                }
+            },
+            14: {
+                "task_type": "show_program_window",
+                "properties": {
+                    "app_name": "",
+                    "app_icon_path": "",
+                    "exe_name": "explorer.exe",
+                    "exe_path": "",
+                    "window_title": "",
+                    "window_handle": -1
+                }
+            },
             24: {
                 "task_type": "call_function",
                 "properties": {
@@ -247,10 +291,10 @@ class ButtonInfo:
                 self.button_info_dict[i] = {
                     "task_type": "launch_program",
                     "properties": {
-                        "app_name": "Explorer",
-                        "app_icon_path": "app_icons\\explorer.png",
+                        "app_name": "",
+                        "app_icon_path": "",
                         "exe_name": "explorer.exe",
-                        "exe_path": "C:\\Windows\\explorer.exe",
+                        "exe_path": "",
                         "window_title": ""
                     }
                 }
