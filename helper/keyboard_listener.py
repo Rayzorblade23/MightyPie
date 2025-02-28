@@ -1,8 +1,11 @@
+import threading
+import time
 from typing import TYPE_CHECKING
 
 import keyboard
 from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import QApplication, QWidget
+from keyboard import on_press, on_release
 
 from data.config import CONFIG
 from events import ShowWindowEvent, HotkeyReleaseEvent
@@ -25,16 +28,35 @@ class HotkeyListener:
         self.main_window = main_window
         self.can_open_window = True  # Track window state
         self.initial_mouse_pos = None  # Store initial mouse position on press
+        self.hotkey_states = {}  # Track active hotkeys
 
     def start_listening(self):
         """Starts listening for the configured hotkeys."""
-        keyboard.on_press_key(CONFIG.HOTKEY_PRIMARY, lambda _: self.on_press(CONFIG.HOTKEY_PRIMARY), suppress=True)
-        keyboard.on_release_key(CONFIG.HOTKEY_PRIMARY, lambda _: self.on_release(CONFIG.HOTKEY_PRIMARY))
 
-        keyboard.on_press_key(CONFIG.HOTKEY_SECONDARY, lambda _: self.on_press(CONFIG.HOTKEY_SECONDARY), suppress=True)
-        keyboard.on_release_key(CONFIG.HOTKEY_SECONDARY, lambda _: self.on_release(CONFIG.HOTKEY_SECONDARY))
+        # Listen for press and trigger on_press
+        keyboard.add_hotkey(CONFIG.HOTKEY_PRIMARY, lambda: self.handle_press(CONFIG.HOTKEY_PRIMARY), suppress=True)
+        keyboard.add_hotkey(CONFIG.HOTKEY_SECONDARY, lambda: self.handle_press(CONFIG.HOTKEY_SECONDARY), suppress=True)
 
-        keyboard.wait()
+        keyboard.wait()  # Keep the listener running
+
+    def handle_press(self, hotkey_name: str):
+        """Handles hotkey press and starts a release monitor if needed."""
+        if self.hotkey_states.get(hotkey_name, False):
+            return  # Prevent multiple triggers if already pressed
+
+        self.hotkey_states[hotkey_name] = True
+        self.on_press(hotkey_name)
+
+        # Start a background thread to monitor release
+        threading.Thread(target=self.monitor_release, args=(hotkey_name,), daemon=True).start()
+
+    def monitor_release(self, hotkey_name: str):
+        """Monitors when the hotkey is released and triggers on_release."""
+        while keyboard.is_pressed(hotkey_name):
+            time.sleep(0.01)  # Avoid excessive CPU usage
+
+        self.hotkey_states[hotkey_name] = False
+        self.on_release(hotkey_name)
 
     def on_press(self, hotkey_name: str):
         """Handles hotkey press events."""

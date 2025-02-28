@@ -1,5 +1,5 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
+from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtGui import QColor, QKeySequence
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
                              QLabel, QLineEdit, QCheckBox, QSpinBox, QWidget,
                              QPushButton, QScrollArea, QMessageBox, QSizePolicy, QColorDialog)
@@ -16,11 +16,14 @@ class NoScrollSpinBox(QSpinBox):
     def wheelEvent(self, event):
         event.ignore()  # Prevents the wheel from changing the selection
 
+
 class ConfigSettingsWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(f"{CONFIG.INTERNAL_PROGRAM_NAME} Settings")
         self.setMinimumWidth(400)
+
+        self._temp_hotkey = {}  # Initialize as a dictionary
 
         # Central widget and main layout
         central_widget = QWidget()
@@ -68,8 +71,6 @@ class ConfigSettingsWindow(QMainWindow):
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
 
-
-
     def _create_setting_input(self, setting):
         row_layout = QHBoxLayout()
 
@@ -88,6 +89,28 @@ class ConfigSettingsWindow(QMainWindow):
             input_widget.setRange(1, 9999)  # Set appropriate min/max range
             input_widget.setValue(setting['value'])
             row_layout.addWidget(input_widget)
+
+
+        elif setting['name'] == "HOTKEY_PRIMARY":
+            input_widget = QLineEdit(str(setting['value']))
+            input_widget.setPlaceholderText("Press key...")
+            input_widget.installEventFilter(self)  # Capture key events
+
+            # Temporarily store the hotkey input for HOTKEY_PRIMARY
+            self._temp_hotkey["HOTKEY_PRIMARY"] = setting['value']
+
+            row_layout.addWidget(input_widget)
+
+        elif setting['name'] == "HOTKEY_SECONDARY":
+            input_widget = QLineEdit(str(setting['value']))
+            input_widget.setPlaceholderText("Press key...")
+            input_widget.installEventFilter(self)  # Capture key events
+
+            # Temporarily store the hotkey input for HOTKEY_SECONDARY
+            self._temp_hotkey["HOTKEY_SECONDARY"] = setting['value']
+
+            row_layout.addWidget(input_widget)
+
         elif setting['type'] == "<class 'str'>":  # Handle string type (color hex code)
             input_widget = QLineEdit(str(setting['value']))
 
@@ -161,11 +184,19 @@ class ConfigSettingsWindow(QMainWindow):
             # Update the color picker button's background color to match the selected color
             color_picker_button.setStyleSheet(f"background-color: {hex_color};")
 
-
     def save_settings(self):
         for name, widget in self.setting_widgets.items():
             value = self._get_widget_value(widget)
-            CONFIG.update_setting(name, value)
+
+            # Handle saving hotkey correctly (store the hotkey as a string)
+            if isinstance(widget, QLineEdit) and name in {'HOTKEY_PRIMARY', 'HOTKEY_SECONDARY'}:
+                hotkey_string = self._temp_hotkey.get(name)  # Correctly fetch the hotkey string from _temp_hotkey
+                if hotkey_string is None:
+                    hotkey_string = value  # Fallback to the original value if no temp hotkey is set
+                CONFIG.update_setting(name, hotkey_string)  # Save the hotkey string in the configuration
+            else:
+                CONFIG.update_setting(name, value)
+
         self.close()
 
     def save_settings_and_restart(self):
@@ -231,9 +262,40 @@ class ConfigSettingsWindow(QMainWindow):
             return widget.text()
         return None
 
+    def eventFilter(self, obj, event):
+        """Capture key press events for hotkey input and update QLineEdit."""
+        if event.type() == QEvent.Type.KeyPress:
+            if isinstance(obj, QLineEdit) and obj.placeholderText() == "Press key...":
+                setting_name = obj.objectName()  # Get the setting name from the QLineEdit object
+
+                # Get the integer value of the modifiers and combine with the key
+                modifiers = event.modifiers().value  # Use .value to get an int from the KeyboardModifiers
+                key = event.key()  # event.key() is already an int
+                key_combination = modifiers | key
+
+                key_sequence = QKeySequence(key_combination)
+                hotkey_string = key_sequence.toString()
+
+                # Remove the "Num" part from Numpad keys (e.g., Num+7 becomes 7)
+                if "Num" in hotkey_string:
+                    hotkey_string = hotkey_string.replace("Num", "")
+
+                # Clean up extra "+" signs
+                hotkey_string = hotkey_string.replace("++", "+").lstrip("+")
+
+                obj.setText(hotkey_string)
+                self._temp_hotkey[setting_name] = hotkey_string
+
+                # Suppress the event so system actions aren't triggered
+                event.accept()
+
+                return True  # Prevent further processing of the event
+        return super().eventFilter(obj, event)
+
 
 if __name__ == "__main__":
     import sys
+
     app = QApplication(sys.argv)
     # Load the QSS template
     with open(get_resource_path("../../style.qss"), "r") as file:
