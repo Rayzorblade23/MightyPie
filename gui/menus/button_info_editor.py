@@ -2,7 +2,7 @@
 
 import logging
 
-from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QComboBox, QFrame
+from PyQt6.QtWidgets import QMessageBox, QWidget, QVBoxLayout, QComboBox, QFrame, QApplication
 
 from data.button_config_manager import ButtonConfigManager
 from data.config import CONFIG
@@ -27,8 +27,15 @@ class ButtonInfoEditor(QWidget):
 
     def init_ui(self) -> None:
         """Sets up the user interface components."""
+        # Get the available screen geometry
+        screen = QApplication.primaryScreen().availableGeometry()
+
         self.setWindowTitle('Button Info Editor')
-        self.setGeometry(100, 100, 1500, 860)
+        # Calculate dimensions based on screen size (e.g., 80% of available space)
+        width = min(1800, int(screen.width() * 0.8))
+        height = min(860, int(screen.height() * 0.8))
+
+        self.setGeometry(50, 50, width, height)
 
         main_layout = QVBoxLayout(self)
         scroll, scroll_layout = create_scroll_area()

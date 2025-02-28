@@ -79,7 +79,7 @@ def create_texts_layout() -> QVBoxLayout:
     """Creates the layout for task type and program labels."""
     texts_layout = QVBoxLayout()
     texts_layout.addWidget(QLabel("Task Type:"))
-    texts_layout.addWidget(QLabel("Program:"))
+    texts_layout.addWidget(QLabel("Property:"))
     return texts_layout
 
 
