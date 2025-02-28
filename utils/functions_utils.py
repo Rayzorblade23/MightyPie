@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING
 
 import pyautogui
 import win32api
+import win32com.client
 import win32con
 import win32gui
 import win32process
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor, QGuiApplication
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget, QMessageBox
 
 from data.config import CONFIG
 from data.window_manager import WindowManager
@@ -22,9 +23,54 @@ last_minimized_hwnd = 0
 
 manager = WindowManager.get_instance()
 
+
+def get_explorer_windows_paths():
+    """Get the paths of currently open Explorer windows."""
+    shell = win32com.client.Dispatch("Shell.Application")
+    explorer_windows = []
+
+    for window in shell.Windows():
+        try:
+            if window.Name == "File Explorer":  # Only consider File Explorer windows
+                # This will get the current folder path in the Explorer window
+                path = window.LocationURL
+                # Filter out empty or invalid paths
+                if path:
+                    # Convert file:/// path to a regular file path
+                    path = path.replace("file:///", "").replace("/", "\\")
+                    # Ensure the path is valid (i.e., it exists)
+                    if os.path.exists(path):
+                        explorer_windows.append(path)
+        except Exception as e:
+            print(f"Error accessing window: {e}")
+
+    return explorer_windows
+
+
 def restart_explorer():
-    subprocess.run("taskkill /f /im explorer.exe", shell=True)
-    subprocess.run("start explorer.exe", shell=True)
+    """Ask for confirmation before restarting explorer and reopen open windows."""
+    # Step 1: Ask for confirmation
+    reply = QMessageBox.question(
+        None,
+        "Confirm Restart",
+        "Are you sure you want to restart Explorer?",
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        QMessageBox.StandardButton.No
+    )
+
+    if reply == QMessageBox.StandardButton.Yes:
+        # Step 2: Get the paths of open Explorer windows
+        explorer_paths = get_explorer_windows_paths()
+
+        # Step 3: Kill and restart Explorer
+        subprocess.run("taskkill /f /im explorer.exe", shell=True)
+        subprocess.run("start explorer.exe", shell=True)
+
+        # Step 4: Reopen previously open Explorer windows using the tracked paths
+        for path in explorer_paths:
+            if path:
+                # Open the folder with explorer
+                subprocess.run(f'explorer "{path}"', shell=True)
 
 
 def launch_app(exe_path):
@@ -397,6 +443,7 @@ def close_window_at_cursor(main_window: "PieWindow") -> None:
         close_window_by_handle(root_handle)
     else:
         print("No valid window found under cursor.")
+
 
 def close_window_by_handle(hwnd):
     """Close a window given its handle."""

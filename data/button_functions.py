@@ -25,12 +25,12 @@ class ButtonFunctions:
 
         self.functions: Dict[str, Dict[str, Union[str, Callable, str]]] = {
             "toggle_maximize_window": {
-                "text_1": "MAXIMIZE",
+                "text_1": "Maximize",
                 "action": self._wrap(toggle_maximize_window_at_cursor),
                 "icon": EXTERNAL_ICON_PATHS.get("window_maximize"),
             },
             "restore_minimized_window": {
-                "text_1": "Restore Minimized",
+                "text_1": "Restore Mini.",
                 "action": restore_last_minimized_window,
                 "icon": EXTERNAL_ICON_PATHS.get("change"),
             },
@@ -62,7 +62,7 @@ class ButtonFunctions:
             "fullscreen_11": {
                 "text_1": "Fullscreen (F11)",
                 "action": lambda: pyautogui.press('f11'),
-                "icon": EXTERNAL_ICON_PATHS.get("clipboard-search"),
+                "icon": EXTERNAL_ICON_PATHS.get("fullscreen"),
             },
             "media_play_pause": {
                 "text_1": "Play/Pause",

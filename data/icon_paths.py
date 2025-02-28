@@ -28,6 +28,7 @@ EXTERNAL_ICON_PATHS = {
     "palette": get_resource_path("external_icons/palette.png"),
     "arrow-right": get_resource_path("external_icons/arrow-right.png"),
     "arrow-left": get_resource_path("external_icons/arrow-left.png"),
+    "fullscreen": get_resource_path("external_icons/fullscreen.png"),
     "change": get_resource_path("external_icons/change.png"),
     "cake": get_resource_path("external_icons/cake.png"),
     "schedule-time": get_resource_path("external_icons/schedule-time.png"),
