@@ -339,10 +339,6 @@ def show_special_menu(menu: QWidget):
 
 def focus_window_by_handle(hwnd):
     """Bring a main_window to the foreground and restore/maximize as needed."""
-    if hwnd == win32gui.GetForegroundWindow():
-        print(f"Window {hwnd} is already in the foreground.")
-        return  # Avoid calling SetForegroundWindow again
-
     print(f"FOCUSING WINDOW {hwnd}")
     class_name = win32gui.GetClassName(hwnd)
 

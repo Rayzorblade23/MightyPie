@@ -12,6 +12,7 @@ Collect multiple windows on one button
 
 
 BUGS:
+- after monitor change: menu open offset from cursor on primary screen
 
 - one time: crash no "restore minimized"
 
