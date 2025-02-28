@@ -71,6 +71,9 @@ class ConfigSettingsWindow(QMainWindow):
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
 
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
+
     def _create_setting_input(self, setting):
         row_layout = QHBoxLayout()
 
@@ -201,7 +204,10 @@ class ConfigSettingsWindow(QMainWindow):
 
     def save_settings_and_restart(self):
         for name, widget in self.setting_widgets.items():
-            value = self._get_widget_value(widget)
+            if isinstance(widget, QLineEdit) and name in {'HOTKEY_PRIMARY', 'HOTKEY_SECONDARY'}:
+                value = self._temp_hotkey.get(name, widget.text())
+            else:
+                value = self._get_widget_value(widget)
             CONFIG.update_setting(name, value)
         restart_program()
 
@@ -227,6 +233,8 @@ class ConfigSettingsWindow(QMainWindow):
                     widget.setValue(default_value)
                 elif isinstance(widget, QLineEdit):
                     widget.setText(str(default_value))
+                    if name in {"HOTKEY_PRIMARY", "HOTKEY_SECONDARY"}:
+                        self._temp_hotkey[name] = default_value
 
                 # Update the actual configuration
                 CONFIG.update_setting(name, default_value)
@@ -235,8 +243,7 @@ class ConfigSettingsWindow(QMainWindow):
 
             QMessageBox.information(self, 'Reset Complete', 'Settings have been reset to default values.')
 
-    @staticmethod
-    def reset_single_setting(widget, setting_name):
+    def reset_single_setting(self, widget, setting_name):
         """Resets the given setting to its default value."""
         default_config = DefaultConfig()
         default_value = getattr(default_config, setting_name)
@@ -247,10 +254,12 @@ class ConfigSettingsWindow(QMainWindow):
             widget.setValue(default_value)
         elif isinstance(widget, QLineEdit):
             widget.setText(str(default_value))
+            # Update the temporary hotkey for hotkey fields
+            if setting_name in {"HOTKEY_PRIMARY", "HOTKEY_SECONDARY"}:
+                self._temp_hotkey[setting_name] = default_value
 
-        # Update the actual configuration
         CONFIG.update_setting(setting_name, default_value)
-        CONFIG.save_config()  # Optionally save after resetting
+        CONFIG.save_config()
 
     @staticmethod
     def _get_widget_value(widget):
