@@ -30,6 +30,9 @@ class HotkeyListener:
         self.initial_mouse_pos = None  # Store initial mouse position on press
         self.hotkey_states = {}  # Track active hotkeys
 
+        self.thread_events = {}  # Track thread events for monitoring thread completion
+        self.active_threads = []  # Track active threads
+
     def start_listening(self):
         """Starts listening for the configured hotkeys."""
 
@@ -47,16 +50,30 @@ class HotkeyListener:
         self.hotkey_states[hotkey_name] = True
         self.on_press(hotkey_name)
 
-        # Start a background thread to monitor release
-        threading.Thread(target=self.monitor_release, args=(hotkey_name,), daemon=True).start()
+        # Create an event to monitor the thread's completion
+        release_event = threading.Event()
+        self.thread_events[hotkey_name] = release_event  # Track this event with the hotkey name
 
-    def monitor_release(self, hotkey_name: str):
+        # Start a background thread to monitor release
+        thread = threading.Thread(target=self.monitor_release, args=(hotkey_name, release_event), daemon=True)
+        self.active_threads.append(thread)  # Add to active threads list
+        print(f"Created thread for {hotkey_name}. Active threads: {len(self.active_threads)}")
+        thread.start()
+
+    def monitor_release(self, hotkey_name: str, release_event: threading.Event):
         """Monitors when the hotkey is released and triggers on_release."""
         while keyboard.is_pressed(hotkey_name):
             time.sleep(0.01)  # Avoid excessive CPU usage
 
         self.hotkey_states[hotkey_name] = False
         self.on_release(hotkey_name)
+
+        # Signal that the thread has finished its task
+        release_event.set()
+
+        # Remove the thread from the active threads list when it's done
+        self.active_threads = [t for t in self.active_threads if t.is_alive()]  # Keep only alive threads
+        print(f"Thread for {hotkey_name} completed. Active threads: {len(self.active_threads)}")
 
     def on_press(self, hotkey_name: str):
         """Handles hotkey press events."""
@@ -120,3 +137,7 @@ class HotkeyListener:
                 release_event = HotkeyReleaseEvent(self.main_window, pie_menu)
                 QApplication.postEvent(self.main_window, release_event)
                 self.can_open_window = True  # Reset the state
+
+        # Clean up the thread event after the thread has finished
+        if hotkey_name in self.thread_events:
+            del self.thread_events[hotkey_name]
