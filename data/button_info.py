@@ -126,7 +126,7 @@ class ButtonInfo:
                     "exe_name": "vivaldi.exe",
                     "exe_path": "",
                     "window_title": "",
-                    "window_handle": -1,
+                    "window_handle": -1
                 }
             },
             4: {
@@ -136,122 +136,127 @@ class ButtonInfo:
                     "app_icon_path": "",
                     "exe_name": "spotify.exe",
                     "exe_path": "",
-                    "window_title": "Spotify Premium",
-                    "window_handle": -1,
-                }
-            },
-            8: {
-                "task_type": "show_program_window",
-                "properties": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "exe_name": "explorer.exe",
-                    "exe_path": "",
                     "window_title": "",
-                    "window_handle": -1,
-                }
-            },
-            10: {
-                "task_type": "show_program_window",
-                "properties": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "exe_name": "explorer.exe",
-                    "exe_path": "",
-                    "window_title": "",
-                    "window_handle": -1,
-                }
-            },
-            12: {
-                "task_type": "show_program_window",
-                "properties": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "exe_name": "explorer.exe",
-                    "exe_path": "",
-                    "window_title": "",
-                    "window_handle": -1,
-                }
-            },
-            14: {
-                "task_type": "show_program_window",
-                "properties": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "exe_name": "explorer.exe",
-                    "exe_path": "",
-                    "window_title": "",
-                    "window_handle": -1,
+                    "window_handle": -1
                 }
             },
             24: {
                 "task_type": "call_function",
                 "properties": {
-                    "function_name": "toggle_maximize_window",
+                    "function_name": "toggle_maximize_window"
                 }
             },
             25: {
                 "task_type": "call_function",
                 "properties": {
-                    "function_name": "restore_minimized_window",
+                    "function_name": "restore_minimized_window"
                 }
             },
             26: {
                 "task_type": "call_function",
                 "properties": {
-                    "function_name": "navigation_forward",
+                    "function_name": "navigation_forward"
                 }
             },
             27: {
                 "task_type": "call_function",
                 "properties": {
-                    "function_name": "focus_all_explorer_windows",
+                    "function_name": "focus_all_explorer_windows"
                 }
             },
             28: {
                 "task_type": "call_function",
                 "properties": {
-                    "function_name": "minimize_window",
+                    "function_name": "minimize_window"
                 }
             },
             29: {
                 "task_type": "call_function",
                 "properties": {
-                    "function_name": "center_window",
+                    "function_name": "center_window"
+                }
+            },
+            30: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "navigation_backwards"
+                }
+            },
+            31: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "clipboard"
                 }
             },
             32: {
-                "task_type": "launch_program",
+                "task_type": "call_function",
                 "properties": {
-                    "app_name": "",
-                    "app_icon_path": "",
-                    "exe_name": "sourcetree.exe",
-                    "exe_path": "",
+                    "function_name": "media_play_pause"
                 }
             },
-
+            33: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "media_skip_forward"
+                }
+            },
+            34: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "paste"
+                }
+            },
+            35: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "restart_explorer"
+                }
+            },
+            36: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "media_mute"
+                }
+            },
+            37: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "fullscreen_11"
+                }
+            },
+            38: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "copy"
+                }
+            },
+            39: {
+                "task_type": "call_function",
+                "properties": {
+                    "function_name": "media_skip_backward"
+                }
+            },
         }
 
-        # # Explorer reserved spaces
-        # explorer_reserved_indexes = [8, 10, 12, 14]
-        #
-        # for i in explorer_reserved_indexes:
-        #     if i not in self.button_info_dict:
-        #         self.button_info_dict[i] = {
-        #             "task_type": "show_any_window",
-        #             "properties": {
-        #                 "app_name": "Windows Explorer",
-        #                 "text_1": "",
-        #                 "text_2": "Windows Explorer",
-        #                 "window_handle": -1,
-        #                 "app_icon_path": "",
-        #                 "exe_name": "explorer.exe"
-        #             }
-        #         }
+        total_entries = CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU * (
+                CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY + CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY)
+
+        # fill last pie menu with launchers
+        for i in range(total_entries - 8, total_entries):
+            if i not in self.button_info_dict:
+                self.button_info_dict[i] = {
+                    "task_type": "launch_program",
+                    "properties": {
+                        "app_name": "Explorer",
+                        "app_icon_path": "app_icons\\explorer.png",
+                        "exe_name": "explorer.exe",
+                        "exe_path": "C:\\Windows\\explorer.exe",
+                        "window_title": ""
+                    }
+                }
 
         # Fill in missing tasks
-        for i in range(CONFIG.INTERNAL_NUM_BUTTONS_IN_PIE_MENU * (
-                CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY + CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY)):
+        for i in range(total_entries):
             if i not in self.button_info_dict:
                 self.button_info_dict[i] = {
                     "task_type": "show_any_window",
