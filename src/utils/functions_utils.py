@@ -83,18 +83,20 @@ def launch_app(exe_path):
     try:
         # Check if exe_path contains 'spotify' (case-insensitive)
         if "spotify" in exe_path.lower():
-            print("Detected Spotify. Using Start Menu simulation...")
-
             subprocess.run(['start', 'spotify:'], shell=True)
 
         elif "explorer" in exe_path.lower():
             pyautogui.hotkey('win', 'e')
 
         else:
-            # Redirect output to suppress terminal spam
-            with open(os.devnull, 'w') as devnull:
-                subprocess.Popen(exe_path, stdout=devnull, stderr=devnull)
-            print("Launched successfully.", exe_path)
+            # using explorer.exe to avoid transferring admin rights
+            subprocess.run(['explorer.exe', exe_path], check=True)
+            print("Launched without admin privileges:", exe_path)
+
+            # # Redirect output to suppress terminal spam
+            # with open(os.devnull, 'w') as devnull:
+            #     subprocess.Popen(exe_path, stdout=devnull, stderr=devnull)
+            # print("Launched successfully.", exe_path)
     except Exception as e:
         print(f"An error occurred: {e}")
 
