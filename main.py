@@ -23,6 +23,41 @@ from gui.pie_window import PieWindow
 
 import ctypes
 
+import logging
+from logging.handlers import RotatingFileHandler
+
+
+def setup_logging():
+    # Create logs directory if it doesn't exist
+    log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+    os.makedirs(log_dir, exist_ok=True)
+
+    # Set up log file path
+    log_file = os.path.join(log_dir, 'mightypie.log')
+
+    # Configure logging
+    handler = RotatingFileHandler(
+        log_file,
+        maxBytes=1024 * 1024 * 5,  # 5MB max file size
+        backupCount=3  # Keep 3 backup files
+    )
+
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    handler.setFormatter(formatter)
+
+    # Root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)  # Set default level
+    root_logger.addHandler(handler)
+
+    # Also log to console during development
+    console = logging.StreamHandler()
+    console.setFormatter(formatter)
+    root_logger.addHandler(console)
+
+    return root_logger
 
 def signal_handler(signal, frame):
     # Ensure taskbar is shown before exiting
@@ -87,8 +122,16 @@ class SingleInstance:
 
 
 if __name__ == "__main__":
+    # Initialize logging
+    logger = setup_logging()
+    logger.info("Starting MightyPie application")
+
     # Store instance in sys for global access
-    sys._instance = SingleInstance()
+    try:
+        sys._instance = SingleInstance()
+    except Exception as e:
+        logger.error(f"Failed to create single instance: {e}", exc_info=True)
+        sys.exit(1)
 
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(2)  # Per-monitor DPI awareness
