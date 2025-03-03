@@ -1,3 +1,5 @@
+import logging
+
 from PyQt6.QtCore import Qt, QEvent
 from PyQt6.QtGui import QColor, QKeySequence
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
@@ -8,6 +10,8 @@ from src.data.config import CONFIG, DefaultConfig
 from src.utils.file_handling_utils import get_resource_path
 from src.utils.icon_utils import get_icon
 from src.utils.program_utils import restart_program
+
+logger = logging.getLogger(__name__)
 
 
 class NoScrollSpinBox(QSpinBox):
@@ -300,24 +304,3 @@ class ConfigSettingsWindow(QMainWindow):
 
                 return True  # Prevent further processing of the event
         return super().eventFilter(obj, event)
-
-
-if __name__ == "__main__":
-    import sys
-
-    app = QApplication(sys.argv)
-    # Load the QSS template
-    with open(get_resource_path("../../../assets/style.qss"), "r") as file:
-        qss_template = file.read()
-
-    # inserting style attributes from the config.py file
-    qss = (qss_template
-           .replace("{{accent_color}}", CONFIG.ACCENT_COLOR)
-           .replace("{{accent_muted}}", CONFIG.ACCENT_COLOR_MUTED)
-           .replace("{{bg_color}}", CONFIG.BG_COLOR))
-
-    # Apply the QSS to the application or widgets
-    app.setStyleSheet(qss)
-    window = ConfigSettingsWindow()
-    window.show()
-    app.exec()

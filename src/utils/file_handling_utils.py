@@ -1,5 +1,9 @@
+import logging
 import sys
 import os
+
+logger = logging.getLogger(__name__)
+
 
 def get_resource_path(relative_path):
     """
@@ -14,6 +18,7 @@ def get_resource_path(relative_path):
     """
     # Normalize the path to use the OS's path separator. This handles both / and \.
     normalized_path = os.path.normpath(relative_path)
+    logger.debug(f"get_resource_path (normalized): {normalized_path}")
 
     if hasattr(sys, '_MEIPASS'):
         # Running in PyInstaller bundle

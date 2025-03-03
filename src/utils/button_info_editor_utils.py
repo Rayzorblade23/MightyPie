@@ -1,12 +1,9 @@
 # button_info_editor_utils.py
 
-import logging
 from typing import Callable, Tuple, Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, QFrame, QScrollArea
-
-logging.basicConfig(level=logging.DEBUG)
 
 
 def create_scroll_area() -> Tuple[QScrollArea, QHBoxLayout]:

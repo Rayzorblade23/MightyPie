@@ -1,5 +1,8 @@
+import logging
 import subprocess
 import pyautogui
+
+logger = logging.getLogger(__name__)
 
 
 def open_audio_settings(self, hide_parent=False):
@@ -9,9 +12,9 @@ def open_audio_settings(self, hide_parent=False):
         if hide_parent and self.parent():
             self.parent().hide()  # Hide the parent window after the button is pressed
     except FileNotFoundError:
-        print("Error: Explorer or ms-settings:sound command not found.")
+        logger.error("Error: Explorer or ms-settings:sound command not found.")
     except subprocess.CalledProcessError as e:
-        print(f"Error opening audio settings: {e}")
+        logger.error(f"Error opening audio settings: {e}")
 
 
 def open_network_settings(self, hide_parent=False):
@@ -21,9 +24,9 @@ def open_network_settings(self, hide_parent=False):
         if hide_parent and self.parent():
             self.parent().hide()  # Hide the parent window after the button is pressed
     except FileNotFoundError:
-        print("Error: Explorer or ms-settings:network-status command not found.")
+        logger.error("Error: Explorer or ms-settings:network-status command not found.")
     except subprocess.CalledProcessError as e:
-        print(f"Error opening network settings: {e}")
+        logger.error(f"Error opening network settings: {e}")
 
 
 def open_projection_settings(self, hide_parent=False):
@@ -33,7 +36,7 @@ def open_projection_settings(self, hide_parent=False):
         if hide_parent and self.parent():
             self.parent().hide()  # Hide the parent window after the button is pressed
     except Exception as e:
-        print(f"Error opening projection settings: {e}")
+        logger.error(f"Error opening projection settings: {e}")
 
 
 def open_onscreen_keyboard(self, hide_parent=False):
@@ -43,7 +46,7 @@ def open_onscreen_keyboard(self, hide_parent=False):
         if hide_parent and self.parent():
             self.parent().hide()  # Hide the parent window after the button is pressed
     except Exception as e:
-        print(f"Error opening touch keyboard: {e}")
+        logger.error(f"Error opening touch keyboard: {e}")
 
 
 def open_start_menu(self, hide_parent=False):
@@ -54,7 +57,7 @@ def open_start_menu(self, hide_parent=False):
         if hide_parent and self.parent():
             self.parent().hide()  # Hide the parent window after the button is pressed
     except Exception as e:
-        print(f"Error pressing Ctrl + Esc: {e}")
+        logger.error(f"Error pressing Ctrl + Esc: {e}")
     finally:
         pyautogui.FAILSAFE = True  # Re-enable fail-safe
 
@@ -67,7 +70,7 @@ def open_action_center(self, hide_parent=False):
         if hide_parent and self.parent():
             self.parent().hide()  # Hide the parent window after the button is pressed
     except Exception as e:
-        print(f"Error opening Action Center: {e}")
+        logger.error(f"Error opening Action Center: {e}")
     finally:
         pyautogui.FAILSAFE = True  # Re-enable fail-safe
 
@@ -79,7 +82,7 @@ def open_explorer_window(self, hide_parent=False):
         if hide_parent and self.parent():
             self.parent().hide()  # Hide the parent window after the button is pressed
     except Exception as e:
-        print(f"Error pressing Win + e: {e}")
+        logger.error(f"Error pressing Win + e: {e}")
 
 def open_task_manager(self, hide_parent=False):
     """Simulate pressing Ctrl + Shift + Esc to open the Start menu"""
@@ -89,6 +92,6 @@ def open_task_manager(self, hide_parent=False):
         if hide_parent and self.parent():
             self.parent().hide()  # Hide the parent window after the button is pressed
     except Exception as e:
-        print(f"Error pressing Ctrl + Shift + Esc: {e}")
+        logger.error(f"Error pressing Ctrl + Shift + Esc: {e}")
     finally:
         pyautogui.FAILSAFE = True  # Re-enable fail-safe

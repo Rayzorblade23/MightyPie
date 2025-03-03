@@ -1,8 +1,12 @@
+import logging
+
 from PyQt6.QtCore import Qt, QPropertyAnimation, QPoint, QEasingCurve, pyqtProperty, QTimer
 from PyQt6.QtGui import QPainter, QColor, QBrush, QPen, QFont
 from PyQt6.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton
 
 from src.data.config import CONFIG
+
+logger = logging.getLogger(__name__)
 
 
 class Toggle(QPushButton):
@@ -75,6 +79,7 @@ class Toggle(QPushButton):
 
     def toggle_switch(self):
         if not self._is_clickable:
+            logger.warning("Button click ignored: Button is in cooldown state.")
             return  # Ignore click if button is in cooldown state
 
         # Set the button to non-clickable (cooldown state)

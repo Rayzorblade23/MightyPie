@@ -1,3 +1,4 @@
+import logging
 import os
 import subprocess
 import sys
@@ -9,13 +10,15 @@ from PyQt6.QtCore import QCoreApplication, QPoint
 from PyQt6.QtGui import QCursor, QScreen, QGuiApplication
 from PyQt6.QtWidgets import QApplication, QWidget
 
+logger = logging.getLogger(__name__)
+
 if TYPE_CHECKING:
     from src.gui.pie_window import PieWindow
 
 
 def restart_program():
     current_pid = os.getpid()
-    print(f"Restarting. Current PID: {current_pid}")
+    logger.info(f"Restarting. Current PID: {current_pid}")
 
     if hasattr(sys, '_instance'):
         sys._instance.release_for_restart()
@@ -24,13 +27,13 @@ def restart_program():
         try:
             if proc.info['pid'] != current_pid and proc.info['cmdline']:
                 if sys.argv[0] in proc.info['cmdline']:
-                    print(f"Killing old instance: PID {proc.info['pid']}")
+                    logger.info(f"Killing old instance: PID {proc.info['pid']}")
                     proc.terminate()
         except psutil.NoSuchProcess:
             pass
 
     new_process = subprocess.Popen([sys.executable] + sys.argv)
-    print(f"New process started with PID: {new_process.pid}")
+    logger.info(f"New process started with PID: {new_process.pid}")
 
     time.sleep(1)
     os._exit(0)
@@ -90,13 +93,16 @@ def position_window_at_cursor(window: QWidget, center: bool = True) -> None:
     # Move window
     window.move(QPoint(x, y))
 
+
 def get_active_setup_screen() -> QScreen:
     """Return the screen with the largest available area (heuristic primary)."""
     screens = QGuiApplication.screens()
     if not screens:
+        logger.error("No screens found")  # Log the error before raising the exception
         raise RuntimeError("No screens found")
     # Choose the screen with the maximum available area.
     return max(screens, key=lambda s: s.availableGeometry().width() * s.availableGeometry().height())
+
 
 def get_screen_dpi(screen: QScreen) -> float:
     """Return the screen's logical and physical DPI as a tuple."""

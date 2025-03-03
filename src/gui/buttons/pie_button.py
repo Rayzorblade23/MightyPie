@@ -1,3 +1,4 @@
+import logging
 from typing import *
 
 from PyQt6.QtCore import Qt, QTimer
@@ -8,9 +9,11 @@ from src.data.button_functions import ButtonFunctions
 from src.data.config import CONFIG
 from src.data.font_styles import FontStyle
 from src.gui.elements.scrolling_text_label import ScrollingLabel
+from src.utils.functions_utils import close_window_by_handle, launch_app, focus_window_by_handle
 from src.utils.icon_utils import invert_icon
 from src.utils.program_utils import main_window_hide, main_window_force_refresh
-from src.utils.functions_utils import close_window_by_handle, launch_app, focus_window_by_handle
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from src.gui.menus.pie_menu import PieMenu
@@ -18,6 +21,7 @@ if TYPE_CHECKING:
 NO_HWND_ASSIGNED = -1
 PROGRAM_NOT_YET_REGISTERED = -1
 READY_TO_OPEN_PROGRAM = 0
+
 
 class PieButton(QPushButton):
     """Custom Button with text animation for long text."""
@@ -32,6 +36,8 @@ class PieButton(QPushButton):
                  parent: Optional["PieMenu"] = None
                  ):
         super().__init__(parent)
+
+        logger.debug(f"Initializing PieButton: {object_name}, Index: {index}")
 
         self.setObjectName(object_name)
         self.index = index
@@ -237,26 +243,28 @@ class PieButton(QPushButton):
         if self.left_click_action:
             self.left_click_action()
         else:
-            print(f"Left-click action has not been set for button: {self.objectName()}")
+            logger.debug(f"Left-click action not set for button: {self.objectName()}")
 
     def trigger_right_click_action(self):
         """Trigger the right-click action."""
         if self.right_click_action:
             self.right_click_action()
         else:
-            print(f"Right-click action has not been set for button: {self.objectName()}")
+            logger.debug(f"Right-click action not set for button: {self.objectName()}")
 
     def trigger_middle_click_action(self):
         """Trigger the middle-click action."""
         if self.middle_click_action:
             self.middle_click_action()
         else:
-            print(f"Middle-click action has not been set for button: {self.objectName()}")
+            logger.debug(f"Middle-click action not set for button: {self.objectName()}")
 
     def enterEvent(self, event):
+        logger.debug(f"Mouse entered button: {self.objectName()}")
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))  # Change cursor on hover
 
     def leaveEvent(self, event):
+        logger.debug(f"Mouse left button: {self.objectName()}")
         self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Restore default cursor
 
     def update_hover_state(self, hovered):

@@ -87,35 +87,14 @@ class InvisibleUI(QWidget):
         """Reposition buttons when the window is resized."""
         super().resizeEvent(event)
         self.position_buttons()
+    #
+    # @staticmethod
+    # def on_button_left_clicked():
+    #     """Print message when the left button is clicked."""
+    #     print("Left button clicked!")
+    #
+    # @staticmethod
+    # def on_button_right_clicked():
+    #     """Print message when the right button is clicked."""
+    #     print("Right button clicked!")
 
-    @staticmethod
-    def on_button_left_clicked():
-        """Print message when the left button is clicked."""
-        print("Left button clicked!")
-
-    @staticmethod
-    def on_button_right_clicked():
-        """Print message when the right button is clicked."""
-        print("Right button clicked!")
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    # Load the QSS template
-    with open("../../assets/style.qss", "r") as file:
-        qss_template = file.read()
-
-    qss = (qss_template
-           .replace("{{accent_color}}", CONFIG.ACCENT_COLOR)
-           .replace("{{accent_muted}}", CONFIG.ACCENT_COLOR_MUTED)
-           .replace("{{bg_color}}", CONFIG.BG_COLOR))
-
-    app.setStyleSheet(qss)
-
-    invisUI = InvisibleUI()
-    invisUI.show()  # Explicitly show the clock widget
-
-    print("Entering event loop...")
-    sys.exit(app.exec())  # Start the application event loop
-    print("Exited event loop.")

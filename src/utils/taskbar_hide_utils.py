@@ -1,11 +1,14 @@
 import atexit
 import ctypes
+import logging
 import sys
 
 import win32con
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 from src.events import taskbar_event
+
+logger = logging.getLogger(__name__)
 
 
 class TaskbarController(QMainWindow):
@@ -31,7 +34,6 @@ class TaskbarController(QMainWindow):
         layout.addWidget(self.toggle_button)
 
     def closeEvent(self, event):
-        print("Taskbar Utils Close Event")
         if self.is_hidden:
             show_taskbar()
         event.accept()
@@ -51,7 +53,7 @@ def set_taskbar_opacity(alpha_value: int):
     hwnd = get_taskbar_handle()
 
     if hwnd == 0:
-        print("Failed to get taskbar handle!")
+        logger.error("Failed to get taskbar handle!")
         return
 
     # Constants
@@ -72,9 +74,7 @@ def set_taskbar_opacity(alpha_value: int):
     result = ctypes.windll.user32.SetLayeredWindowAttributes(hwnd, 0, alpha_value, LWA_ALPHA)
 
     if result == 0:
-        print("Failed to apply transparency!")
-    else:
-        print("Transparency applied successfully.")
+        logger.error("Failed to apply transparency!")
 
 
 def is_taskbar_visible():
@@ -118,7 +118,7 @@ def show_taskbar():
     if hwnd != 0:
         ctypes.windll.user32.ShowWindow(hwnd, win32con.SW_SHOW)
     else:
-        print("Failed to retrieve taskbar handle.")
+        logger.error("Failed to retrieve taskbar handle.")
 
 
 def hide_taskbar():
@@ -126,7 +126,7 @@ def hide_taskbar():
     if hwnd != 0:
         ctypes.windll.user32.ShowWindow(hwnd, win32con.SW_HIDE)
     else:
-        print("Failed to retrieve taskbar handle.")
+        logger.error("Failed to retrieve taskbar handle.")
 
 
 def toggle_taskbar():

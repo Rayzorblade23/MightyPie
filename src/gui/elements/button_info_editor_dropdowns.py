@@ -1,4 +1,5 @@
 # gui/menus/button_info_dropdowns.py
+import logging
 from typing import Dict, List, Tuple, TYPE_CHECKING
 
 from PyQt6.QtWidgets import QComboBox
@@ -7,6 +8,8 @@ from src.data.button_functions import ButtonFunctions
 from src.data.config import CONFIG
 from src.gui.buttons.pie_button import BUTTON_TYPES
 from src.utils.json_utils import JSONManager
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from src.gui.menus.button_info_editor import ButtonInfoEditor
@@ -22,7 +25,12 @@ class ButtonDropdowns:
     @staticmethod
     def _load_apps_info() -> Dict:
         """Load applications info from cache."""
-        return JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
+        try:
+            apps_info = JSONManager.load(CONFIG.INTERNAL_PROGRAM_NAME, "apps_info_cache.json", default={})
+            return apps_info
+        except Exception as e:
+            logger.error(f"Failed to load applications info for Dropdowns: {e}")
+            return {}
 
     def _get_sorted_exe_names(self) -> List[Tuple[str, str]]:
         """Get sorted list of executable names and their display names."""
@@ -44,20 +52,24 @@ class ButtonDropdowns:
 
     def _create_task_type_dropdown(self, current_button_info: Dict, index: int) -> QComboBox:
         """Create the task type dropdown."""
-        dropdown = QComboBox()
-        for task_type in self.task_types:
-            display_text = task_type.replace('_', ' ').title()
-            dropdown.addItem(display_text, task_type)
+        try:
+            dropdown = QComboBox()
+            for task_type in self.task_types:
+                display_text = task_type.replace('_', ' ').title()
+                dropdown.addItem(display_text, task_type)
 
-        current_index = self.task_types.index(current_button_info["task_type"])
-        dropdown.setCurrentIndex(current_index)
-        dropdown.setProperty("button_index", index)
-        dropdown.currentTextChanged.connect(
-            lambda text: self.editor.on_task_type_changed(
-                self.task_types[dropdown.currentIndex()]
+            current_index = self.task_types.index(current_button_info["task_type"])
+            dropdown.setCurrentIndex(current_index)
+            dropdown.setProperty("button_index", index)
+            dropdown.currentTextChanged.connect(
+                lambda text: self.editor.on_task_type_changed(
+                    self.task_types[dropdown.currentIndex()]
+                )
             )
-        )
-        return dropdown
+            return dropdown
+        except Exception as e:
+            logger.critical(f"Error creating task type dropdown for button at index {index}: {e}")
+            raise
 
     def _create_value_dropdown(self, current_button_info: Dict, index: int) -> QComboBox:
         """Create the value dropdown (exe name or function)."""
@@ -92,19 +104,23 @@ class ButtonDropdowns:
     @staticmethod
     def _setup_function_dropdown(dropdown: QComboBox, current_button_info: Dict) -> None:
         """Setup dropdown for 'call_function' type."""
-        functions = ButtonFunctions().functions
-        dropdown.setEditable(False)
-        dropdown.setEnabled(True)
+        try:
+            functions = ButtonFunctions().functions
+            dropdown.setEditable(False)
+            dropdown.setEnabled(True)
 
-        for func_name, func_data in functions.items():
-            dropdown.addItem(func_data['text_1'], func_name)
+            for func_name, func_data in functions.items():
+                dropdown.addItem(func_data['text_1'], func_name)
 
-        current_function = current_button_info["properties"].get("function_name", "")
-        if current_function:
-            for i in range(dropdown.count()):
-                if dropdown.itemData(i) == current_function:
-                    dropdown.setCurrentIndex(i)
-                    break
+            current_function = current_button_info["properties"].get("function_name", "")
+            if current_function:
+                for i in range(dropdown.count()):
+                    if dropdown.itemData(i) == current_function:
+                        dropdown.setCurrentIndex(i)
+                        break
+        except Exception as e:
+            logger.critical(f"Error setting up 'call_function' dropdown: {e}")
+            raise
 
     def _setup_program_dropdown(self, dropdown: QComboBox, current_button_info: Dict) -> None:
         """Setup dropdown for program-related types."""

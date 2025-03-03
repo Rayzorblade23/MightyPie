@@ -1,4 +1,5 @@
 import ctypes
+import logging
 import os
 import subprocess
 import sys
@@ -10,6 +11,8 @@ from PyQt6.QtWidgets import QMessageBox, QWidget, QHBoxLayout, QLabel, QPushButt
 from src.data.config import CONFIG
 from src.gui.elements.toggle_switch import ToggleSwitch
 from src.utils.icon_utils import get_icon
+
+logger = logging.getLogger(__name__)
 
 
 def is_portable():
@@ -158,7 +161,7 @@ def setup_startup_section(parent: QWidget) -> QHBoxLayout:
     layout_startup.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Ensure left alignment
     # Check if running with admin privileges
     if ctypes.windll.shell32.IsUserAnAdmin():
-        print("Running as admin. Making Startup Options available.")
+        logger.info("Running as admin. Making Startup Options available.")
         # Check if this is the Build
         if getattr(sys, 'frozen', False):
             startup_toggle = ToggleSwitch(

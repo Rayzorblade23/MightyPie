@@ -1,7 +1,5 @@
-import sys
-
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy, QApplication
+from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QSpacerItem, QSizePolicy
 
 from src.data.config import CONFIG
 from src.utils.icon_utils import get_icon
@@ -64,11 +62,3 @@ class WindowsSettingsMenu(QWidget):
 
         # Set the layout for the window
         self.setLayout(layout)
-
-
-# Main entry point
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = WindowsSettingsMenu()
-    window.show()
-    sys.exit(app.exec())

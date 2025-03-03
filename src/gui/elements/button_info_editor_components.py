@@ -14,6 +14,8 @@ from src.utils.button_info_editor_utils import (
 )
 from src.utils.icon_utils import get_icon
 
+logger = logging.getLogger(__name__)
+
 if TYPE_CHECKING:
     from src.gui.menus.button_info_editor import ButtonInfoEditor
 
@@ -120,5 +122,5 @@ class ButtonFrame(QFrame):
             update_window_title(self.editor.config_manager, self.editor)
 
         except Exception as e:
-            logging.error(f"Error resetting button {self.index}: {str(e)}")
+            logger.error(f"Error resetting button {self.index}: {str(e)}")
             QMessageBox.critical(self.editor, "Error", f"Failed to reset button: {str(e)}")

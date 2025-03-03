@@ -1,6 +1,7 @@
 # window_utils.py
 
 import ctypes
+import logging
 import os
 import sys
 from ctypes import windll
@@ -20,6 +21,8 @@ from src.data.config import CONFIG
 from src.data.window_manager import WindowManager
 from src.utils.json_utils import JSONManager
 
+logger = logging.getLogger(__name__)
+
 cache_being_cleared = False
 
 APP_NAME = CONFIG.INTERNAL_PROGRAM_NAME
@@ -34,9 +37,9 @@ def load_cache():
 def save_cache(cache):
     """Save application name cache to file."""
     if JSONManager.save(APP_NAME, CACHE_FILENAME, cache):
-        print("Cache saved successfully.")
+        logger.info("Cache saved successfully.")
     else:
-        print("Error saving cache file.")
+        logger.error("Error saving cache file.")
 
 
 def clear_cache(self):
@@ -53,16 +56,16 @@ def clear_cache(self):
 
         cache_dir = JSONManager.get_config_directory(APP_NAME, config_type='cache')
         cache_file = os.path.join(cache_dir, CACHE_FILENAME)
-        print(cache_file)
+        logger.debug(cache_file)
 
         if os.path.exists(cache_file):
             try:
                 os.remove(cache_file)
-                print("Cache file cleared successfully.")
+                logger.info("Cache file cleared successfully.")
             except Exception as e:
-                print(f"Error clearing cache file: {e}")
+                logger.error(f"Error clearing cache file: {e}")
         else:
-            print("Cache file does not exist.")
+            logger.warning("Cache file does not exist.")
 
         # Determine the program directory
         if hasattr(sys, '_MEIPASS'):  # Running as a compiled executable
@@ -72,7 +75,7 @@ def clear_cache(self):
 
         # Path to the app_icons folder
         icons_dir = os.path.join(program_dir, 'app_icons')
-        print(f"Checking directory: {icons_dir}")  # For debugging purposes
+        logger.debug(f"Checking directory: {icons_dir}")  # For debugging purposes
         if os.path.exists(icons_dir):
             try:
                 for filename in os.listdir(icons_dir):
@@ -81,11 +84,11 @@ def clear_cache(self):
                         os.remove(file_path)
                     else:
                         os.rmdir(file_path)  # Remove any subdirectories if present
-                print("Icons folder cleared successfully.")
+                logger.debug("Icons folder cleared successfully.")
             except Exception as e:
-                print(f"Error clearing icons folder: {e}")
+                logger.error(f"Error clearing icons folder: {e}")
         else:
-            print("Icons folder does not exist.")  # For debugging purposes
+            logger.error("Icons folder does not exist.")  # For debugging purposes
 
         global app_cache
         app_cache = load_cache()
@@ -113,7 +116,7 @@ def update_icon_paths_in_cache():
 
     for exe_name in invalid_entries:
         del app_cache[exe_name]
-        print(f"Removed entry for {exe_name} due to invalid or missing icon path.")
+        logger.warning(f"Removed entry for {exe_name} due to invalid or missing icon path.")
 
     save_cache(app_cache)
 
@@ -158,7 +161,7 @@ def get_filtered_list_of_windows(this_window: Optional[QWidget] = None) -> Windo
 
         return manager.get_open_windows_info()
     except Exception as e:
-        print(f"Error getting windows: {e}")
+        logger.error(f"Error getting windows: {e}")
         return {}
 
 
@@ -215,7 +218,6 @@ def assign_instance_numbers(temp_window_hwnds_mapping: Dict[int, Tuple[str, str,
     for hwnd, (title, exe, instance) in temp_window_hwnds_mapping.items():
         # If window exists in manager, update its title and exe but keep the instance number
         if hwnd in existing_mapping:
-            # print(f"Window {title} was there.")
             old_title, _, instance = existing_mapping[hwnd]  # Preserve the existing instance number
             new_title, _, _ = temp_window_hwnds_mapping[hwnd]  # Get the updated title and exe
             if new_title != old_title:
@@ -231,14 +233,12 @@ def assign_instance_numbers(temp_window_hwnds_mapping: Dict[int, Tuple[str, str,
         # Always try to find the next available instance number
         new_instance = 0
         while new_instance in title_exe_mapping[key]:
-            # print(f"DEBUG: Incrementing instance for ({title}, {exe}) from {new_instance} to {new_instance + 1}")
             new_instance += 1
 
         # Add the new instance to our tracking set
         title_exe_mapping[key].add(new_instance)
         result_mapping[hwnd] = (title, exe, new_instance)
 
-        # print(result_mapping)
     return result_mapping
 
 
@@ -248,7 +248,7 @@ def _get_pid_from_window_handle(hwnd):
         _, pid = win32process.GetWindowThreadProcessId(hwnd)
         return pid
     except Exception as e:
-        print(f"Error retrieving PID for main_window: {e}")
+        logger.error(f"Error retrieving PID for main_window: {e}")
         return None
 
 
@@ -271,7 +271,7 @@ def _get_window_info(window_handle):
                 process = psutil.Process(pid)
                 exe_path = process.exe()
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as e:
-                print(f"Error accessing executable for PID {pid}: {e}")
+                logger.error(f"Error accessing executable for PID {pid}: {e}")
                 result[window_handle] = (window_title, "Unknown App", 0)
                 return result
 
@@ -284,13 +284,12 @@ def _get_window_info(window_handle):
                     app_name = _get_friendly_app_name(exe_path, exe_name)
                     app_cache[exe_name] = {"app_name": app_name, "icon_path": _get_window_icon(exe_path, window_handle),
                                            "exe_path": exe_path}
-                    print(app_cache)
                     save_cache(app_cache)
 
                 result[window_handle] = (window_title, exe_name, 0)
                 return result, app_name
             else:
-                print(f"Executable path does not exist: {exe_path}")
+                logger.warning(f"Executable path does not exist: {exe_path}")
         result[window_handle] = (window_title, "Unknown App", 0)
 
     return result
@@ -313,7 +312,7 @@ def _get_friendly_app_name(exe_path: str, exe_name: str):
         else:
             return os.path.splitext(exe_name)[0].capitalize()  # Remove the ".exe" extension
     except Exception as e:
-        print(f"Error retrieving file description for {exe_path}: {e}")
+        logger.error(f"Error retrieving file description for {exe_path}: {e}")
         return os.path.splitext(exe_name)[0].capitalize()  # Remove the ".exe" extension
 
 
@@ -343,7 +342,7 @@ def hicon_to_image(icon_handle: int, size: tuple[int, int] = (32, 32)) -> Image.
         win32gui.ReleaseDC(0, screen_dc)
         win32gui.DestroyIcon(icon_handle)
     except Exception as e:
-        print(f"[DEBUG] Error during cleanup: {e}")
+        logger.error(f"Error during cleanup in hicon_to_image: {e}")
 
     return image
 
@@ -369,14 +368,14 @@ def _get_window_icon(exe_path: str, hwnd: int) -> Optional[str]:
                     image.save(icon_path, format='PNG')
                     return icon_path
                 else:
-                    print(f"[DEBUG] No icon found in exe_path: {exe_path}")
+                    logger.warning(f"No icon found in exe_path: {exe_path}")
             except Exception as e:
-                print(f"[DEBUG] Error extracting icon from exe_path: {e}")
+                logger.error(f"Error extracting icon from exe_path: {e}")
         else:
-            print(f"[DEBUG] exe_path not provided or doesn't exist for hwnd {hwnd}")
+            logger.warning(f"_get_window_icon: exe_path not provided or doesn't exist for hwnd {hwnd}")
 
         # Fallback: try using WM_GETICON method.
-        print(f"[DEBUG] Falling back to WM_GETICON method for hwnd {hwnd}")
+        logger.info(f"Falling back to WM_GETICON method for hwnd {hwnd}")
         icon_handle = win32gui.SendMessage(hwnd, win32con.WM_GETICON, win32con.ICON_BIG, 0)
         if icon_handle == 0:
             icon_handle = win32gui.SendMessage(hwnd, win32con.WM_GETICON, win32con.ICON_SMALL, 0)
@@ -387,7 +386,7 @@ def _get_window_icon(exe_path: str, hwnd: int) -> Optional[str]:
                 icon_handle = windll.user32.GetClassLongPtrW(hwnd, win32con.GCL_HICON)
 
         if icon_handle == 0:
-            print(f"[DEBUG] No icon found using WM_GETICON method for hwnd {hwnd}")
+            logger.warning(f"No icon found using WM_GETICON method for hwnd {hwnd}")
             return None
 
         image = hicon_to_image(icon_handle, size=(32, 32))
@@ -395,11 +394,11 @@ def _get_window_icon(exe_path: str, hwnd: int) -> Optional[str]:
         exe_name_no_ext = os.path.splitext(exe_name)[0]  # Remove .exe extension
         icon_path = os.path.join(icon_folder, f"{exe_name_no_ext}.png")  # Use exe_name without extension
         image.save(icon_path, format="PNG")
-        print(f"[DEBUG] Icon extracted using WM_GETICON method saved as {icon_path}")
+        logger.debug(f"Icon extracted using WM_GETICON method saved as {icon_path}")
         return icon_path
 
     except Exception as e:
-        print(f"[DEBUG] Error in _get_window_icon for hwnd {hwnd}: {e}")
+        logger.error(f"[DEBUG] Error in _get_window_icon for hwnd {hwnd}: {e}")
         return None
 
 
@@ -408,7 +407,5 @@ def _get_window_title(hwnd):
     try:
         return win32gui.GetWindowText(hwnd)
     except Exception as e:
-        print(f"Error retrieving main_window title for handle {hwnd}: {e}")
+        logger.error(f"Error retrieving main_window title for handle {hwnd}: {e}")
         return "Unknown Window Title"
-
-

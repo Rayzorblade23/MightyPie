@@ -1,3 +1,4 @@
+import logging
 import math
 from pathlib import Path
 from typing import *
@@ -9,6 +10,8 @@ from PyQt6.QtWidgets import QPushButton
 
 from src.data.config import CONFIG
 from src.utils.file_handling_utils import get_resource_path
+
+logger = logging.getLogger(__name__)
 
 
 class SVGIndicatorButton(QPushButton):
@@ -23,13 +26,17 @@ class SVGIndicatorButton(QPushButton):
         self.setObjectName(object_name)
         self.button_size = size
 
-        # Load the SVG
-        svg_path = get_resource_path(CONFIG.INTERNAL_INDICATOR_SVG_PATH)
-
-        svg = Path(svg_path).read_text()
-        svg = (svg.replace("{indicator}", CONFIG.ACCENT_COLOR_MUTED).
-               replace("{ring_fill}", CONFIG.RING_FILL).
-               replace("{ring_stroke}", CONFIG.RING_STROKE))
+        try:
+            svg_path = Path(get_resource_path(CONFIG.INTERNAL_INDICATOR_SVG_PATH))
+            if not svg_path.exists():
+                raise FileNotFoundError(f"SVG file not found at {svg_path}")
+            svg = Path(svg_path).read_text()
+            svg = (svg.replace("{indicator}", CONFIG.ACCENT_COLOR_MUTED).
+                   replace("{ring_fill}", CONFIG.RING_FILL).
+                   replace("{ring_stroke}", CONFIG.RING_STROKE))
+        except Exception as e:
+            logger.error(f"Failed to load or process Indicator SVG for button initialization: {e}")
+            raise
 
         # self.svg_renderer = QSvgRenderer(str(svg_path))
         self.svg_renderer = QSvgRenderer(QByteArray(svg.encode("utf-8")))

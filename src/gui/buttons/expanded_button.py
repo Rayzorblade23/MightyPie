@@ -1,6 +1,12 @@
+import logging
+
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtWidgets import QPushButton, QSizePolicy
+
 from src.data.config import CONFIG
+
+logger = logging.getLogger(__name__)
+
 
 class ExpandedButton(QPushButton):
     """Class for creating a QPushButton with customizable properties."""
@@ -37,10 +43,13 @@ class ExpandedButton(QPushButton):
     def mouseReleaseEvent(self, event):
         """Handle mouse release event."""
         if event.button() == Qt.MouseButton.LeftButton:
+            logger.debug(f"'{self.objectName()}' left-clicked")
             self.left_clicked.emit()
         elif event.button() == Qt.MouseButton.RightButton:
+            logger.debug(f"'{self.objectName()}' right-clicked")
             self.right_clicked.emit()
         elif event.button() == Qt.MouseButton.MiddleButton:
+            logger.debug(f"'{self.objectName()}' middle-clicked")
             self.middle_clicked.emit()
         # Ensure the default behavior is maintained (like styling updates)
         super().mouseReleaseEvent(event)  # This calls the default QPushButton release behavior
@@ -55,4 +64,3 @@ class ExpandedButton(QPushButton):
     def leaveEvent(self, event):
         """Handle mouse leave event."""
         super().leaveEvent(event)  # Default leave behavior (handled by Qt automatically)
-

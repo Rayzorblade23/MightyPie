@@ -1,9 +1,12 @@
+import logging
 import os
 import json
 import tempfile
 import sys
 from pathlib import Path
 from typing import Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class JSONManager:
@@ -45,7 +48,7 @@ class JSONManager:
                 return default
             return {}
         except (json.JSONDecodeError, IOError) as e:
-            print(f"Error loading {filename}: {e}")
+            logger.error(f"Error loading {filename}: {e}")
             return default or {}
 
     @classmethod
@@ -74,7 +77,7 @@ class JSONManager:
             return True
 
         except Exception as e:
-            print(f"Error saving {filename}: {e}")
+            logger.error(f"Error saving {filename}: {e}")
             # Cleanup temporary file if it exists
             if 'temp_file_path' in locals() and os.path.exists(temp_file_path):
                 os.remove(temp_file_path)

@@ -1,3 +1,4 @@
+import logging
 import os
 import subprocess
 from typing import TYPE_CHECKING
@@ -15,6 +16,9 @@ from PyQt6.QtWidgets import QWidget, QMessageBox
 from src.data.config import CONFIG
 from src.data.window_manager import WindowManager
 from src.utils.window_utils import _get_window_title
+
+logger = logging.getLogger(__name__)
+
 
 if TYPE_CHECKING:
     from src.gui.pie_window import PieWindow
@@ -42,7 +46,7 @@ def get_explorer_windows_paths():
                     if os.path.exists(path):
                         explorer_windows.append(path)
         except Exception as e:
-            print(f"Error accessing window: {e}")
+            logger.error(f"Error accessing window: {e}")
 
     return explorer_windows
 
@@ -91,21 +95,15 @@ def launch_app(exe_path):
         else:
             # using explorer.exe to avoid transferring admin rights
             subprocess.run(['explorer.exe', exe_path], check=True)
-            print("Launched without admin privileges:", exe_path)
+            logger.info("Launched without admin privileges:", exe_path)
 
-            # # Redirect output to suppress terminal spam
-            # with open(os.devnull, 'w') as devnull:
-            #     subprocess.Popen(exe_path, stdout=devnull, stderr=devnull)
-            # print("Launched successfully.", exe_path)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred when launching the app '{exe_path}': {e}")
 
 
 def restore_last_minimized_window():
     """Restores a maximized window under the cursor and brings it to the foreground."""
     window_handle = last_minimized_hwnd
-
-    print(window_handle)
 
     if window_handle and window_handle != win32gui.GetDesktopWindow():
         root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
@@ -115,7 +113,7 @@ def restore_last_minimized_window():
         is_minimized = placement[1] == win32con.SW_SHOWMINIMIZED
 
         if is_minimized:
-            print("Window is minimized. Restoring...")
+            logger.info("Window is minimized. Restoring...")
             win32gui.ShowWindow(root_handle, win32con.SW_RESTORE)
 
         # Get the current foreground window
@@ -149,7 +147,7 @@ def restore_last_minimized_window():
                                           win32con.SWP_NOMOVE |
                                           win32con.SWP_NOSIZE)
                 except Exception as e:
-                    print(f"Error during window manipulation: {e}")
+                    logger.error(f"Error during window manipulation: {e}")
                 finally:
                     # Always detach threads
                     win32process.AttachThreadInput(current_thread, other_thread, False)
@@ -158,15 +156,15 @@ def restore_last_minimized_window():
                 try:
                     win32gui.SetForegroundWindow(root_handle)
                 except Exception as e:
-                    print(f"Error bringing window to front: {e}")
+                    logger.error(f"Error bringing window to front: {e}")
 
-            print("Window restored successfully.")
+            logger.debug("Window restored successfully.")
 
         # Defer the execution of window manipulation to prevent blocking
         QTimer.singleShot(100, process_window_input)
 
     else:
-        print("No valid window found.")
+        logger.error("No valid window found.")
 
 
 def minimize_window_at_cursor(main_window: "PieWindow"):
@@ -186,18 +184,18 @@ def minimize_window_by_hwnd(hwnd: int):
         root_handle = win32gui.GetAncestor(hwnd, win32con.GA_ROOT)
 
         if root_handle not in set(manager.get_open_windows_info().keys()):
-            print("Hwnd is not among valid windows")
+            logger.warning("Hwnd is not among valid windows")
             return
 
         window_title = win32gui.GetWindowText(root_handle)
-        print(f"Minimizing {window_title}")
+        logger.info(f"Minimizing {window_title}")
 
         win32gui.ShowWindow(root_handle, win32con.SW_MINIMIZE)
 
         global last_minimized_hwnd
         last_minimized_hwnd = root_handle
     else:
-        print("No valid window found.")
+        logger.warning("No valid window found.")
 
 
 def toggle_maximize_window_at_cursor(pie_window: "PieWindow"):
@@ -216,10 +214,10 @@ def toggle_maximize_window_at_cursor(pie_window: "PieWindow"):
         is_maximized = placement[1] == win32con.SW_SHOWMAXIMIZED
 
         if is_maximized:
-            print("Window is maximized. Restoring to normal.")
+            logger.info("Window is maximized. Restoring to normal.")
             win32gui.ShowWindow(root_handle, win32con.SW_RESTORE)
         else:
-            print("Window is not maximized. Maximizing now.")
+            logger.info("Window is not maximized. Maximizing now.")
             win32gui.ShowWindow(root_handle, win32con.SW_MAXIMIZE)
 
         # Get the current foreground window
@@ -253,7 +251,7 @@ def toggle_maximize_window_at_cursor(pie_window: "PieWindow"):
                                           win32con.SWP_NOMOVE |
                                           win32con.SWP_NOSIZE)
                 except Exception as e:
-                    print(f"Error during window manipulation: {e}")
+                    logger.error(f"Error during window manipulation in toggle_maximize_window_at_cursor: {e}")
                 finally:
                     # Always detach threads
                     win32process.AttachThreadInput(current_thread, other_thread, False)
@@ -262,15 +260,15 @@ def toggle_maximize_window_at_cursor(pie_window: "PieWindow"):
                 try:
                     win32gui.SetForegroundWindow(root_handle)
                 except Exception as e:
-                    print(f"Error bringing window to front: {e}")
+                    logger.error(f"Error bringing window to front in toggle_maximize_window_at_cursor: {e}")
 
-            print("Window maximized successfully")
+            logger.debug("Window maximized successfully")
 
         # Defer the execution of window manipulation to prevent blocking
         QTimer.singleShot(100, process_window_input)
 
     else:
-        print("No valid window found under cursor")
+        logger.warning("No valid window found under cursor")
 
 
 def center_window_at_cursor(pie_window: "PieWindow"):
@@ -282,12 +280,12 @@ def center_window_at_cursor(pie_window: "PieWindow"):
     window_handle = win32gui.WindowFromPoint(cursor_pos)
 
     if not window_handle or window_handle == win32gui.GetDesktopWindow():
-        print("No valid window found under cursor")
+        logger.warning("No valid window found under cursor")
         return
 
     root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
     if not win32gui.IsWindowVisible(root_handle):
-        print("Window is not visible")
+        logger.warning("Window is not visible in center_window_at_cursor")
         return
 
     monitor_info = win32api.MonitorFromPoint(cursor_pos, win32con.MONITOR_DEFAULTTONEAREST)
@@ -303,7 +301,7 @@ def center_window_at_cursor(pie_window: "PieWindow"):
 
     win32gui.ShowWindow(root_handle, win32con.SW_RESTORE)
     win32gui.SetWindowPos(root_handle, None, new_x, new_y, new_width, new_height, win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE)
-    print("Window centered successfully on the correct monitor")
+    logger.info("Window centered successfully on the correct monitor")
 
 
 def show_special_menu(menu: QWidget):
@@ -341,7 +339,7 @@ def show_special_menu(menu: QWidget):
 
 def focus_window_by_handle(hwnd):
     """Bring a main_window to the foreground and restore/maximize as needed."""
-    print(f"FOCUSING WINDOW {hwnd}")
+    logger.info(f"FOCUSING WINDOW {hwnd}")
     class_name = win32gui.GetClassName(hwnd)
 
     if class_name == "TaskManagerWindow":
@@ -396,7 +394,7 @@ def focus_window_by_handle(hwnd):
                                           win32con.SWP_NOSIZE)
 
                 except Exception as e:
-                    print(f"Error during window manipulation: {e}")
+                    logger.error(f"Error during window manipulation in focus_window_by_handle: {e}")
                 finally:
                     # Always detach threads
                     win32process.AttachThreadInput(current_thread, other_thread, False)
@@ -405,11 +403,11 @@ def focus_window_by_handle(hwnd):
                 try:
                     win32gui.SetForegroundWindow(hwnd)
                 except Exception as e:
-                    print(f"Error bringing window to front: {e}")
+                    logger.error(f"Error bringing window to front in focus_window_by_handle: {e}")
         except Exception as e:
-            print(f"Error bringing window to front: {e}")
+            logger.error(f"Error bringing window to front in focus_window_by_handle: {e}")
     except Exception as e:
-        print(f"Could not focus main_window with handle '{_get_window_title(hwnd)}': {e}")
+        logger.error(f"Could not focus window with handle '{_get_window_title(hwnd)}': {e}")
 
 
 def focus_all_explorer_windows():
@@ -437,10 +435,10 @@ def close_window_at_cursor(main_window: "PieWindow") -> None:
     root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
 
     if root_handle and root_handle != win32gui.GetDesktopWindow():
-        print(f"Closing window at cursor: HWND {root_handle}")
+        logger.info(f"Closing window at cursor: HWND {root_handle}")
         close_window_by_handle(root_handle)
     else:
-        print("No valid window found under cursor.")
+        logger.warning("No valid window found under cursor.")
 
 
 def close_window_by_handle(hwnd):
@@ -449,4 +447,4 @@ def close_window_by_handle(hwnd):
     try:
         win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
     except Exception as e:
-        print(f"Could not close window with handle '{hwnd}': {e}")
+        logger.error(f"Could not close window with handle '{hwnd}': {e}")

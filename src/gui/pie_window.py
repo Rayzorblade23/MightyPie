@@ -1,3 +1,4 @@
+import logging
 import threading
 from threading import Lock
 from typing import Dict, Tuple, Optional, Type, List
@@ -17,6 +18,8 @@ from src.gui.menus.pie_menu import PieMenu, PrimaryPieMenu, SecondaryPieMenu
 from src.gui.menus.special_menu import SpecialMenu
 from src.utils.program_utils import restart_program, get_active_setup_screen, get_screen_dpi
 from src.utils.window_utils import get_filtered_list_of_windows, load_cache, update_icon_paths_in_cache
+
+logger = logging.getLogger(__name__)
 
 
 class PieWindow(QMainWindow):
@@ -111,7 +114,7 @@ class PieWindow(QMainWindow):
         new_dpi = get_screen_dpi(new_screen)
 
         if new_dpi != self.last_dpi:
-            print(f"DPI change detected: {self.last_dpi} -> {new_dpi}. Restarting program...")
+            logger.info(f"DPI change detected: {self.last_dpi} -> {new_dpi}. Restarting program...")
             restart_program()
 
     def event(self, event):
@@ -119,7 +122,6 @@ class PieWindow(QMainWindow):
         if isinstance(event, ShowWindowEvent):
             pie_menu: PieMenu = event.child_window
             if pie_menu is not None:
-                # print(f"Showing Pie Menu {pie_menu.pie_menu_index} - {pie_menu.view.objectName()}")
                 # Hide siblings of class PieMenuTaskSwitcher
                 for sibling in self.children():
                     if sibling is not pie_menu and isinstance(sibling, PieMenu):
@@ -189,7 +191,7 @@ class PieWindow(QMainWindow):
             self.special_menu.show_menu()
             self.hide()
         else:
-            print("No SpecialMenu here...")
+            logger.error("No SpecialMenu here...")
 
     def refresh(self, reassign_all_buttons: bool = False):
         # Start the background task
@@ -253,11 +255,11 @@ class PieWindow(QMainWindow):
             offset = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY if pie_menus_primary else 0
             menu_type_str = "secondary"  # string of pie_menu for error printing
         else:
-            print(f"Warning: Invalid pie_menu_type: {pie_menu_type}")
+            logger.error(f"Warning: Invalid pie_menu_type: {pie_menu_type}")
             return None, None
 
         if not pie_menus or not isinstance(pie_menus, list):
-            print(f"Warning: {menu_type_str.replace('_', ' ').title()} Pie Menus are not instantiated.")
+            logger.error(f"Warning: {menu_type_str.replace('_', ' ').title()} Pie Menus are not instantiated.")
             return None, None
 
         # Find the first pie menu to toggle or open the next one
@@ -290,7 +292,7 @@ class PieWindow(QMainWindow):
         if 0 <= index < CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY:
             return menus[index]
 
-        print("Active child index is out of range for task switchers.")
+        logger.error("Active child index is out of range for task switchers.")
         return None
 
     def show_pie_menu_at_mouse_pos(self, pie_menu):
@@ -338,7 +340,7 @@ class PieWindow(QMainWindow):
             return cursor_pos
 
         except Exception as e:
-            print(f"Error showing the pie menu: {e}")
+            logger.error(f"Error showing the pie menu: {e}")
 
     def adjust_pie_window_to_screen(self, virtual_geometry):
         """Adjust the pie window to fit the screen geometry."""

@@ -1,9 +1,13 @@
+import logging
+
 from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtWidgets import QLabel, QHBoxLayout, QSizePolicy, QWidget
 
 from src.data.config import CONFIG
 from src.data.font_styles import FontStyle
+
+logger = logging.getLogger(__name__)
 
 
 class ScrollingLabel(QWidget):
@@ -122,22 +126,20 @@ class ScrollingLabel(QWidget):
         # Manually calculate the available width
         label_width = self.rect().width() - 2 * self.label_margins
 
-        # print(f"{self.label.text()}\n Text width is: {text_width} \n Label width is  {label_width} \n")
-
         if text_width > label_width:
             if not self.text_scroll_active:
                 self.text_scroll_active = True
+                logger.debug("Scrolling activated")
                 self.timer.start()
 
         else:
             if self.text_scroll_active:
                 self.text_scroll_active = False
+                logger.debug("Scrolling deactivated")
                 self.timer.stop()
 
         # Reset label width and position
         self.label.setFixedWidth(text_width)
-        # print(f"Afterwards Label width is  {self.label.width()} \n")
-
 
     def _scroll_text(self):
         """Animate scrolling text with pauses."""
@@ -183,34 +185,3 @@ class ScrollingLabel(QWidget):
         """Center the label vertically within the container."""
         vertical_center = (self.height() - self.label.height()) // 2
         self.label.move(pos_x, vertical_center)
-
-
-# Example usage
-if __name__ == "__main__":
-    import sys
-    from PyQt6.QtWidgets import QApplication, QVBoxLayout, QWidget
-
-    app = QApplication(sys.argv)
-
-    # Load the stylesheet
-    with open("../../../assets/style.qss", "r") as file:
-        app.setStyleSheet(file.read())
-
-    window = QWidget()
-    layout = QVBoxLayout(window)
-
-    label = ScrollingLabel("This is a very long text that should scroll smoothly if it doesn't fit in the label.",
-                           FontStyle.Bold, h_align=Qt.AlignmentFlag.AlignLeft)
-    label.setFixedSize(300, 50)
-    layout.addWidget(label)
-
-    label2 = ScrollingLabel("Short text or something.", font_style=FontStyle.Italic, h_align=Qt.AlignmentFlag.AlignLeft)
-    label2.setFixedSize(300, 50)
-    layout.addWidget(label2)
-
-    label3 = ScrollingLabel("short is not what you'Re reading here this is super long man!", h_align=Qt.AlignmentFlag.AlignHCenter)
-    label3.setFixedSize(300, 50)
-    layout.addWidget(label3)
-
-    window.show()
-    sys.exit(app.exec())

@@ -56,11 +56,6 @@ class AreaButton(QPushButton):
         dot_widget.move(local_pos)  # Move the dot widget to hover position
         dot_widget.setVisible(True)  # Show the dot widget
 
-    # def resizeEvent(self, event):
-    #     button_x = (self.width() - self.child_button.width()) // 2
-    #     button_y = (self.height() - self.child_button.height()) // 2
-    #     self.child_button.move(button_x, button_y)
-
     def check_active_area(self, x, y):
         center_x = self.width() // 2
         center_y = self.height() // 2

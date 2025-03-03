@@ -62,11 +62,3 @@ class MonitorSetupMenu(QWidget):
 
         # Set the layout for the window
         self.setLayout(layout)
-
-
-# Main entry point
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = MonitorSetupMenu()
-    window.show()
-    sys.exit(app.exec())

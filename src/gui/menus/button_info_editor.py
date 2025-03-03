@@ -12,7 +12,7 @@ from src.utils.button_info_editor_utils import (
     update_window_title, create_scroll_area, create_column, create_button_container
 )
 
-logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class ButtonInfoEditor(QWidget):
@@ -72,7 +72,7 @@ class ButtonInfoEditor(QWidget):
                 self.restore_values_from_model()
                 update_window_title(self.config_manager, self)
             except Exception as e:
-                logging.error(f"Error in reset_to_defaults: {str(e)}")
+                logger.error(f"Error in reset_to_defaults: {str(e)}")
                 QMessageBox.critical(self, "Error", f"Failed to reset configuration: {str(e)}")
 
     def update_apps_info(self) -> None:
@@ -172,7 +172,7 @@ class ButtonInfoEditor(QWidget):
             update_window_title(self.config_manager, self)
 
         except Exception as e:
-            logging.error(f"Failed to update task type: {str(e)}")
+            logger.error(f"Failed to update task type: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to update task type: {str(e)}")
 
     # Add helper method
@@ -208,12 +208,12 @@ class ButtonInfoEditor(QWidget):
 
     def on_value_changed(self, new_value: str, button_index: int) -> None:
         """Handles changes to the value (exe name or function name) in the dropdown."""
-        logging.debug(f"on_value_changed called with new_value: {new_value}, button_index: {button_index}")
+        logger.debug(f"on_value_changed called with new_value: {new_value}, button_index: {button_index}")
         try:
             self.config_manager.update_value(button_index, new_value)
             update_window_title(self.config_manager, self)
         except Exception as e:
-            logging.error(f"Failed to update value: {str(e)}")
+            logger.error(f"Failed to update value: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to update value: {str(e)}")
 
     def on_value_index_changed(self, idx: int, button_index: int, dropdown: QComboBox) -> None:
@@ -229,7 +229,7 @@ class ButtonInfoEditor(QWidget):
             QMessageBox.information(self, "Success", "Configuration saved successfully!")
             self.close()
         except Exception as e:
-            logging.error(f"Failed to save configuration: {str(e)}")
+            logger.error(f"Failed to save configuration: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to save configuration: {str(e)}")
 
     class NoScrollComboBox(QComboBox):
