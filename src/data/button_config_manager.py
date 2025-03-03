@@ -1,9 +1,12 @@
 # data/button_config_manager.py
-from typing import Dict, Any, Optional
 import logging
+from typing import Dict, Any, Optional
 
 from src.data.button_info import ButtonInfo
 from src.data.temp_button_config import TemporaryButtonConfig
+
+logger = logging.getLogger(__name__)
+
 
 class ButtonConfigManager:
     """Manages button configuration state and changes."""
@@ -11,6 +14,8 @@ class ButtonConfigManager:
     def __init__(self):
         self.button_info = ButtonInfo.get_instance()
         self.temp_config = TemporaryButtonConfig()
+
+        logger.info("ButtonConfigManager initialized.")
 
     def update_task_type(self, button_index: int, task_type: str) -> None:
         """Updates the task type for a button and sets default properties."""
@@ -20,7 +25,6 @@ class ButtonConfigManager:
                 "task_type": task_type,
                 "properties": default_properties
             })
-            logging.debug(f"Updated task type for button {button_index}: {task_type}")
         except Exception as e:
             logging.error(f"Failed to update task type: {str(e)}")
             raise

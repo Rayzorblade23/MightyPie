@@ -7,6 +7,8 @@ from typing import Dict, Any
 from src.data.config import CONFIG
 from src.utils.json_utils import JSONManager
 
+logger = logging.getLogger(__name__)
+
 
 class ButtonInfo:
     _instance = None  # Class-level variable for the singleton instance
@@ -29,10 +31,6 @@ class ButtonInfo:
         self.button_info_dict: Dict[int, Dict[str, Any]] = {}
         self.has_unsaved_changes = False
 
-        # Set up logging
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
-
         self.load_json()
 
     def load_json(self) -> None:
@@ -43,7 +41,7 @@ class ButtonInfo:
             self.button_info_dict = {int(k): v for k, v in loaded_dict.items()}
         else:
             self._initialize_tasks()
-            self.logger.info("Config file not found. Initialized with default configuration.")
+            logger.info("Config file not found. Initialized with default configuration.")
 
     def save_to_json(self) -> bool:
         """Save current configuration to JSON file atomically with error handling"""
@@ -54,7 +52,7 @@ class ButtonInfo:
             self.has_unsaved_changes = False
             return True
         else:
-            self.logger.error("Error saving configuration.")
+            logger.error("Error saving configuration.")
             return False
 
     def _initialize_button(self):
@@ -63,6 +61,7 @@ class ButtonInfo:
             "task_type": "show_any_window",
             "properties": self.get_default_properties()
         }
+
     def update_button(self, index, update_dict):
         """Update a button's configuration (but don't save to file)"""
         try:
@@ -86,6 +85,7 @@ class ButtonInfo:
             self.has_unsaved_changes = True
 
         except Exception as e:
+            logger.error(f"Error updating button {index}: {str(e)}")
             raise e
 
     @staticmethod

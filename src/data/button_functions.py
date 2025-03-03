@@ -1,3 +1,4 @@
+import logging
 from typing import Callable, Union, Dict
 
 import pyautogui
@@ -6,6 +7,8 @@ from PyQt6.QtWidgets import QApplication
 from src.data.icon_paths import EXTERNAL_ICON_PATHS
 from src.utils.functions_utils import close_window_at_cursor, restore_last_minimized_window, minimize_window_at_cursor, \
     toggle_maximize_window_at_cursor, center_window_at_cursor, focus_all_explorer_windows, restart_explorer
+
+logger = logging.getLogger(__name__)
 
 
 class ButtonFunctions:
@@ -131,5 +134,6 @@ class ButtonFunctions:
         """Returns the function metadata for a given key, or raises an error if the key doesn't exist."""
         func = self.functions.get(key)
         if func is None:
+            logger.error(f"Function key '{key}' not found.")
             raise KeyError(f"Function key '{key}' not found.")
         return func

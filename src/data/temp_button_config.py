@@ -4,6 +4,9 @@ from typing import Any, Dict, Optional
 
 from src.data.button_info import ButtonInfo
 
+logger = logging.getLogger(__name__)
+
+
 class TemporaryButtonConfig:
     """Temporarily stores button configuration changes until saved."""
 
@@ -15,7 +18,7 @@ class TemporaryButtonConfig:
         return self._temp_changes.get(button_index)
 
     def update_button(self, index: int, changes: dict) -> None:
-        logging.debug(f"TemporaryButtonConfig.update_button called with index: {index}, changes: {changes}")
+        logger.debug(f"TemporaryButtonConfig.update_button called with index: {index}, changes: {changes}")
         if index not in self._temp_changes:
             self._temp_changes[index] = {"task_type": "", "properties": {}}
 
@@ -27,11 +30,12 @@ class TemporaryButtonConfig:
         if "properties" in changes:
             self._temp_changes[index]["properties"].update(changes["properties"])
 
-        logging.debug(f"Updated temp changes for index {index}: {self._temp_changes[index]}")
+        logger.debug(f"Updated temp changes for index {index}: {self._temp_changes[index]}")
 
     def apply_changes(self, button_info: ButtonInfo) -> None:
         for index, changes in self._temp_changes.items():
             button_info.update_button(index, changes)
+        logger.info("Applied temporary button configuration changes.")
         self.clear()
 
     def clear(self) -> None:

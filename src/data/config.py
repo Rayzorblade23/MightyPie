@@ -1,9 +1,12 @@
 import ast
+import logging
 from dataclasses import fields, dataclass
 from typing import Any, List, Tuple
 
 from src.utils.color_utils import adjust_saturation
 from src.utils.json_utils import JSONManager  # Assuming the previous JSONManager is saved as json_utils.py
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -78,14 +81,7 @@ class ConfigManager(BaseConfig):
         # Compute derived values
         self.ACCENT_COLOR_MUTED = adjust_saturation(self.ACCENT_COLOR, 0.5)
 
-    # def _get_config_directory(self) -> str:
-    #     """Determine the appropriate configuration directory."""
-    #     base_dirs = {
-    #         "win32": os.path.join(os.environ.get('APPDATA', ''), self.INTERNAL_PROGRAM_NAME),
-    #         "darwin": os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', self.INTERNAL_PROGRAM_NAME),
-    #         "linux": os.path.join(os.path.expanduser('~'), '.config', self.INTERNAL_PROGRAM_NAME)
-    #     }
-    #     return base_dirs.get(os.name, os.path.abspath('.'))
+        logger.info("ConfigManager initialized successfully.")
 
     def _get_default_config(self) -> dict:
         """Generate a default configuration dictionary."""
@@ -114,7 +110,7 @@ class ConfigManager(BaseConfig):
                     else:
                         setattr(self, field.name, value)
                 except Exception as e:
-                    print(f"Could not set {field.name}: {e}")
+                    logger.error(f"Could not set {field.name}: {e}")
 
     def save_config(self):
         """Save current configuration using JSONManager."""
@@ -122,6 +118,7 @@ class ConfigManager(BaseConfig):
             f.name: getattr(self, f.name)
             for f in fields(self)
         }
+        logger.info("Configuration saved successfully.")
 
         JSONManager.save(
             app_name=self.INTERNAL_PROGRAM_NAME,
@@ -141,7 +138,7 @@ class ConfigManager(BaseConfig):
             # Save updated configuration
             self.save_config()
         else:
-            print(f"Setting {setting} not found.")
+            logger.warning(f"Setting {setting} not found.")
 
     def get_settings_for_ui(self) -> List[dict]:
         """Prepare settings for UI representation."""

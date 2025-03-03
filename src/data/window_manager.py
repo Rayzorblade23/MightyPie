@@ -1,8 +1,11 @@
+import logging
 from copy import deepcopy
 from threading import Lock
 from typing import Dict, Tuple, Set, Any
 
 from src.data.config import CONFIG
+
+logger = logging.getLogger(__name__)
 
 
 class WindowManager:
@@ -11,7 +14,8 @@ class WindowManager:
 
     def __init__(self):
         if WindowManager._instance is not None:
-            raise RuntimeError("Use get_instance() to access the singleton instance.")
+            logger.warning("Attempted to directly instantiate the singleton instance of WindowManager. Use get_instance().")
+            raise RuntimeError("Use get_instance() to access the Window Manager singleton instance.")
         self._window_hwnd_mapping: Dict[int, Tuple[str, str, int]] = {}
         self.last_window_handles = []
         self.windowHandles_To_buttonIndexes_map = {}
@@ -54,6 +58,7 @@ class WindowManager:
             for key, value in new_map.items():
                 if not (isinstance(value, tuple) and len(value) == 3 and
                         isinstance(value[0], str) and isinstance(value[1], str) and isinstance(value[2], int)):
+                    logger.error(f"Invalid window info for key {key}: {value}")
                     raise ValueError("Each value in the dictionary must be a tuple of (str, str, int).")
 
             # Atomically replace the entire dictionary
@@ -97,7 +102,7 @@ class WindowManager:
         self._update_launch_program_windows(launch_program_buttons)
 
         # Process Show (specific) Program Buttons
-        self._update_existing_handles(show_program_window_buttons, processed_buttons, reassign_all_buttons,True)
+        self._update_existing_handles(show_program_window_buttons, processed_buttons, reassign_all_buttons, True)
         self._assign_free_windows_for_show_program_window_buttons(show_program_window_buttons, processed_buttons)
 
         # Process Show Any Window Buttons
@@ -108,6 +113,8 @@ class WindowManager:
         updated_button_config.update(show_any_window_buttons)
         updated_button_config.update(show_program_window_buttons)
         updated_button_config.update(launch_program_buttons)
+
+        logger.debug("Button window assignments updated successfully.")
 
         self._emit_button_updates(updated_button_config, pie_window)
 
@@ -220,3 +227,5 @@ class WindowManager:
         if pie_window:
             for pie_menu in pie_window.pie_menus_primary + pie_window.pie_menus_secondary:
                 pie_menu.update_buttons_signal.emit(updated_config)
+
+        logger.info("Emitted button updates to pie window.")
