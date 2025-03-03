@@ -53,6 +53,7 @@ class HotkeyListener:
 
     def handle_press(self, hotkey_name: str):
         """Handles hotkey press and starts a release monitor if needed."""
+        logger.debug("Hotkey '%s' pressed. Starting handling process.", hotkey_name)
         if self.hotkey_states.get(hotkey_name, False):
             return  # Prevent multiple triggers if already pressed
 
@@ -64,14 +65,20 @@ class HotkeyListener:
         self.thread_events[hotkey_name] = release_event  # Track this event with the hotkey name
 
         # Start a background thread to monitor release
+        logger.debug("Starting new monitoring thread for hotkey: %s", hotkey_name)
+
         thread = threading.Thread(target=self.monitor_release, args=(hotkey_name, release_event), daemon=True)
         self.active_threads.append(thread)  # Add to active threads list
         thread.start()
 
     def monitor_release(self, hotkey_name: str, release_event: threading.Event):
         """Monitors when the hotkey is released and triggers on_release."""
+        logger.debug("Monitoring release for hotkey: %s", hotkey_name)
+
         while keyboard.is_pressed(hotkey_name):
             time.sleep(0.01)  # Avoid excessive CPU usage
+
+        logger.debug("Hotkey '%s' released. Triggering on_release.", hotkey_name)
 
         self.hotkey_states[hotkey_name] = False
         self.on_release(hotkey_name)
@@ -81,13 +88,18 @@ class HotkeyListener:
 
         # Remove the thread from the active threads list when it's done
         self.active_threads = [t for t in self.active_threads if t.is_alive()]  # Keep only alive threads
+        logger.debug("Remaining active threads: %d", len(self.active_threads))
 
     def on_press(self, hotkey_name: str):
         """Handles hotkey press events."""
+        logger.debug("Processing hotkey press: %s", hotkey_name)
+
         if not self.can_open_window:
             return  # Only show if not already open
 
         self.initial_mouse_pos = QCursor.pos()  # Store initial mouse position using QCursor
+
+        logger.debug("Initial mouse position: %s", self.initial_mouse_pos)
 
         try:
             if hotkey_name == CONFIG.HOTKEY_PRIMARY:
@@ -111,6 +123,8 @@ class HotkeyListener:
 
     def on_release(self, hotkey_name: str):
         """Handles hotkey release events."""
+        logger.debug("Processing hotkey release: %s", hotkey_name)
+
         try:
             # Ensure cursor_displacement is valid (i.e., has been set)
             if self.main_window.cursor_displacement is None:
@@ -123,6 +137,8 @@ class HotkeyListener:
 
             # Get current mouse position
             current_mouse_pos = QCursor.pos()
+
+            logger.debug("Current mouse position: %s", current_mouse_pos)
 
             # Calculate the movement, factoring in the cursor displacement
             displacement_x = current_mouse_pos.x() - self.initial_mouse_pos.x() - self.main_window.cursor_displacement[0]
