@@ -6,7 +6,9 @@ import tempfile
 import threading
 import warnings
 
-from helper.keyboard_listener import HotkeyListener
+from src.events import ShowWindowEvent
+from src.global_mouse_filter import GlobalMouseFilter
+from src.helper.keyboard_listener import HotkeyListener
 
 warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
@@ -15,10 +17,8 @@ from PyQt6.QtWidgets import (
     QMessageBox, )
 
 from src.data.config import CONFIG
-from events import ShowWindowEvent
 from src.utils.file_handling_utils import get_resource_path
 from src.utils.taskbar_hide_utils import set_taskbar_opacity, show_taskbar
-from global_mouse_filter import GlobalMouseFilter
 from src.gui.pie_window import PieWindow
 
 import ctypes
