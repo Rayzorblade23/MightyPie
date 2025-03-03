@@ -1,6 +1,6 @@
 # Define the icon file paths (use appropriate file paths)
 
-from PyQt6.QtGui import QIcon, QPixmap, QColor
+from PyQt6.QtGui import QIcon, QPixmap
 
 from src.data.icon_paths import EXTERNAL_ICON_PATHS
 
@@ -11,39 +11,53 @@ def get_icon(icon_name: str, is_inverted: bool = False):
 
     if icon_path:
         if is_inverted:
+            print("From get-icon")
             return invert_icon(icon_path)  # Return inverted icon
         else:
             return QIcon(icon_path)  # Return original icon
     return None  # In case icon name doesn't match
 
 
-def invert_icon(icon_path, return_pixmap=False):
-    """Invert the colors of the icon, preserving the alpha channel."""
+def invert_icon(icon_path: str, return_pixmap: bool = False):
+    """Invert the colors of the icon more efficiently, preserving the alpha channel."""
+    print(f"inverting icon {icon_path}")
     # Load the icon as QPixmap
     pixmap = QPixmap(icon_path)
 
     # Convert QPixmap to QImage for manipulation
     image = pixmap.toImage()
 
-    # Loop through each pixel and invert its color (keep alpha intact)
-    for x in range(image.width()):
-        for y in range(image.height()):
-            color = image.pixelColor(x, y)
+    # Access the raw pixel data using QImage.bits()
+    image_bits = image.bits()
+    image_bits.setsize(image.sizeInBytes())
 
-            # Skip pixels with full transparency (alpha = 0)
-            if color.alpha() == 0:
+    # Create a memoryview of the image bits cast as unsigned bytes.
+    data = memoryview(image_bits).cast("B")
+
+    width, height = image.width(), image.height()
+    for y in range(height):
+        for x in range(width):
+            # Calculate the index of the pixel in the data array (each pixel is 4 bytes: RGBA)
+            pixel_index = (y * width + x) * 4
+
+            # Get the RGBA values (as integers)
+            r = data[pixel_index]
+            g = data[pixel_index + 1]
+            b = data[pixel_index + 2]
+            a = data[pixel_index + 3]
+
+            # Skip fully transparent pixels
+            if a == 0:
                 continue
 
-            # Invert RGB, but keep the alpha channel intact
-            inverted_color = QColor(255 - color.red(), 255 - color.green(), 255 - color.blue(), color.alpha())
-            image.setPixelColor(x, y, inverted_color)
+            # Invert the RGB values
+            data[pixel_index] = 255 - r
+            data[pixel_index + 1] = 255 - g
+            data[pixel_index + 2] = 255 - b
+            # Alpha remains unchanged
 
-    # Convert the QImage back to QPixmap
+    # Convert the modified QImage back to QPixmap
     inverted_pixmap = QPixmap.fromImage(image)
-
-    # Return QPixmap or QIcon based on the flag
     if return_pixmap:
         return inverted_pixmap
     return QIcon(inverted_pixmap)
-
-
