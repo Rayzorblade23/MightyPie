@@ -43,6 +43,7 @@ class PieButton(QPushButton):
         self.index = index
         self.text_1 = text_1
         self.text_2 = text_2
+        self.icon_path = icon_path
 
         self.button_type = "normal_pie_button"
 
@@ -78,7 +79,7 @@ class PieButton(QPushButton):
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)  # Set minimal spacing between widgets
 
-        self.update_icon(icon_path)
+        self.update_icon(self.icon_path)
 
         # Add the VBoxLayout as a pie_menu of the HBoxLayout
         self.layout().addLayout(self.label_layout)
@@ -136,9 +137,20 @@ class PieButton(QPushButton):
         self._update_ui("Empty", "", "")
 
     def _update_ui(self, text_1: str, text_2: str, app_icon_path=None, is_invert_icon=False) -> None:
-        self._set_label_1_text(text_1)
-        self._set_label_2_text(text_2)
-        self.update_icon(app_icon_path, is_invert_icon)
+        # Update label 1 text if it's different
+        if self.text_1 != text_1:
+            self._set_label_1_text(text_1)
+            self.text_1 = text_1  # Store the updated value
+
+        # Update label 2 text if it's different
+        if self.text_2 != text_2:
+            self._set_label_2_text(text_2)
+            self.text_2 = text_2  # Store the updated value
+
+        # Update icon if it's different
+        if self.icon_path != app_icon_path:
+            self.update_icon(app_icon_path, is_invert_icon)
+            self.icon_path = app_icon_path  # Store the updated value
 
     def _set_label_1_text(self, text: str):
         """Change the text of label_1 from outside."""
@@ -404,15 +416,14 @@ class CallFunctionPieButton(PieButton):
         button_text_2 = ""
         app_icon_path = function_metadata["icon"]
 
-        # Define the left-click action, which will invoke the wrapped function
-        left_click_action = lambda: function_metadata["action"]()
-
         if button_text_1 == "":
             self.clear()
             return
 
-        # Update button text and icon
         self._update_ui(button_text_1, button_text_2, app_icon_path, is_invert_icon=True)
+
+        # Define the left-click action, which will invoke the wrapped function
+        left_click_action = lambda: function_metadata["action"]()
 
         # Handle window actions
         self.set_left_click_action(

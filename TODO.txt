@@ -1,3 +1,5 @@
+- do the action updates in Pie Buttons also ONLY when necessary
+
 - put in more logging to text file. maybe only in window functions
 
 - clear for fullscreen applications?

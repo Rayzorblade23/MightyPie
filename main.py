@@ -49,7 +49,7 @@ def setup_logging():
 
     # Root logger
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)  # Set default level
+    root_logger.setLevel(logging.INFO)  # Set default level
     root_logger.addHandler(handler)
 
     # Also log to console during development

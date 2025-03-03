@@ -1,5 +1,6 @@
 import logging
 import threading
+import time
 from threading import Lock
 from typing import Dict, Tuple, Optional, Type, List
 
@@ -207,7 +208,11 @@ class PieWindow(QMainWindow):
 
     def auto_refresh(self):
         """Automatically monitor and refresh windows periodically in a thread-safe way."""
-        # start_time = time.time()
+        from pyinstrument import Profiler
+
+        profiler = Profiler()
+        profiler.start()
+
         # Lock access to shared data to ensure thread safety
         with self.button_mapping_lock:
             current_window_handles = [
@@ -218,8 +223,11 @@ class PieWindow(QMainWindow):
                 self.manager.last_window_handles = current_window_handles
                 self.refresh()
 
-        # elapsed_time = time.time() - start_time
-        # print(f"auto_refresh took {elapsed_time:.3f} seconds")
+        # Stop profiling
+        profiler.stop()
+
+        # Output the results (text format with color)
+        print(profiler.output_text(unicode=True, color=True))
 
     def force_refresh(self, reassign_all_buttons: bool = False):
         """Automatically monitor and refresh windows periodically in a thread-safe way."""

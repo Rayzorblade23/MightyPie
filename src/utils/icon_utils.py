@@ -1,20 +1,40 @@
 # Define the icon file paths (use appropriate file paths)
 
-from PyQt6.QtGui import QIcon, QPixmap
+from collections import defaultdict
+
+from PyQt6.QtGui import QPixmap, QIcon
 
 from src.data.icon_paths import EXTERNAL_ICON_PATHS
 
+# Cache to hold icons
+icon_cache = defaultdict(dict)
 
-# Load the icon based on the inverted_icons flag
+
 def get_icon(icon_name: str, is_inverted: bool = False):
-    icon_path = EXTERNAL_ICON_PATHS.get(icon_name)
-
-    if icon_path:
-        if is_inverted:
-            print("From get-icon")
-            return invert_icon(icon_path)  # Return inverted icon
+    """
+    Load the icon based on the inverted_icons flag, with caching.
+    """
+    # Check if the icon is already cached
+    if is_inverted:
+        if icon_name in icon_cache["inverted"]:
+            print(f"Returning cached inverted icon for {icon_name}")
+            return icon_cache["inverted"][icon_name]
         else:
-            return QIcon(icon_path)  # Return original icon
+            icon_path = EXTERNAL_ICON_PATHS.get(icon_name)
+            if icon_path:
+                inverted_icon = invert_icon(icon_path)
+                icon_cache["inverted"][icon_name] = inverted_icon
+                return inverted_icon
+    else:
+        if icon_name in icon_cache["original"]:
+            print(f"Returning cached original icon for {icon_name}")
+            return icon_cache["original"][icon_name]
+        else:
+            icon_path = EXTERNAL_ICON_PATHS.get(icon_name)
+            if icon_path:
+                original_icon = QIcon(icon_path)
+                icon_cache["original"][icon_name] = original_icon
+                return original_icon
     return None  # In case icon name doesn't match
 
 
