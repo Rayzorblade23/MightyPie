@@ -1,10 +1,13 @@
 # Define the icon file paths (use appropriate file paths)
-
+import logging
 from collections import defaultdict
 
 from PyQt6.QtGui import QPixmap, QIcon
 
 from src.data.icon_paths import EXTERNAL_ICON_PATHS
+
+logger = logging.getLogger(__name__)
+
 
 # Cache to hold icons
 icon_cache = defaultdict(dict)
@@ -17,7 +20,7 @@ def get_icon(icon_name: str, is_inverted: bool = False):
     # Check if the icon is already cached
     if is_inverted:
         if icon_name in icon_cache["inverted"]:
-            print(f"Returning cached inverted icon for {icon_name}")
+            logger.info(f"Returning cached inverted icon for {icon_name}")
             return icon_cache["inverted"][icon_name]
         else:
             icon_path = EXTERNAL_ICON_PATHS.get(icon_name)
@@ -27,7 +30,7 @@ def get_icon(icon_name: str, is_inverted: bool = False):
                 return inverted_icon
     else:
         if icon_name in icon_cache["original"]:
-            print(f"Returning cached original icon for {icon_name}")
+            logger.info(f"Returning cached original icon for {icon_name}")
             return icon_cache["original"][icon_name]
         else:
             icon_path = EXTERNAL_ICON_PATHS.get(icon_name)
@@ -40,7 +43,7 @@ def get_icon(icon_name: str, is_inverted: bool = False):
 
 def invert_icon(icon_path: str, return_pixmap: bool = False):
     """Invert the colors of the icon more efficiently, preserving the alpha channel."""
-    print(f"inverting icon {icon_path}")
+    logger.debug(f"inverting icon {icon_path}")
     # Load the icon as QPixmap
     pixmap = QPixmap(icon_path)
 

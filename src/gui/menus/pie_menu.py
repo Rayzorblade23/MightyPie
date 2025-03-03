@@ -1,5 +1,5 @@
 import math
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSize, pyqtSignal, pyqtSlot, QTimer, QPoint, QAbstractAnimation
 from PyQt6.QtGui import QPainter
@@ -12,6 +12,9 @@ from src.gui.buttons.pie_button import PieButton, BUTTON_TYPES
 from src.gui.buttons.pie_menu_middle_button import PieMenuMiddleButton
 from src.gui.elements.svg_indicator_button import SVGIndicatorButton
 
+if TYPE_CHECKING:
+    from src.gui.pie_window import PieWindow
+
 ANIMATION_DURATION = 150
 
 class PieMenu(QWidget):
@@ -23,6 +26,7 @@ class PieMenu(QWidget):
         # Initialize these attributes BEFORE calling setup methods
         self.pie_menu_index: int = pie_menu_index
         self.obj_name: str = obj_name
+        self.parent : "PieWindow" = parent
         self.indicator: Optional[SVGIndicatorButton] = None
         self.scene = None
         self.view = None
@@ -296,8 +300,12 @@ class PieMenu(QWidget):
         was_visible = self.isVisible()
 
         self.button_info.button_info_dict = updated_button_config
-        self.button_info.has_unsaved_changes = True
-        self.button_info.save_to_json()
+
+        # Only trigger save if it hasn't been triggered yet
+        if not self.parent.button_info_save_triggered:
+            self.button_info.has_unsaved_changes = True
+            self.button_info.save_to_json()
+            self.parent.button_info_save_triggered = True  # Prevent future saves for this update
 
         # Directly update each pie_button with the properties from button_info
         for pie_button in list(self.pie_buttons.values()):

@@ -19,7 +19,7 @@ class PieMenuMiddleButton(ExpandedButton):
         super().__init__(text, object_name, parent=parent)
 
         self.pie_menu_parent: "PieMenu" = parent
-        self.main_window: "PieWindow" = cast("PieWindow", self.pie_menu_parent.parent())
+        self.main_window: "PieWindow" = cast("PieWindow", self.pie_menu_parent.parent)
         self.radius = CONFIG.INTERNAL_INNER_RADIUS
 
         self.set_size(fixed_size=True, size=(self.radius * 2, self.radius * 2))
