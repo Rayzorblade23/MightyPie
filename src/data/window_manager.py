@@ -225,7 +225,5 @@ class WindowManager:
     @staticmethod
     def _emit_button_updates(updated_config: Dict[int, Dict[str, Any]], pie_window) -> None:
         if pie_window:
-            for pie_menu in pie_window.pie_menus_primary + pie_window.pie_menus_secondary:
-                pie_menu.update_buttons_signal.emit(updated_config)
-
+            pie_window.update_buttons_signal.emit(updated_config)
         logger.info("Emitted button updates to pie window.")

@@ -1,11 +1,10 @@
 import math
 from typing import Optional, TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSize, pyqtSignal, pyqtSlot, QTimer, QPoint, QAbstractAnimation
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QSize, QTimer, QPoint, QAbstractAnimation
 from PyQt6.QtGui import QPainter
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QWidget, QGraphicsOpacityEffect
 
-from src.data.button_info import ButtonInfo
 from src.data.config import CONFIG
 from src.gui.buttons.area_button import AreaButton
 from src.gui.buttons.pie_button import PieButton, BUTTON_TYPES
@@ -17,8 +16,8 @@ if TYPE_CHECKING:
 
 ANIMATION_DURATION = 150
 
+
 class PieMenu(QWidget):
-    update_buttons_signal = pyqtSignal(dict)
 
     def __init__(self, pie_menu_index: int, obj_name: str = "", parent: 'PieWindow' = None):
         super().__init__(parent)
@@ -26,7 +25,7 @@ class PieMenu(QWidget):
         # Initialize these attributes BEFORE calling setup methods
         self.pie_menu_index: int = pie_menu_index
         self.obj_name: str = obj_name
-        self.parent : "PieWindow" = parent
+        self.parent: "PieWindow" = parent
         self.indicator: Optional[SVGIndicatorButton] = None
         self.scene = None
         self.view = None
@@ -36,12 +35,8 @@ class PieMenu(QWidget):
 
         self.hotkey = CONFIG.HOTKEY_PRIMARY
 
-        self.button_info: ButtonInfo = ButtonInfo.get_instance()
-
         self.middle_button: Optional[PieMenuMiddleButton] = None
         self.area_button: Optional[AreaButton] = None
-
-        self.update_buttons_signal.connect(self.update_button_ui)
 
         self.setup_window()
         # Create scene and graphical elements
@@ -294,20 +289,11 @@ class PieMenu(QWidget):
 
         return opacity_animation
 
-    @pyqtSlot(dict)
     def update_button_ui(self, updated_button_config):
         """Update button UI in the main thread."""
         was_visible = self.isVisible()
 
-        self.button_info.button_info_dict = updated_button_config
-
-        # Only trigger save if it hasn't been triggered yet
-        if not self.parent.button_info_save_triggered:
-            self.button_info.has_unsaved_changes = True
-            self.button_info.save_to_json()
-            self.parent.button_info_save_triggered = True  # Prevent future saves for this update
-
-        # Directly update each pie_button with the properties from button_info
+        # Directly update each pie_button with the properties from updates
         for pie_button in list(self.pie_buttons.values()):
             if updated_button_config[pie_button.index]["task_type"] in BUTTON_TYPES.keys():
                 button_type = updated_button_config[pie_button.index]["task_type"]

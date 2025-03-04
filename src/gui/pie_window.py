@@ -5,7 +5,7 @@ from typing import Dict, Tuple, Optional, Type, List
 
 import win32con
 import win32gui
-from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QTimer, QRect
+from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QTimer, QRect, pyqtSlot
 from PyQt6.QtGui import QKeyEvent, QCursor, QGuiApplication, QScreen
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
 
@@ -26,7 +26,7 @@ class PieWindow(QMainWindow):
     EXIT_CODE_REBOOT = 122
 
     # Add a custom signal for thread-safe updates
-    update_buttons_signal = pyqtSignal(list)
+    update_buttons_signal = pyqtSignal(dict)
 
     def __init__(self):
         super().__init__()
@@ -39,8 +39,7 @@ class PieWindow(QMainWindow):
         self.auto_refresh_timer: Optional[QTimer] = None
 
         self.manager = WindowManager.get_instance()
-        self.button_info = ButtonInfo.get_instance()
-        self.button_info_save_triggered = False
+        self.button_info: ButtonInfo = ButtonInfo.get_instance()
 
         self.pie_menu_pos = QPoint()
         self.button_mapping_lock = Lock()
@@ -62,6 +61,8 @@ class PieWindow(QMainWindow):
 
     # region Initialization and Setup
     def connect_signals(self):
+        self.update_buttons_signal.connect(self.update_button_ui)
+
         # Start auto-refreshing every REFRESH_INTERVAL milliseconds
         self.auto_refresh_timer = QTimer(self)
         self.auto_refresh_timer.timeout.connect(self.auto_refresh)
@@ -237,6 +238,17 @@ class PieWindow(QMainWindow):
             ]
             self.manager.last_window_handles = current_window_handles
             self.refresh(reassign_all_buttons)
+
+    @pyqtSlot(dict)
+    def update_button_ui(self, updated_button_config):
+        # Save updates to global Button Info
+        self.button_info.button_info_dict = updated_button_config
+
+        self.button_info.has_unsaved_changes = True
+        self.button_info.save_to_json()
+
+        for pie_menu in self.pie_menus_primary + self.pie_menus_secondary:
+            pie_menu.update_button_ui(updated_button_config)
 
     # endregion
 
