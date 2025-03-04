@@ -4,6 +4,7 @@ from functools import partial
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QPushButton, QWidget
 
+from src.data.button_functions import ButtonFunctions
 from src.data.config import CONFIG
 from src.utils.shortcut_utils import open_explorer_window
 from src.utils.taskbar_hide_utils import toggle_taskbar
@@ -19,6 +20,9 @@ class InvisibleUI(QWidget):
         self.setWindowTitle(f"{CONFIG.INTERNAL_PROGRAM_NAME} - InvisibleUI")  # Set the window title
         self.button_size = button_size  # Button size variable
 
+        self.button_functions = ButtonFunctions()
+        print(self.button_functions.get_function("clipboard"))
+
         add_hwnd_to_exclude(self)
 
         # Set up window properties
@@ -29,6 +33,7 @@ class InvisibleUI(QWidget):
             # "btn_btm_right": ((90, self.button_size), partial(open_action_center, self, hide_parent=False)),
             "btn_btm_center": ((1000, self.button_size), lambda: toggle_taskbar()),
             "btn_ctr_left": ((self.button_size, 600), partial(open_explorer_window, self, hide_parent=False)),
+            "btn_ctr_right": ((self.button_size * 6, 600), self.button_functions.get_function("clipboard")["action"]),
         }
 
         self.create_buttons()
@@ -45,6 +50,7 @@ class InvisibleUI(QWidget):
             button.setObjectName("InvisibleButton")
             button.setFixedSize(*size)
 
+            # print(callback)
             # Rename the callback inside the lambda to avoid conflict
             button.clicked.connect(lambda _, cb=callback: cb())
 
@@ -64,6 +70,10 @@ class InvisibleUI(QWidget):
 
         if "btn_ctr_left" in self.buttons:
             self.buttons["btn_ctr_left"].move(0, self.height() // 2 - self.buttons["btn_ctr_left"].height() // 2)
+        if "btn_ctr_right" in self.buttons:
+            self.buttons["btn_ctr_right"].move(
+                self.width() - self.buttons["btn_ctr_right"].width(),  # Align to the right edge
+                self.height() // 2 - self.buttons["btn_ctr_right"].height() // 2)  # Center vertically
 
     def handle_geometry_change(self):
         screen = QApplication.primaryScreen()
