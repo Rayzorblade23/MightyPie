@@ -78,14 +78,14 @@ class SingleInstance:
             try:
                 if os.path.exists(self.lockfile):
                     os.unlink(self.lockfile)
-                self.fd = os.open(self.lockfile, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+                self.lock_file_descriptor = os.open(self.lockfile, os.O_CREAT | os.O_EXCL | os.O_RDWR)
             except OSError:
                 self._show_messagebox()
         else:
             import fcntl
-            self.fp = open(self.lockfile, 'w')
+            self.lock_file_pointer = open(self.lockfile, 'w')
             try:
-                fcntl.lockf(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fcntl.lockf(self.lock_file_pointer, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except IOError:
                 self._show_messagebox()
 
@@ -104,19 +104,26 @@ class SingleInstance:
         sys.exit(1)  # Ensure the program exits after showing the message
 
     def cleanup(self):
+        # Stop hotkey listener if it exists
+        if hasattr(self, 'hotkey_listener'):
+            try:
+                self.hotkey_listener.stop_listening()
+            except Exception as e:
+                logger.error(f"Error stopping hotkey listener: {e}")
+
         if sys.platform == 'win32':
-            if hasattr(self, 'fd'):
-                os.close(self.fd)
+            if hasattr(self, 'lock_file_descriptor'):
+                os.close(self.lock_file_descriptor)
                 if os.path.exists(self.lockfile):
                     os.unlink(self.lockfile)
-        else:
-            import fcntl
-            if hasattr(self, 'fp'):
-                fcntl.lockf(self.fp, fcntl.LOCK_UN)
-                if not self.fp.closed:
-                    self.fp.close()
-                if os.path.exists(self.lockfile):
-                    os.unlink(self.lockfile)
+            else:
+                import fcntl
+                if hasattr(self, 'lock_file_pointer'):
+                    fcntl.lockf(self.lock_file_pointer, fcntl.LOCK_UN)
+                    if not self.lock_file_pointer.closed:
+                        self.lock_file_pointer.close()
+                    if os.path.exists(self.lockfile):
+                        os.unlink(self.lockfile)
 
     def release_for_restart(self):
         self.cleanup()
@@ -182,8 +189,14 @@ if __name__ == "__main__":
 
     # Hotkey Thread
     hotkey_listener = HotkeyListener(window)
-    hotkey_thread = threading.Thread(target=hotkey_listener.start_listening, daemon=True)
+    hotkey_thread = threading.Thread(
+        target=hotkey_listener.start_listening,
+        daemon=True,
+        name="HotkeyListenerThread"
+    )
     hotkey_thread.start()
+
+    sys._instance.hotkey_listener = hotkey_listener
 
     # main_window.auto_refresh()
 

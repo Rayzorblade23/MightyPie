@@ -200,11 +200,20 @@ class PieWindow(QMainWindow):
         app_info_cache = load_cache()
         self.manager.set_app_info_cache(app_info_cache)
 
+        # Create a method that wraps the thread's work
+        def update_thread_wrapper():
+            try:
+                self.manager.update_button_window_assignment(
+                    self, self.button_info, reassign_all_buttons
+                )
+            except Exception as e:
+                logger.error(f"Error in update_button_window_assignment thread: {e}", exc_info=True)
+
+        # Start the thread with the wrapper
         threading.Thread(
-            target=self.manager.update_button_window_assignment(
-                self, self.button_info, reassign_all_buttons
-            ),
-            daemon=True
+            target=update_thread_wrapper,
+            daemon=True,
+            name="ButtonWindowAssignmentThread"
         ).start()
 
     def auto_refresh(self):

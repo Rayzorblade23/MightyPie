@@ -4,7 +4,6 @@ import time
 from typing import TYPE_CHECKING
 
 import keyboard
-from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import QApplication, QWidget
 
@@ -34,33 +33,48 @@ class HotkeyListener:
         self.initial_mouse_pos = None  # Store initial mouse position on press
         self.hotkey_states = {}  # Track active hotkeys
 
-        self.thread_events = {}  # Track thread events for monitoring thread completion
-        self.active_threads = []  # Track active threads
-
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.check_if_exists)
-        self.timer.start(5000)  # Check every 5 seconds
-
-
+        self._stop_event = threading.Event()  # Event to gracefully stop the listener
         logger.info("HotkeyListener initialized")
-
-    def check_if_exists(self):
-        """Check if the class instance still exists."""
-        print(f"HotkeyListener exists: {self is not None}")
-
 
     def start_listening(self):
         """Starts listening for the configured hotkeys."""
-        logger.info("Starting hotkey listener with hotkeys: primary=%s, secondary=%s",
-                    CONFIG.HOTKEY_PRIMARY, CONFIG.HOTKEY_SECONDARY)
-
         try:
+            # Ensure clean thread state
+            threading.current_thread().is_stopping = False
+
+            logger.info("Starting hotkey listener with hotkeys: primary=%s, secondary=%s",
+                        CONFIG.HOTKEY_PRIMARY, CONFIG.HOTKEY_SECONDARY)
+
             # Listen for press and trigger on_press
-            keyboard.add_hotkey(CONFIG.HOTKEY_PRIMARY, lambda: self.handle_press(CONFIG.HOTKEY_PRIMARY), suppress=True)
-            keyboard.add_hotkey(CONFIG.HOTKEY_SECONDARY, lambda: self.handle_press(CONFIG.HOTKEY_SECONDARY), suppress=True)
-            keyboard.wait()  # Keep the listener running
+            keyboard.add_hotkey(CONFIG.HOTKEY_PRIMARY,
+                                lambda: self.handle_press(CONFIG.HOTKEY_PRIMARY),
+                                suppress=True)
+            keyboard.add_hotkey(CONFIG.HOTKEY_SECONDARY,
+                                lambda: self.handle_press(CONFIG.HOTKEY_SECONDARY),
+                                suppress=True)
+
+            # Replace blocking wait with a non-blocking loop
+            while not self._stop_event.is_set():
+                try:
+                    time.sleep(0.1)  # Prevent busy waiting
+                except Exception as inner_e:
+                    logger.warning(f"Inner loop exception: {inner_e}")
+                    break
+
         except Exception as e:
             logger.error("Failed to register hotkeys: %s", e, exc_info=True)
+        finally:
+            # Ensure cleanup
+            try:
+                keyboard.unhook_all()
+            except Exception:
+                pass
+            logger.info("Hotkey listener stopped")
+
+    def stop_listening(self):
+        """Gracefully stop the hotkey listener."""
+        self._stop_event.set()
+        logger.debug("Stop event set for hotkey listener")
 
     def handle_press(self, hotkey_name: str):
         """Handles hotkey press and starts a release monitor if needed."""
@@ -71,35 +85,27 @@ class HotkeyListener:
         self.hotkey_states[hotkey_name] = True
         self.on_press(hotkey_name)
 
-        # Create an event to monitor the thread's completion
-        release_event = threading.Event()
-        self.thread_events[hotkey_name] = release_event  # Track this event with the hotkey name
+        # Start monitoring release in a separate thread
+        release_thread = threading.Thread(
+            target=self._monitor_release,
+            args=(hotkey_name,),
+            daemon=True
+        )
+        release_thread.start()
 
-        # Start a background thread to monitor release
-        logger.debug("Starting new monitoring thread for hotkey: %s", hotkey_name)
-
-        thread = threading.Thread(target=self.monitor_release, args=(hotkey_name, release_event), daemon=True)
-        self.active_threads.append(thread)  # Add to active threads list
-        thread.start()
-
-    def monitor_release(self, hotkey_name: str, release_event: threading.Event):
+    def _monitor_release(self, hotkey_name: str):
         """Monitors when the hotkey is released and triggers on_release."""
         logger.debug("Monitoring release for hotkey: %s", hotkey_name)
 
+        # Wait for key release
         while keyboard.is_pressed(hotkey_name):
             time.sleep(0.01)  # Avoid excessive CPU usage
 
         logger.debug("Hotkey '%s' released. Triggering on_release.", hotkey_name)
 
+        # Reset state and trigger release handling
         self.hotkey_states[hotkey_name] = False
         self.on_release(hotkey_name)
-
-        # Signal that the thread has finished its task
-        release_event.set()
-
-        # Remove the thread from the active threads list when it's done
-        self.active_threads = [t for t in self.active_threads if t.is_alive()]  # Keep only alive threads
-        logger.debug("Remaining active threads: %d", len(self.active_threads))
 
     def on_press(self, hotkey_name: str):
         """Handles hotkey press events."""
@@ -131,13 +137,15 @@ class HotkeyListener:
                 self.can_open_window = False
         except Exception as e:
             logger.error("Error handling hotkey press '%s': %s", hotkey_name, e, exc_info=True)
+            # Reset window state to prevent lockouts
+            self.can_open_window = True
 
     def on_release(self, hotkey_name: str):
         """Handles hotkey release events."""
         logger.debug("Processing hotkey release: %s", hotkey_name)
 
         try:
-            # Ensure cursor_displacement is valid (i.e., has been set)
+            # Ensure cursor_displacement is valid
             if self.main_window.cursor_displacement is None:
                 self.can_open_window = True  # Allow reopening window
                 return
@@ -172,10 +180,6 @@ class HotkeyListener:
                     release_event = HotkeyReleaseEvent(self.main_window, pie_menu)
                     QApplication.postEvent(self.main_window, release_event)
                     self.can_open_window = True  # Reset the state
-
-            # Clean up the thread event after the thread has finished
-            if hotkey_name in self.thread_events:
-                del self.thread_events[hotkey_name]
 
         except Exception as e:
             logger.error("Error handling hotkey release '%s': %s", hotkey_name, e, exc_info=True)
