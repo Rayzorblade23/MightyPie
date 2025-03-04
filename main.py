@@ -1,3 +1,11 @@
+import faulthandler
+
+faulthandler.enable()
+
+# Redirect crashes to a file for debugging
+with open("crash_log.txt", "w") as f:
+    faulthandler.enable(f)
+
 import atexit
 import os
 import signal
@@ -10,8 +18,9 @@ from src.events import ShowWindowEvent
 from src.global_mouse_filter import GlobalMouseFilter
 from src.helper.keyboard_listener import HotkeyListener
 
-warnings.simplefilter("ignore", UserWarning)
-sys.coinit_flags = 2
+# warnings.simplefilter("ignore", UserWarning)
+# sys.coinit_flags = 2
+
 from PyQt6.QtWidgets import (
     QApplication,
     QMessageBox, )

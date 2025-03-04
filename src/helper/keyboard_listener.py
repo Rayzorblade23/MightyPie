@@ -39,6 +39,19 @@ class HotkeyListener:
 
         logger.info("HotkeyListener initialized")
 
+        # Start heartbeat logging
+        self.start_heartbeat()
+
+    def start_heartbeat(self):
+        """Periodically logs a heartbeat to detect silent crashes."""
+        def heartbeat():
+            while not self._stop_event.is_set():
+                logger.debug(f"<3 Heartbeat: HotkeyListener is still running. Can open Window is {self.can_open_window}")
+                time.sleep(5)  # Adjust interval if needed
+
+        heartbeat_thread = threading.Thread(target=heartbeat, daemon=True)
+        heartbeat_thread.start()
+
     def handle_press(self, hotkey_name: str):
         """Handles hotkey press and starts a release monitor if needed."""
         logger.debug(f"Hotkey '{hotkey_name}' pressed. Starting handling process.")
@@ -80,11 +93,13 @@ class HotkeyListener:
                 # Ensure hotkey state is reset
                 self.hotkey_states[hotkey_name] = False
 
-        # Start monitoring in a daemon thread
-        release_thread = threading.Thread(
-            target=release_monitor,
-            daemon=True
-        )
+        def wrapped_release_monitor():
+            try:
+                release_monitor()
+            except Exception as e:
+                logger.critical(f"Unhandled exception in release monitor: {e}", exc_info=True)
+
+        release_thread = threading.Thread(target=wrapped_release_monitor, daemon=True)
         release_thread.start()
 
     def start_listening(self):
