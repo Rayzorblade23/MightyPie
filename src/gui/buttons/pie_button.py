@@ -40,10 +40,11 @@ class PieButton(QPushButton):
         logger.debug(f"Initializing PieButton: {object_name}, Index: {index}")
 
         self.setObjectName(object_name)
-        self.index = index
-        self.text_1 = text_1
-        self.text_2 = text_2
-        self.icon_path = icon_path
+        self.index: int = index
+        self.text_1: str = text_1
+        self.text_2: str = text_2
+        self.icon_path: str = icon_path
+        self.windowHandle: int = -1
 
         self.button_type = "normal_pie_button"
 
@@ -112,6 +113,12 @@ class PieButton(QPushButton):
 
         # Update button text and icon
         self._update_ui(button_text_1, button_text_2, app_icon_path)
+
+        # check if there's anything to update
+        if self.windowHandle == window_handle:
+            return
+
+        self.windowHandle = window_handle
 
         # Handle window actions
         self.set_left_click_action(
@@ -337,6 +344,12 @@ class ShowProgramWindowPieButton(PieButton):
         # Update button text and icon
         self._update_ui(button_text_1, button_text_2, app_icon_path)
 
+        # check if there's anything to update
+        if self.windowHandle == window_handle:
+            return
+
+        self.windowHandle = window_handle
+
         # Handle window actions
         self.set_left_click_action(
             lambda hwnd=window_handle: (
@@ -373,6 +386,8 @@ class LaunchProgramPieButton(PieButton):
 
         self.print_button_type()
 
+        self.exe_path: str = ""
+
     def update_button(self, properties: dict) -> None:
         button_text_2 = "- Launch -"
         exe_path = properties["exe_path"]
@@ -382,13 +397,18 @@ class LaunchProgramPieButton(PieButton):
         # Update button text and icon
         self._update_ui(button_text_1, button_text_2, app_icon_path)
 
-        if exe_path:
-            self.set_left_click_action(
-                lambda captured_exe_path=exe_path: (
-                    main_window_hide(),
-                    QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
-                )
+        # check if there's anything to update
+        if self.exe_path == exe_path or not exe_path:
+            return
+
+        self.exe_path = exe_path
+
+        self.set_left_click_action(
+            lambda captured_exe_path=exe_path: (
+                main_window_hide(),
+                QTimer.singleShot(0, lambda: launch_app(captured_exe_path)),
             )
+        )
 
         # self.set_middle_click_action()
         self.setEnabled(True)

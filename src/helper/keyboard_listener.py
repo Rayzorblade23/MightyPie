@@ -4,6 +4,7 @@ import time
 from typing import TYPE_CHECKING
 
 import keyboard
+from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import QApplication, QWidget
 
@@ -36,7 +37,17 @@ class HotkeyListener:
         self.thread_events = {}  # Track thread events for monitoring thread completion
         self.active_threads = []  # Track active threads
 
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.check_if_exists)
+        self.timer.start(5000)  # Check every 5 seconds
+
+
         logger.info("HotkeyListener initialized")
+
+    def check_if_exists(self):
+        """Check if the class instance still exists."""
+        print(f"HotkeyListener exists: {self is not None}")
+
 
     def start_listening(self):
         """Starts listening for the configured hotkeys."""
