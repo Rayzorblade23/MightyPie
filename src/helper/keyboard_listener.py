@@ -79,9 +79,14 @@ class HotkeyListener:
         # Simple release monitoring without complex thread management
         def release_monitor():
             try:
-                # Wait for key release
+                timeout = 20.0  # seconds
+                start_time = time.time()
+                # Wait for key release or timeout
                 while keyboard.is_pressed(hotkey_name):
-                    time.sleep(0.01)  # Avoid excessive CPU usage
+                    if time.time() - start_time > timeout:
+                        logger.warning(f"Timeout waiting for release of hotkey '{hotkey_name}'. Forcing release.")
+                        break
+                    time.sleep(0.01)
 
                 logger.debug(f"Hotkey '{hotkey_name}' released. Triggering on_release.")
 
@@ -127,6 +132,21 @@ class HotkeyListener:
                 keyboard.unhook_all()
             except Exception as cleanup_e:
                 logger.error(f"Error during hotkey unhook: {cleanup_e}")
+
+    def stop_listening(self):
+        """Stops the hotkey listener and cleans up resources."""
+        logger.info("Stopping hotkey listener...")
+
+        # Signal threads to stop
+        self._stop_event.set()
+
+        # Unhook all keyboard listeners
+        try:
+            keyboard.unhook_all()
+        except Exception as e:
+            logger.error(f"Error during hotkey unhook: {e}", exc_info=True)
+
+        logger.info("Hotkey listener stopped.")
 
     def on_press(self, hotkey_name: str):
         """Handles hotkey press events."""
