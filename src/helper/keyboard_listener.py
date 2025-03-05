@@ -50,10 +50,11 @@ class HotkeyListener:
 
     def handle_press(self, hotkey_name: str):
         """Handles hotkey press events."""
-        logger.debug(f"Hotkey '{hotkey_name}' pressed. Starting handling process.")
-
         if not self.can_open_window:
+            logger.debug(f"Hotkey '{hotkey_name}' press ignored (already active).")
             return  # Only show if not already open
+
+        logger.debug(f"Hotkey '{hotkey_name}' pressed. Starting handling process.")
 
         self.initial_mouse_pos = QCursor.pos()  # Store initial mouse position using QCursor
 
