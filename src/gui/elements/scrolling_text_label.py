@@ -126,9 +126,6 @@ class ScrollingLabel(QWidget):
         # Calculate the available width
         label_width = self.rect().width() - 2 * self.label_margins
 
-        logger.debug(f"Text: {self.label.text()}")
-        logger.debug(f"Label width: {label_width}, Text width: {text_width}")
-
         # Set the label width to the text width
         self.label.setFixedWidth(text_width)
 

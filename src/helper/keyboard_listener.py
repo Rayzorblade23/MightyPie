@@ -109,6 +109,9 @@ class HotkeyListener:
                 QApplication.postEvent(self.main_window, release_event)
                 self.can_open_window = True
 
+        self.clear_keyboard_state()
+
+
     @staticmethod
     def stop_listening():
         """Stops the hotkey listener and cleans up resources."""
@@ -120,6 +123,16 @@ class HotkeyListener:
             logger.error(f"Error during hotkey unhook: {e}", exc_info=True)
 
         logger.info("Hotkey listener stopped.")
+
+    def clear_keyboard_state(self) -> None:
+        """Clears the keyboard module's internal pressed keys state."""
+        try:
+            logger.debug(f"Clearing keyboard state.")
+            # noinspection PyProtectedMember
+            keyboard._pressed_events.clear()
+        except Exception as e:
+            logger.error("Failed to clear keyboard state: %s", e, exc_info=True)
+
 
     @staticmethod
     def get_last_key(hotkey: str) -> str:
