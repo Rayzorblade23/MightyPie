@@ -32,8 +32,8 @@ class ScrollingLabel(QWidget):
         # Pause parameters
         self.pause_state = 1
         self.pause_counter = 0
-        self.PAUSE_DURATION_AT_START = 60
-        self.PAUSE_DURATION_AT_END = 60
+        self.PAUSE_DURATION_AT_START = 40  # Reduced from 60 to start scrolling sooner
+        self.PAUSE_DURATION_AT_END = 40  # Reduced from 60 to restart scrolling sooner
 
         # UI initialization
         self._container = QWidget(self)
@@ -42,10 +42,8 @@ class ScrollingLabel(QWidget):
         self._initialize_ui()
 
         self.label.setText(text)
+        self._set_font_style(font_style)  # Set font before checking fit
         self._check_text_fit()
-
-        # Set the font style (based on the font_styles.py enum)
-        self._set_font_style(font_style)
 
         # Configure timer
         self.timer.timeout.connect(self._scroll_text)
@@ -54,7 +52,6 @@ class ScrollingLabel(QWidget):
     def _initialize_ui(self):
         """Set up the container and layout."""
         self._container.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        # self.setStyleSheet("background-color: lightblue;")  # Set background color
 
         # Label to display text
         self.label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
@@ -66,6 +63,7 @@ class ScrollingLabel(QWidget):
         # Layout for QLabel
         self.layout = QHBoxLayout(self._container)
         self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
 
         self.layout.addWidget(self.label)
         self.layout.setAlignment(self.label, self.h_align | Qt.AlignmentFlag.AlignVCenter)  # Align label to the left
@@ -78,12 +76,14 @@ class ScrollingLabel(QWidget):
         rect.moveLeft((self.rect().width() - rect.width()) // 2)
         rect.moveTop(-self.v_offset)
         self._container.setGeometry(rect)
-        # self._check_text_fit()
+        self._check_text_fit()  # Re-check text fit on resize
 
     def update_text(self, new_text: str):
         """Update the text of the scrolling label."""
         self.label.setText(new_text)
         self.text_scroll_pos = 0  # Reset scroll position
+        self.pause_state = 1  # Reset to initial pause state
+        self.pause_counter = 0  # Reset pause counter
         self._check_text_fit()  # Re-evaluate if scrolling is needed
 
     def update_v_offset(self, new_offset: int):
@@ -121,67 +121,83 @@ class ScrollingLabel(QWidget):
 
         # Adjust width if the font is italic
         if self.label.font().italic():
-            text_width = int(text_width * 1.1)  # Adjust the factor as needed
+            text_width = int(text_width * 1.1)  # Adjust for italic fonts
 
-        # Manually calculate the available width
+        # Calculate the available width
         label_width = self.rect().width() - 2 * self.label_margins
 
+        logger.debug(f"Text: {self.label.text()}")
+        logger.debug(f"Label width: {label_width}, Text width: {text_width}")
+
+        # Set the label width to the text width
+        self.label.setFixedWidth(text_width)
+
+        # Activate scrolling if text is wider than available space
         if text_width > label_width:
             if not self.text_scroll_active:
                 self.text_scroll_active = True
                 logger.debug("Scrolling activated")
+                self.pause_state = 1
+                self.pause_counter = 0
                 self.timer.start()
-
         else:
             if self.text_scroll_active:
                 self.text_scroll_active = False
                 logger.debug("Scrolling deactivated")
                 self.timer.stop()
-
-        # Reset label width and position
-        self.label.setFixedWidth(text_width)
+                self._center_y_move_to_x(0)  # Reset position
 
     def _scroll_text(self):
         """Animate scrolling text with pauses."""
+        if not self.text_scroll_active:
+            return
+
         font_metrics = QFontMetrics(self.label.font())
         text_width = font_metrics.horizontalAdvance(self.label.text())
 
-        # Manually calculate the available width
+        # Adjust width if the font is italic
+        if self.label.font().italic():
+            text_width = int(text_width * 1.1)
+
+        # Calculate the available width
         label_width = self.width() - 2 * self.label_margins
 
-        if text_width > label_width:
-            # Handle pauses
-            if self.pause_state == 1:  # Pause at start
-                self.pause_counter += 1
-                if self.pause_counter < self.PAUSE_DURATION_AT_START:
-                    self._center_y_move_to_x(-self.text_scroll_pos)
-                    return
-                self.pause_state = 0
-                self.pause_counter = 0
+        # Handle pause states
+        if self.pause_state == 1:  # Pause at start
+            self.pause_counter += 1
+            if self.pause_counter < self.PAUSE_DURATION_AT_START:
+                return
+            self.pause_state = 0  # Move to scrolling state
+            self.pause_counter = 0
 
-            if self.pause_state == 2:  # Pause at End
-                self.pause_counter += 1
-                if self.pause_counter < self.PAUSE_DURATION_AT_END:
-                    self._center_y_move_to_x(-self.text_scroll_pos)
-                    return
-                self.text_scroll_pos = 0
-                self.pause_state = 1
-                self.pause_counter = 0
+        elif self.pause_state == 2:  # Pause at end
+            self.pause_counter += 1
+            if self.pause_counter < self.PAUSE_DURATION_AT_END:
+                return
+            # Reset for next cycle
+            self.text_scroll_pos = 0
+            self.pause_state = 1  # Back to start pause
+            self.pause_counter = 0
+            self._center_y_move_to_x(0)  # Reset position
+            return
 
-            # Update scroll position
-            self.text_scroll_pos += self.scroll_speed
+        # Update scroll position during scrolling state
+        self.text_scroll_pos += self.scroll_speed
 
-            # Check if scrolling needs to stop (text has moved out of view)
-            if self.text_scroll_pos > text_width - label_width:
-                self.pause_state = 2
+        # Check if we've reached the end of the text
+        if self.text_scroll_pos > text_width - label_width:
+            self.pause_state = 2  # Switch to end pause
+            self.pause_counter = 0
+            return
 
-            self._center_y_move_to_x(-self.text_scroll_pos)
-
-        else:
-            # Reset position if no scrolling is needed
-            self._center_y_move_to_x(0)
+        # Update label position
+        self._center_y_move_to_x(-self.text_scroll_pos)
 
     def _center_y_move_to_x(self, pos_x: int = 0):
-        """Center the label vertically within the container."""
+        """Center the label vertically within the container and set horizontal position."""
         vertical_center = (self.height() - self.label.height()) // 2
         self.label.move(pos_x, vertical_center)
+
+    def sizeHint(self):
+        """Return a sensible size hint for the widget."""
+        return self.label.sizeHint()
