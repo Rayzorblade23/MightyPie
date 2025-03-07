@@ -1,4 +1,6 @@
 - find out why scrolling starts so late.
+2025-03-05 23:11:47,845 - src.utils.functions_utils - ERROR - An error occurred when launching the app 'C:\Program Files\JetBrains\PyCharm Community Edition 2024.3\bin\pycharm64.exe': Command '['explorer.exe', 'C:\\Program Files\\JetBrains\\PyCharm Community Edition 2024.3\\bin\\pycharm64.exe']' returned non-zero exit status 1.
+- make focus_window even more robust. it still sometimes doesn't work
 
 
 IDEA:

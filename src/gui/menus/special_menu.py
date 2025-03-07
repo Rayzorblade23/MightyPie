@@ -174,8 +174,6 @@ class SpecialMenu(QWidget):
             self.taskbar_toggle.toggle.setCheckedWithoutAction(False)
 
     def trigger_toggle(self):
-        # self.clock_toggle.toggle.setChecked(False)  # Clock turned off by default
-        # self.clock_toggle.toggle.toggle_switch()
         self.invisible_UI_toggle.toggle.setChecked(True)  # or False
         self.invisible_UI_toggle.toggle.toggle_switch()
 

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import keyboard
 from PyQt6.QtGui import QCursor
-from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtWidgets import QApplication
 
 from src.data.config import CONFIG
 from src.events import ShowWindowEvent, HotkeyReleaseEvent
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 # Create a module-specific logger
 logger = logging.getLogger(__name__)
+
 
 class HotkeyListener:
     def __init__(self, main_window: 'PieWindow'):
@@ -45,8 +46,6 @@ class HotkeyListener:
 
         except Exception as e:
             logger.error(f"Failed to register hotkeys: {e}", exc_info=True)
-
-
 
     def handle_press(self, hotkey_name: str):
         """Handles hotkey press events."""
@@ -79,11 +78,11 @@ class HotkeyListener:
 
     def handle_release(self, hotkey_name: str):
         """Handles hotkey release events."""
-        logger.debug(f"Hotkey '{hotkey_name}' released. Processing release.")
-
         if self.main_window.cursor_displacement is None:
             self.can_open_window = True  # Allow reopening window
             return
+
+        logger.debug(f"Hotkey '{hotkey_name}' released. Processing release.")
 
         if self.initial_mouse_pos is None:
             return

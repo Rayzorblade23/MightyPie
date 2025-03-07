@@ -1,4 +1,3 @@
-import sys
 from functools import partial
 
 from PyQt6.QtCore import Qt
@@ -14,14 +13,13 @@ from src.utils.window_utils import add_hwnd_to_exclude
 class InvisibleUI(QWidget):
     """A clock with no seconds and a 50% transparent background."""
 
-    def __init__(self, obj_name: str = "InvisibleUI", parent=None, button_size: int = 5):
+    def __init__(self, obj_name: str = "InvisibleUI", parent=None, button_size: int = 6):
         super().__init__(parent)
         self.obj_name = obj_name
         self.setWindowTitle(f"{CONFIG.INTERNAL_PROGRAM_NAME} - InvisibleUI")  # Set the window title
         self.button_size = button_size  # Button size variable
 
         self.button_functions = ButtonFunctions()
-        print(self.button_functions.get_function("clipboard"))
 
         add_hwnd_to_exclude(self)
 
@@ -29,18 +27,13 @@ class InvisibleUI(QWidget):
         self.setup_window()
 
         self.button_config = {
-            # "btn_btm_left": ((90, self.button_size), partial(open_start_menu, self, hide_parent=False)),
-            # "btn_btm_right": ((90, self.button_size), partial(open_action_center, self, hide_parent=False)),
-            "btn_btm_center": ((1000, self.button_size), lambda: toggle_taskbar()),
-            "btn_ctr_left": ((self.button_size, 600), partial(open_explorer_window, self, hide_parent=False)),
-            "btn_ctr_right": ((self.button_size * 6, 600), self.button_functions.get_function("clipboard")["action"]),
+            "button_bottom_center": ((1000, self.button_size), lambda: toggle_taskbar()),
+            "button_center_left": ((self.button_size, self.height() // 3), partial(open_explorer_window, self, hide_parent=False)),
+            # "button_center_right": ((self.button_size, self.height() // 3), self.button_functions.get_function("clipboard")["action"]),
         }
 
         self.create_buttons()
         self.position_buttons()
-
-        screen = QApplication.primaryScreen()
-        screen.geometryChanged.connect(self.handle_geometry_change)
 
     def create_buttons(self):
         """Initialize buttons with properties."""
@@ -59,30 +52,21 @@ class InvisibleUI(QWidget):
 
     def position_buttons(self):
         """Position available buttons dynamically."""
-        if "btn_btm_left" in self.buttons:
-            self.buttons["btn_btm_left"].move(0, self.height() - self.buttons["btn_btm_left"].height())
-        if "btn_btm_right" in self.buttons:
-            self.buttons["btn_btm_right"].move(self.width() - self.buttons["btn_btm_right"].width(),
-                                               self.height() - self.buttons["btn_btm_right"].height())
-        if "btn_btm_center" in self.buttons:
-            self.buttons["btn_btm_center"].move(self.width() // 2 - self.buttons["btn_btm_center"].width() // 2,
-                                                self.height() - self.buttons["btn_btm_center"].height())
+        if "button_bottom_center" in self.buttons:
+            bottom_x = self.width() // 2 - self.buttons["button_bottom_center"].width() // 2
+            bottom_y = self.height() - self.buttons["button_bottom_center"].height()
+            self.buttons["button_bottom_center"].move(bottom_x, bottom_y)
 
-        if "btn_ctr_left" in self.buttons:
-            self.buttons["btn_ctr_left"].move(0, self.height() // 2 - self.buttons["btn_ctr_left"].height() // 2)
-        if "btn_ctr_right" in self.buttons:
-            self.buttons["btn_ctr_right"].move(
-                self.width() - self.buttons["btn_ctr_right"].width(),  # Align to the right edge
-                self.height() // 2 - self.buttons["btn_ctr_right"].height() // 2)  # Center vertically
+        if "button_center_left" in self.buttons:
+            left_x = 0
+            left_y = self.height() // 2 - self.buttons["button_center_left"].height() // 2
+            self.buttons["button_center_left"].move(left_x, left_y)
 
-    def handle_geometry_change(self):
-        screen = QApplication.primaryScreen()
-        geometry = screen.geometry()
-
-        # Update the main window size based on the screen geometry
-        self.setGeometry(0, 0, geometry.width(), geometry.height())
-
-        self.position_buttons()
+        ###### Doesn't work reliably on the right edge with monitor scaling
+        # if "button_center_right" in self.buttons:
+        #     right_x = self.width() - self.buttons["button_center_right"].width()  # Align to the right edge
+        #     right_y = self.height() // 4 - self.buttons["button_center_right"].height() // 2  # Center vertically
+        #     self.buttons["button_center_right"].move(right_x, right_y)
 
     def setup_window(self):
         """Set up the main window properties."""
@@ -107,4 +91,3 @@ class InvisibleUI(QWidget):
     # def on_button_right_clicked():
     #     """Print message when the right button is clicked."""
     #     print("Right button clicked!")
-
