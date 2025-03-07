@@ -25,6 +25,8 @@ class HotkeyListener:
         self.initial_mouse_pos = None  # Store initial mouse position on press
         self.is_hotkey_pressed = False  # Flag to suppress auto-repeat
 
+        self.hotkey_mapping, self.hotkey_keys = self.create_hotkey_mapping()  # Pre-load the mapping
+
         logger.info("HotkeyListener initialized")
 
     def start_listening(self):
@@ -111,6 +113,34 @@ class HotkeyListener:
 
         self.clear_keyboard_state()
 
+    def clear_keyboard_state(self) -> None:
+        """Clears the keyboard state only if no hotkey keys are still pressed."""
+        try:
+            pressed_keys = set(keyboard._pressed_events.keys())  # Get currently pressed scancodes
+
+            # Use pre-loaded mapping
+            def scancode_to_name(scancode: int) -> str:
+                """Returns a human-friendly key name for a given scancode."""
+                return self.hotkey_mapping.get(scancode, f"Unknown({scancode})")
+
+            pressed_keys_human = {scancode_to_name(sc) for sc in pressed_keys}
+
+            # Use human-friendly key names for logging
+            hotkey_keys_human = {scancode_to_name(sc) for sc in self.hotkey_keys}
+
+            logger.debug(f"Pressed keys: {', '.join(pressed_keys_human)}")
+            logger.debug(f"Hotkey keys: {', '.join(hotkey_keys_human)}")
+
+            if not pressed_keys & self.hotkey_keys:  # No hotkey keys are pressed
+                logger.debug("No hotkey keys are currently pressed. Clearing keyboard state.")
+                keyboard._pressed_events.clear()
+            else:
+                remaining_keys = pressed_keys & self.hotkey_keys
+                remaining_keys_human = {scancode_to_name(sc) for sc in remaining_keys}
+                logger.debug(f"Hotkey keys still pressed, not clearing keyboard state. Remaining: {', '.join(remaining_keys_human)}")
+
+        except Exception as e:
+            logger.error("Failed to clear keyboard state: %s", e, exc_info=True)
 
     @staticmethod
     def stop_listening():
@@ -124,25 +154,25 @@ class HotkeyListener:
 
         logger.info("Hotkey listener stopped.")
 
-    def clear_keyboard_state(self) -> None:
-        """Clears the keyboard module's internal pressed keys state."""
-        try:
-            logger.debug(f"Clearing keyboard state.")
-            # noinspection PyProtectedMember
-            keyboard._pressed_events.clear()
-        except Exception as e:
-            logger.error("Failed to clear keyboard state: %s", e, exc_info=True)
+    @staticmethod
+    def create_hotkey_mapping() -> tuple[dict[int, str], set[int]]:
+        """Creates a mapping of scancodes to human-readable key names for hotkeys."""
+        hotkey_keys: set[int] = set()
+        hotkey_mapping: dict[int, str] = {}
 
+        # Define the list of hotkeys to handle
+        for hotkey in (CONFIG.HOTKEY_PRIMARY, CONFIG.HOTKEY_SECONDARY):
+            for key in hotkey.split('+'):
+                scancodes = keyboard.key_to_scan_codes(key)
+                if scancodes:
+                    hotkey_keys.update(scancodes)
+                    for sc in scancodes:
+                        hotkey_mapping[sc] = key
+
+        # Return the mappings: human-readable names (hotkey_mapping) and set of scancodes (hotkey_keys)
+        return hotkey_mapping, hotkey_keys
 
     @staticmethod
     def get_last_key(hotkey: str) -> str:
-        """
-        Extracts the last key from a multi-key hotkey combination.
-
-        Args:
-            hotkey (str): The hotkey string (e.g., "ctrl+d").
-
-        Returns:
-            str: The last key in the combination (e.g., "d").
-        """
+        """Extracts the last key from a multi-key hotkey combination."""
         return hotkey.split('+')[-1]  # Extracts "d" from "ctrl+d"

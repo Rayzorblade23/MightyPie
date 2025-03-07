@@ -1,26 +1,21 @@
-- find out why scrolling starts so late.
+
+- the restart explorer function is pretty buggy. brings back explorer in a different state
+
 2025-03-05 23:11:47,845 - src.utils.functions_utils - ERROR - An error occurred when launching the app 'C:\Program Files\JetBrains\PyCharm Community Edition 2024.3\bin\pycharm64.exe': Command '['explorer.exe', 'C:\\Program Files\\JetBrains\\PyCharm Community Edition 2024.3\\bin\\pycharm64.exe']' returned non-zero exit status 1.
+
+2025-03-07 18:55:24,866 - src.gui.pie_window - ERROR - Active child index is out of range for task switchers.
+
+
 - make focus_window even more robust. it still sometimes doesn't work
 
 
 IDEA:
 We could run PWAs like YouTube Music via custom run commands. Would need a new type of pie menu button.
 
-Also: reverse buttons via Window Name, instead of App Name
-
-Collect multiple windows on one button
-
 
 BUGS:
-- after monitor change: menu open offset from cursor on primary screen
-
-- one time: crash no "restore minimized"
-
-- program doesn't refresh DPI when changing monitors (maybe not fixable)
 
 - LaunchApp might not bring app to foreground
-
-- MightyPie sometimes starts with smaller Pie Menus
 
 BUGS in BUILD:
 

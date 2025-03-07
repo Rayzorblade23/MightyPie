@@ -133,14 +133,14 @@ class ScrollingLabel(QWidget):
         if text_width > label_width:
             if not self.text_scroll_active:
                 self.text_scroll_active = True
-                logger.debug("Scrolling activated")
+                # logger.debug("Scrolling activated")
                 self.pause_state = 1
                 self.pause_counter = 0
                 self.timer.start()
         else:
             if self.text_scroll_active:
                 self.text_scroll_active = False
-                logger.debug("Scrolling deactivated")
+                # logger.debug("Scrolling deactivated")
                 self.timer.stop()
                 self._center_y_move_to_x(0)  # Reset position
 
