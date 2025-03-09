@@ -286,8 +286,8 @@ class PieWindow(QMainWindow):
             print(index)
             return menus[index]
 
-        logger.error("Active child index is out of range for task switchers.")
-        return None
+        logger.error(f"Active child index is out of range for {pie_menu_type}: {index}")
+        return menus[0]
 
     def show_pie_menu_at_mouse_pos(self, pie_menu):
         """Display the pie menu at the corrected position near the cursor."""

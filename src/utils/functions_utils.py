@@ -376,7 +376,8 @@ def focus_window_by_handle(hwnd):
     logger.info(f"FOCUSING WINDOW {hwnd}")
 
     class_name = win32gui.GetClassName(hwnd)
-    logger.debug(f"Window class name: {class_name}")
+    window_title = _get_window_title(hwnd)
+    logger.debug(f"Window class name: {class_name} and title: {window_title}")
 
     if class_name == "TaskManagerWindow":
         logger.debug("Detected Task Manager, sending hotkey to open it.")
@@ -384,27 +385,30 @@ def focus_window_by_handle(hwnd):
         return
 
     if hwnd == win32gui.GetForegroundWindow() and not win32gui.IsIconic(hwnd):
-        logger.debug(f"Window {hwnd} is already focused.")
         if CONFIG.HIDE_WINDOW_WHEN_ALREADY_FOCUSED:
-            logger.debug("Hiding window as per configuration.")
+            logger.debug(f"Window {window_title} is already focused. Hide instead.")
             minimize_window_by_hwnd(hwnd)
         return
 
     try:
         placement = win32gui.GetWindowPlacement(hwnd)
         was_maximized = placement[1] == win32con.SW_MAXIMIZE
-        logger.debug(f"Window placement: {placement}, was_maximized: {was_maximized}")
+
+        # Log window position and size
+        rect = win32gui.GetWindowRect(hwnd)
+        x, y, width, height = rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]
+        logger.info(f"Window position: (x={x}, y={y}), size: (width={width}, height={height})")
 
         if was_maximized:
-            logger.debug(f"Maximizing window {hwnd}.")
+            logger.debug(f"Show window >>{window_title}<< maximized.")
             win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
         else:
-            logger.debug(f"Restoring window {hwnd}.")
+            logger.debug(f"Show window >>{window_title}<< normally.")
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
 
         try:
             current_fore = win32gui.GetForegroundWindow()
-            logger.debug(f"Current foreground window: {current_fore}")
+            logger.debug(f"Current foreground window: {_get_window_title(current_fore)}")
 
             current_thread = win32api.GetCurrentThreadId()
             other_thread = win32process.GetWindowThreadProcessId(current_fore)[0]
@@ -415,15 +419,15 @@ def focus_window_by_handle(hwnd):
                 win32process.AttachThreadInput(current_thread, other_thread, True)
 
                 try:
-                    logger.debug(f"Trying to bring window {hwnd} to top.")
+                    logger.debug(f"Trying to bring window >>{window_title}<< to top.")
                     win32gui.BringWindowToTop(hwnd)
                     win32gui.SetForegroundWindow(hwnd)
 
-                    logger.debug(f"Setting window {hwnd} as topmost.")
+                    logger.debug(f"Setting window >>{window_title}<< as topmost.")
                     win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
                                           win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
 
-                    logger.debug(f"Removing topmost flag from window {hwnd}.")
+                    logger.debug(f"Removing topmost flag from window >>{window_title}<<.")
                     win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
                                           win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
 
@@ -433,15 +437,15 @@ def focus_window_by_handle(hwnd):
                     logger.debug("Detaching thread input.")
                     win32process.AttachThreadInput(current_thread, other_thread, False)
             else:
-                logger.debug("Same thread, trying direct SetForegroundWindow call.")
+                logger.debug(f"Same thread, trying direct SetForegroundWindow call for >>{window_title}<<.")
                 try:
                     win32gui.SetForegroundWindow(hwnd)
                 except Exception as e:
-                    logger.error(f"Error bringing window to front in focus_window_by_handle: {e}")
+                    logger.error(f"Error bringing window >>{window_title}<< to front in focus_window_by_handle: {e}")
         except Exception as e:
-            logger.error(f"Error bringing window to front in focus_window_by_handle: {e}")
+            logger.error(f"Error bringing window >>{window_title}<< to front in focus_window_by_handle: {e}")
     except Exception as e:
-        logger.error(f"Could not focus window with handle '{_get_window_title(hwnd)}': {e}")
+        logger.error(f"Could not focus window >>{window_title}<<: {e}")
 
 
 def focus_all_explorer_windows():
