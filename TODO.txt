@@ -14,8 +14,11 @@ We could run PWAs like YouTube Music via custom run commands. Would need a new t
 
 
 BUGS:
+- mixed monitor setup with scaling and non-scaling is messed up.
 
 - LaunchApp might not bring app to foreground
+
+
 
 BUGS in BUILD:
 

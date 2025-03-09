@@ -301,25 +301,29 @@ def center_window_at_cursor(pie_window: "PieWindow"):
         logger.warning("Window is not visible. Exiting function.")
         return
 
-    # Get monitor info (this part stays unchanged)
-    monitor_info = win32api.MonitorFromPoint(logical_cursor_pos, win32con.MONITOR_DEFAULTTONEAREST)
-    monitor = win32api.GetMonitorInfo(monitor_info)
-    monitor_rect = monitor['Monitor']
-
-    screen_width = monitor_rect[2] - monitor_rect[0]
-    screen_height = monitor_rect[3] - monitor_rect[1]
+    # Get the screen geometry directly
+    screen_rect = screen.geometry()
+    screen_width = screen_rect.width()
+    screen_height = screen_rect.height()
     new_width = screen_width // 2
     new_height = screen_height // 2
-    new_x = monitor_rect[0] + (screen_width - new_width) // 2
-    new_y = monitor_rect[1] + (screen_height - new_height) // 2
+    new_x = screen_rect.left() + (screen_width - new_width) // 2
+    new_y = screen_rect.top() + (screen_height - new_height) // 2
 
-    logger.info(f"Centering window on monitor: {monitor_rect}")
+    # Apply scaling
+    if scaling_factor != 1.0:
+        new_width = int(new_width * scaling_factor)
+        new_height = int(new_height * scaling_factor)
+        new_x = int(new_x * scaling_factor)
+        new_y = int(new_y * scaling_factor)
+
+    logger.info(f"Centering window on monitor: {screen_rect}")
     logger.info(f"New window size: ({new_width}, {new_height}) at position: ({new_x}, {new_y})")
 
     win32gui.ShowWindow(root_handle, win32con.SW_RESTORE)
     win32gui.SetWindowPos(root_handle, None, new_x, new_y, new_width, new_height, win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE)
 
-    logger.info("Window centered successfully on the correct monitor.")
+    logger.info(f"Window {_get_window_title(root_handle)} centered successfully on the correct monitor.")
 
 
 def show_special_menu(menu: QWidget):
