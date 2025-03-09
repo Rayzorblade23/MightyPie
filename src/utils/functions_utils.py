@@ -217,7 +217,10 @@ def toggle_maximize_window_at_cursor(pie_window: "PieWindow"):
 
     if window_handle and window_handle != win32gui.GetDesktopWindow():
         root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
-        window_title = win32gui.GetWindowText(root_handle)
+
+        if root_handle not in set(manager.get_open_windows_info().keys()):
+            logger.warning("Hwnd is not among valid windows")
+            return
 
         # Check the current state of the window
         placement = win32gui.GetWindowPlacement(root_handle)
@@ -303,8 +306,8 @@ def center_window_at_cursor(pie_window: "PieWindow"):
 
     root_handle = win32gui.GetAncestor(window_handle, win32con.GA_ROOT)
 
-    if not win32gui.IsWindowVisible(root_handle):
-        logger.warning("Window is not visible. Exiting function.")
+    if root_handle not in set(manager.get_open_windows_info().keys()):
+        logger.warning("Hwnd is not among valid windows")
         return
 
     # Get the screen geometry directly
@@ -329,7 +332,7 @@ def center_window_at_cursor(pie_window: "PieWindow"):
     win32gui.ShowWindow(root_handle, win32con.SW_RESTORE)
     win32gui.SetWindowPos(root_handle, None, new_x, new_y, new_width, new_height, win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE)
 
-    logger.info(f"Window {_get_window_title(root_handle)} centered successfully on the correct monitor.")
+    logger.info(f"Window {_get_window_title(root_handle)} centered successfully.")
 
 
 def show_special_menu(menu: QWidget):
@@ -476,6 +479,10 @@ def close_window_at_cursor(pie_window: "PieWindow") -> None:
 
 def close_window_by_handle(hwnd):
     """Close a window given its handle."""
+    if hwnd not in set(manager.get_open_windows_info().keys()):
+        logger.warning("Hwnd is not among valid windows")
+        return
+
     focus_window_by_handle(hwnd)
     try:
         win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
