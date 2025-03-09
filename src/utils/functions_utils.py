@@ -93,8 +93,8 @@ def launch_app(exe_path):
 
         else:
             # using explorer.exe to avoid transferring admin rights
-            subprocess.run(['explorer.exe', exe_path], check=True)
-            logger.info("Launched without admin privileges:", exe_path)
+            subprocess.run(f'explorer.exe "{exe_path}"', shell=True)
+            logger.info(f"Launched without admin privileges: {exe_path}")
 
     except Exception as e:
         logger.error(f"An error occurred when launching the app '{exe_path}': {e}")
