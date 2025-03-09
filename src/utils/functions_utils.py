@@ -192,8 +192,7 @@ def minimize_window_by_hwnd(hwnd: int):
             logger.warning("Hwnd is not among valid windows")
             return
 
-        window_title = win32gui.GetWindowText(root_handle)
-        logger.info(f"Minimizing {_get_window_title(window_title)}")
+        logger.info(f"Minimizing {_get_window_title(root_handle)}")
 
         win32gui.ShowWindow(root_handle, win32con.SW_MINIMIZE)
 
@@ -273,7 +272,7 @@ def toggle_maximize_window_at_cursor(pie_window: "PieWindow"):
                 except Exception as e:
                     logger.error(f"Error bringing window to front in toggle_maximize_window_at_cursor: {e}")
 
-            logger.debug("Window maximized successfully")
+            logger.info(f"Maximized window: {_get_window_title(root_handle)}")
 
         # Defer the execution of window manipulation to prevent blocking
         QTimer.singleShot(100, process_window_input)
@@ -480,6 +479,7 @@ def close_window_by_handle(hwnd):
     focus_window_by_handle(hwnd)
     try:
         win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
+        logger.info(f"Closing window: {_get_window_title(hwnd)}")
     except Exception as e:
         logger.error(f"Could not close window with handle '{hwnd}': {e}")
 
