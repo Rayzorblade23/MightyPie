@@ -511,6 +511,6 @@ def _get_cursor_screen_info(pie_window) -> tuple[tuple[int, int], float, QScreen
     # Convert logical to physical coordinates (only for cursor position)
     physical_cursor_pos = (int(global_cursor_pos.x() * scaling_factor), int(global_cursor_pos.y() * scaling_factor))
 
-    print(f"Returning physical_cursor_pos={physical_cursor_pos}, scaling_factor={scaling_factor}, screen={screen.name()}")
+    logger.debug(f"Returning physical_cursor_pos={physical_cursor_pos}, scaling_factor={scaling_factor}, screen={screen.name()}")
 
     return physical_cursor_pos, scaling_factor, screen

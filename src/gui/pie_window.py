@@ -272,15 +272,18 @@ class PieWindow(QMainWindow):
         if pie_menu_type is PrimaryPieMenu:
             offset = 0
             menus = self.pie_menus_primary
+            max_menus = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
         elif pie_menu_type is SecondaryPieMenu:
             offset = CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY
             menus = self.pie_menus_secondary
+            max_menus = CONFIG.INTERNAL_NUM_PIE_MENUS_SECONDARY
         else:
             raise ValueError("Invalid pie_menu_type. Expected PrimaryPieMenu or SecondaryPieMenu.")
 
         index = self.active_child - 1 - offset
 
-        if 0 <= index < CONFIG.INTERNAL_NUM_PIE_MENUS_PRIMARY:
+        if 0 <= index < max_menus and index < len(menus):  # Ensure index is within both CONFIG and actual menu list
+            print(index)
             return menus[index]
 
         logger.error("Active child index is out of range for task switchers.")
