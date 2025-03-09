@@ -371,66 +371,66 @@ def show_special_menu(menu: QWidget):
 def focus_window_by_handle(hwnd):
     """Bring a main_window to the foreground and restore/maximize as needed."""
     logger.info(f"FOCUSING WINDOW {hwnd}")
+
     class_name = win32gui.GetClassName(hwnd)
+    logger.debug(f"Window class name: {class_name}")
 
     if class_name == "TaskManagerWindow":
+        logger.debug("Detected Task Manager, sending hotkey to open it.")
         pyautogui.hotkey('ctrl', 'shift', 'esc')
         return
 
-    if hwnd == win32gui.GetForegroundWindow() and CONFIG.HIDE_WINDOW_WHEN_ALREADY_FOCUSED:
-        minimize_window_by_hwnd(hwnd)
+    if hwnd == win32gui.GetForegroundWindow() and not win32gui.IsIconic(hwnd):
+        logger.debug(f"Window {hwnd} is already focused.")
+        if CONFIG.HIDE_WINDOW_WHEN_ALREADY_FOCUSED:
+            logger.debug("Hiding window as per configuration.")
+            minimize_window_by_hwnd(hwnd)
         return
 
     try:
-        # Get the current window placement
         placement = win32gui.GetWindowPlacement(hwnd)
-        was_maximized = placement[1] == win32con.SW_MAXIMIZE  # Check if it was maximized
+        was_maximized = placement[1] == win32con.SW_MAXIMIZE
+        logger.debug(f"Window placement: {placement}, was_maximized: {was_maximized}")
 
-        # Maximize the window if it was maximized previously, otherwise restore it
         if was_maximized:
+            logger.debug(f"Maximizing window {hwnd}.")
             win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
         else:
+            logger.debug(f"Restoring window {hwnd}.")
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
 
         try:
-            # Get the current foreground window
             current_fore = win32gui.GetForegroundWindow()
+            logger.debug(f"Current foreground window: {current_fore}")
 
-            # Get thread IDs
             current_thread = win32api.GetCurrentThreadId()
             other_thread = win32process.GetWindowThreadProcessId(current_fore)[0]
+            logger.debug(f"Current thread ID: {current_thread}, Other thread ID: {other_thread}")
 
-            # Attach threads if necessary
             if current_thread != other_thread:
+                logger.debug("Attaching thread input to allow window focusing.")
                 win32process.AttachThreadInput(current_thread, other_thread, True)
-                # time.sleep(0.1)  # Small delay to let Windows process the attachment
+
                 try:
-                    # Try multiple approaches to bring window to front
+                    logger.debug(f"Trying to bring window {hwnd} to top.")
                     win32gui.BringWindowToTop(hwnd)
                     win32gui.SetForegroundWindow(hwnd)
 
-                    # Alternative method using different flags
-                    win32gui.SetWindowPos(hwnd,
-                                          win32con.HWND_TOPMOST,
-                                          0, 0, 0, 0,
-                                          win32con.SWP_NOMOVE |
-                                          win32con.SWP_NOSIZE |
-                                          win32con.SWP_SHOWWINDOW)
+                    logger.debug(f"Setting window {hwnd} as topmost.")
+                    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
 
-                    # Remove topmost flag
-                    win32gui.SetWindowPos(hwnd,
-                                          win32con.HWND_NOTOPMOST,
-                                          0, 0, 0, 0,
-                                          win32con.SWP_NOMOVE |
-                                          win32con.SWP_NOSIZE)
+                    logger.debug(f"Removing topmost flag from window {hwnd}.")
+                    win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
 
                 except Exception as e:
                     logger.error(f"Error during window manipulation in focus_window_by_handle: {e}")
                 finally:
-                    # Always detach threads
+                    logger.debug("Detaching thread input.")
                     win32process.AttachThreadInput(current_thread, other_thread, False)
             else:
-                # If in same thread, try direct approach
+                logger.debug("Same thread, trying direct SetForegroundWindow call.")
                 try:
                     win32gui.SetForegroundWindow(hwnd)
                 except Exception as e:
