@@ -497,10 +497,11 @@ def _get_cursor_screen_info(pie_window) -> tuple[tuple[int, int], float, QScreen
     Adjusted for monitor scaling.
     Returns None if no screen is found under the cursor.
     """
-    logical_cursor_pos = (pie_window.pie_menu_pos.x(), pie_window.pie_menu_pos.y())
+    global_cursor_pos = pie_window.mapToGlobal(pie_window.pie_menu_pos)
 
-    # Get the screen where the cursor is
-    screen = QGuiApplication.screenAt(pie_window.pie_menu_pos)
+    # Get the screen where Pie Window was opened
+    screen = QGuiApplication.screenAt(global_cursor_pos)
+
     if not screen:
         logger.warning("No screen found under cursor. Exiting function.")
         return None
@@ -508,6 +509,8 @@ def _get_cursor_screen_info(pie_window) -> tuple[tuple[int, int], float, QScreen
     scaling_factor = screen.devicePixelRatio()
 
     # Convert logical to physical coordinates (only for cursor position)
-    physical_cursor_pos = (int(logical_cursor_pos[0] * scaling_factor), int(logical_cursor_pos[1] * scaling_factor))
+    physical_cursor_pos = (int(global_cursor_pos.x() * scaling_factor), int(global_cursor_pos.y() * scaling_factor))
+
+    print(f"Returning physical_cursor_pos={physical_cursor_pos}, scaling_factor={scaling_factor}, screen={screen.name()}")
 
     return physical_cursor_pos, scaling_factor, screen
