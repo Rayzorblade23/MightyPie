@@ -66,8 +66,11 @@ def restart_explorer():
         explorer_paths = get_explorer_windows_paths()
 
         # Step 3: Kill and restart Explorer
-        subprocess.run("taskkill /f /im explorer.exe", shell=True)
-        subprocess.run("start explorer.exe", shell=True)
+        # Stop Explorer process
+        subprocess.run(['powershell', 'Stop-Process', '-Name', 'explorer', '-Force'])
+
+        # Start Explorer process
+        subprocess.run(['powershell', 'Start-Process', 'explorer.exe'])
 
         # Step 4: Reopen previously open Explorer windows using the tracked paths
         for path in explorer_paths:

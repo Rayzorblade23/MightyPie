@@ -1,11 +1,4 @@
 
-- the restart explorer function is pretty buggy. brings back explorer in a different state
-
-2025-03-07 18:55:24,866 - src.gui.pie_window - ERROR - Active child index is out of range for task switchers.
-
-
-- make focus_window even more robust. it still sometimes doesn't work
-
 
 IDEA:
 We could run PWAs like YouTube Music via custom run commands. Would need a new type of pie menu button.
