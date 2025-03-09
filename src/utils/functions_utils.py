@@ -10,7 +10,7 @@ import win32con
 import win32gui
 import win32process
 from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QCursor, QGuiApplication
+from PyQt6.QtGui import QCursor, QGuiApplication, QScreen
 from PyQt6.QtWidgets import QWidget, QMessageBox
 
 from src.data.config import CONFIG
@@ -166,12 +166,18 @@ def restore_last_minimized_window():
         logger.error("No valid window found.")
 
 
-def minimize_window_at_cursor(main_window: "PieWindow"):
+def minimize_window_at_cursor(pie_window: "PieWindow"):
     """Minimizes the window at the cursor position."""
-    if not hasattr(main_window, 'pie_menu_pos'):
+    if not hasattr(pie_window, 'pie_menu_pos'):
         return
 
-    cursor_pos = (main_window.pie_menu_pos.x(), main_window.pie_menu_pos.y())
+    cursor_info = _get_cursor_screen_info(pie_window)
+    if cursor_info is None:
+        logger.warning("No valid screen information found. Exiting function.")
+        return
+
+    cursor_pos, _, _ = cursor_info
+
     window_handle = win32gui.WindowFromPoint(cursor_pos)
 
     minimize_window_by_hwnd(window_handle)
@@ -187,7 +193,7 @@ def minimize_window_by_hwnd(hwnd: int):
             return
 
         window_title = win32gui.GetWindowText(root_handle)
-        logger.info(f"Minimizing {window_title}")
+        logger.info(f"Minimizing {_get_window_title(window_title)}")
 
         win32gui.ShowWindow(root_handle, win32con.SW_MINIMIZE)
 
@@ -201,7 +207,13 @@ def toggle_maximize_window_at_cursor(pie_window: "PieWindow"):
     if not hasattr(pie_window, 'pie_menu_pos'):
         return
 
-    cursor_pos = (pie_window.pie_menu_pos.x(), pie_window.pie_menu_pos.y())
+    cursor_info = _get_cursor_screen_info(pie_window)
+    if cursor_info is None:
+        logger.warning("No valid screen information found. Exiting function.")
+        return
+
+    cursor_pos, _, _ = cursor_info
+
     window_handle = win32gui.WindowFromPoint(cursor_pos)
 
     if window_handle and window_handle != win32gui.GetDesktopWindow():
@@ -276,18 +288,13 @@ def center_window_at_cursor(pie_window: "PieWindow"):
         logger.warning("PieWindow has no 'pie_menu_pos' attribute. Exiting function.")
         return
 
-    logical_cursor_pos = (pie_window.pie_menu_pos.x(), pie_window.pie_menu_pos.y())
-
-    # Get the screen where the cursor is
-    screen = QGuiApplication.screenAt(pie_window.pie_menu_pos)
-    if not screen:
-        logger.warning("No screen found under cursor. Exiting function.")
+    # Get information at cursor position
+    cursor_info = _get_cursor_screen_info(pie_window)
+    if cursor_info is None:
+        logger.warning("No valid screen information found. Exiting function.")
         return
 
-    scaling_factor = screen.devicePixelRatio()
-
-    # Convert logical to physical coordinates (only for cursor position)
-    physical_cursor_pos = (int(logical_cursor_pos[0] * scaling_factor), int(logical_cursor_pos[1] * scaling_factor))
+    physical_cursor_pos, scaling_factor, screen = cursor_info
 
     window_handle = win32gui.WindowFromPoint(physical_cursor_pos)
 
@@ -444,12 +451,17 @@ def focus_all_explorer_windows():
             focus_window_by_handle(hwnd)
 
 
-def close_window_at_cursor(main_window: "PieWindow") -> None:
+def close_window_at_cursor(pie_window: "PieWindow") -> None:
     """Closes the window at the cursor position."""
-    if not hasattr(main_window, 'pie_menu_pos'):
+    if not hasattr(pie_window, 'pie_menu_pos'):
         return
 
-    cursor_pos = (main_window.pie_menu_pos.x(), main_window.pie_menu_pos.y())
+    cursor_info = _get_cursor_screen_info(pie_window)
+    if cursor_info is None:
+        logger.warning("No valid screen information found. Exiting function.")
+        return
+
+    cursor_pos, _, _ = cursor_info
 
     window_handle = win32gui.WindowFromPoint(cursor_pos)
 
@@ -470,3 +482,25 @@ def close_window_by_handle(hwnd):
         win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)
     except Exception as e:
         logger.error(f"Could not close window with handle '{hwnd}': {e}")
+
+
+def _get_cursor_screen_info(pie_window) -> tuple[tuple[int, int], float, QScreen] | None:
+    """
+    Retrieves physical cursor position, scaling factor, and screen under the cursor.
+    Adjusted for monitor scaling.
+    Returns None if no screen is found under the cursor.
+    """
+    logical_cursor_pos = (pie_window.pie_menu_pos.x(), pie_window.pie_menu_pos.y())
+
+    # Get the screen where the cursor is
+    screen = QGuiApplication.screenAt(pie_window.pie_menu_pos)
+    if not screen:
+        logger.warning("No screen found under cursor. Exiting function.")
+        return None
+
+    scaling_factor = screen.devicePixelRatio()
+
+    # Convert logical to physical coordinates (only for cursor position)
+    physical_cursor_pos = (int(logical_cursor_pos[0] * scaling_factor), int(logical_cursor_pos[1] * scaling_factor))
+
+    return physical_cursor_pos, scaling_factor, screen
