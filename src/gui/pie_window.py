@@ -5,9 +5,9 @@ from typing import Dict, Tuple, Optional, Type, List
 
 import win32con
 import win32gui
-from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QTimer, QRect, pyqtSlot
+from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QTimer, pyqtSlot
 from PyQt6.QtGui import QKeyEvent, QCursor, QGuiApplication, QScreen
-from PyQt6.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView
+from PyQt6.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsView
 
 from src.data.button_info import ButtonInfo
 from src.data.config import CONFIG
@@ -68,8 +68,6 @@ class PieWindow(QMainWindow):
         self.auto_refresh_timer.timeout.connect(self.auto_refresh)
         self.auto_refresh_timer.timeout.connect(self.handle_monitor_setup_change)
         self.auto_refresh_timer.start(CONFIG.REFRESH_INTERVAL)  # Periodic refresh
-        screen = QApplication.primaryScreen()
-        screen.geometryChanged.connect(self.handle_geometry_change)
 
     def initialize_ui(self):
         """Set up all UI components and data structures."""
@@ -83,13 +81,6 @@ class PieWindow(QMainWindow):
         self.setWindowTitle(f"{CONFIG.INTERNAL_PROGRAM_NAME} - Main")
         # Set the default cursor (normal arrow cursor)
         self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))  # Set the normal cursor
-        # Get the combined geometry of all screens
-        virtual_geometry = self._get_virtual_geometry()
-
-        # Set the position and size to cover all screens
-        self.setGeometry(virtual_geometry)
-        self.view.setGeometry(0, 0, virtual_geometry.width(), virtual_geometry.height())
-        self.scene.setSceneRect(0, 0, virtual_geometry.width(), virtual_geometry.height())
 
         self.view.setObjectName("PieWindow")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -158,35 +149,6 @@ class PieWindow(QMainWindow):
         """Hide the main_window instead of closing it."""
         self.hide()
         event.ignore()  # Prevent the default close behavior
-
-    def handle_geometry_change(self):
-        # Get the combined geometry of all screens
-        virtual_geometry = self._get_virtual_geometry()
-
-        # Update the main window size based on the screen geometry
-        self.setGeometry(virtual_geometry)
-
-        # Update the QGraphicsView size to match the new screen size
-        self.view.setGeometry(0, 0, virtual_geometry.width(), virtual_geometry.height())
-
-        # Update the QGraphicsScene size to match the new screen size
-        self.scene.setSceneRect(0, 0, virtual_geometry.width(), virtual_geometry.height())
-
-    @staticmethod
-    def _get_virtual_geometry():
-        """Calculate the bounding rectangle that contains all screens."""
-        # Start with an empty rectangle
-        virtual_geometry = QRect()
-
-        # Iterate through all screens and unite their geometries
-        for screen in QApplication.screens():
-            screen_geo = screen.geometry()
-            if virtual_geometry.isEmpty():
-                virtual_geometry = screen_geo
-            else:
-                virtual_geometry = virtual_geometry.united(screen_geo)
-
-        return virtual_geometry
 
     def open_special_menu(self):
         if hasattr(self, "special_menu"):
@@ -329,18 +291,15 @@ class PieWindow(QMainWindow):
         try:
             # Get the Pie Window handle and cursor position
             hwnd = int(self.winId())
-            cursor_pos = QCursor.pos()
+            global_cursor_pos = QCursor.pos()
 
-            screen, screen_geometry = self.get_screen_bounds(cursor_pos)
+            screen, screen_geometry = self.get_screen_bounds(global_cursor_pos)
 
-            virtual_geometry = self._get_virtual_geometry()
+            # Calculate the cursor position relative to the screen
+            cursor_pos = global_cursor_pos - screen_geometry.topLeft()
 
-            # Calculate the corrected position for the pie menu and move it
+            # Calculate the corrected position for the pie menu
             corrected_x, corrected_y = self.calculate_corrected_pie_menu_position(cursor_pos, pie_menu, screen_geometry)
-
-            # Ensure that the corrected position is relative to the current screen
-            corrected_x += screen_geometry.left()
-            corrected_y += screen_geometry.top()
 
             # Move the pie menu to the calculated corrected position
             pie_menu.move(corrected_x, corrected_y)
@@ -356,26 +315,33 @@ class PieWindow(QMainWindow):
             )
 
             # Teleport the cursor to the center of the pie menu
-            QCursor.setPos(pie_menu_center_x, pie_menu_center_y)
+            QCursor.setPos(screen_geometry.x() + pie_menu_center_x, screen_geometry.y() + pie_menu_center_y)
 
             # Adjust the pie menu to the screen's bounds and display it
-            self.adjust_pie_window_to_screen(virtual_geometry)
+            self.adjust_pie_window_to_screen(screen_geometry)
+
+            # Show the pie menu with fading effect
             self.setWindowOpacity(0)
             self.show()
             QTimer.singleShot(1, lambda: self.setWindowOpacity(1))
 
             self.get_pie_window_to_foreground(hwnd)
 
+            logger.debug(f"Pie menu displayed at ({corrected_x}, {corrected_y})")
+
             return cursor_pos
 
         except Exception as e:
             logger.error(f"Error showing the pie menu: {e}")
+            return None
 
-    def adjust_pie_window_to_screen(self, virtual_geometry):
+    def adjust_pie_window_to_screen(self, screen_geometry) -> None:
         """Adjust the pie window to fit the screen geometry."""
-        self.setGeometry(virtual_geometry)
-        self.view.setGeometry(virtual_geometry)
-        self.scene.setSceneRect(0, 0, virtual_geometry.width(), virtual_geometry.height())
+        # Accessing the integer values from QRect
+        self.setGeometry(screen_geometry)
+
+        self.view.setGeometry(0, 0, self.geometry().width(), self.geometry().height())
+        self.scene.setSceneRect(0, 0, self.geometry().width(), self.geometry().height())
 
     @staticmethod
     def get_screen_bounds(cursor_pos):
@@ -386,18 +352,42 @@ class PieWindow(QMainWindow):
     @staticmethod
     def calculate_corrected_pie_menu_position(cursor_pos, pie_menu, screen_geometry):
         """Calculate the corrected position for the pie menu to ensure it stays within screen bounds."""
-        screen_left, screen_top = screen_geometry.left(), screen_geometry.top()
-        screen_right, screen_bottom = screen_geometry.right(), screen_geometry.bottom()
+        # Center pie menu on cursor
+        desired_x = cursor_pos.x() - (pie_menu.width() // 2)
+        desired_y = cursor_pos.y() - (pie_menu.height() // 2)
 
-        new_x = max(screen_left, min(cursor_pos.x() - (pie_menu.width() // 2), screen_right - pie_menu.width()))
-        new_y = max(screen_top, min(cursor_pos.y() - (pie_menu.height() // 2), screen_bottom - pie_menu.height()))
+        # Calculate screen boundaries
+        screen_right = screen_geometry.width()
+        screen_bottom = screen_geometry.height()
 
-        return new_x - screen_left, new_y - screen_top
+        # Clamp to screen bounds
+        new_x = max(0, min(desired_x, screen_right - pie_menu.width()))
+        new_y = max(0, min(desired_y, screen_bottom - pie_menu.height()))
+
+        # Log if position needed to be adjusted
+        if new_x != desired_x or new_y != desired_y:
+            logger.debug("Pie menu position adjusted to fit screen boundaries")
+
+        return new_x, new_y
 
     @staticmethod
     def get_pie_window_to_foreground(hwnd):
         """Bring the pie window to the foreground and ensure it stays on top momentarily."""
-        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        for flag in [win32con.HWND_NOTOPMOST, win32con.HWND_TOPMOST, win32con.HWND_NOTOPMOST]:
-            win32gui.SetWindowPos(hwnd, flag, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
+        try:
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+            win32gui.SetWindowPos(
+                hwnd,
+                win32con.HWND_TOPMOST,
+                0, 0, 0, 0,
+                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
+            )
+            # Brief delay to ensure visibility then reset topmost state
+            QTimer.singleShot(100, lambda: win32gui.SetWindowPos(
+                hwnd,
+                win32con.HWND_NOTOPMOST,
+                0, 0, 0, 0,
+                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
+            ))
+        except Exception as e:
+            logger.warning(f"Failed to bring window to foreground: {e}")
     # endregion
