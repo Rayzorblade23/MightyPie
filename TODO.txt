@@ -1,4 +1,4 @@
-- what's up with crash log?
+- right-click in the Pie Menu doesn't work between the slices and center button
 
 IDEA:
 We could run PWAs like YouTube Music via custom run commands. Would need a new type of pie menu button.
