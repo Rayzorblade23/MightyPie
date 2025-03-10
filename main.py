@@ -95,7 +95,7 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
     return root_logger
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="MightyPie Application")
     parser.add_argument(
@@ -105,7 +105,9 @@ def parse_args():
         default="INFO",
         help="Set the logging level (default: INFO)"
     )
-    return parser.parse_args()
+    args, _ = parser.parse_known_args()  # Ignore unknown args passed on restart
+    return args
+
 
 
 def signal_handler(signal, frame):
