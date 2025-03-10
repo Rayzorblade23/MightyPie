@@ -36,13 +36,15 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 
-def setup_logging():
+def setup_logging(log_level: str = "INFO") -> logging.Logger:
     # Create logs directory if it doesn't exist
     log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
     os.makedirs(log_dir, exist_ok=True)
 
     # Set up log file path
     log_file = os.path.join(log_dir, 'mightypie.log')
+
+    level = getattr(logging, log_level.upper(), logging.DEBUG)  # Convert string to logging level
 
     # Configure logging
     handler = RotatingFileHandler(
@@ -58,7 +60,7 @@ def setup_logging():
 
     # Root logger
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)  # Set default level
+    root_logger.setLevel(level)  # Set dynamically
     root_logger.addHandler(handler)
 
     # Also log to console during development
@@ -140,7 +142,9 @@ class SingleInstance:
 
 if __name__ == "__main__":
     # Initialize logging
-    logger = setup_logging()
+    log_level = sys.argv[1] if len(sys.argv) > 1 else "INFO"  # Default to INFO
+
+    logger = setup_logging(log_level)
     logger.info("Starting MightyPie application")
 
     # Store instance in sys for global access

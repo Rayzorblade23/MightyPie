@@ -1,17 +1,10 @@
-
+- what's up with crash log?
 
 IDEA:
 We could run PWAs like YouTube Music via custom run commands. Would need a new type of pie menu button.
 
 
-BUGS:
-- LaunchApp might not bring app to foreground
-
-
-
-BUGS in BUILD:
-
 NUISANCE:
 The App Info Cache informs what programs can be chosen for the Show Program Buttons.
-But it accumulates all kinds of stuff you would never want to launch.
-Maybe compare the .exes to something that says it's a more permanent thing?
+But it accumulates all kinds of stuff you would never want to launch that isn't filtered out.
+Maybe compare the .exes to something that says it's a more permanent program?
