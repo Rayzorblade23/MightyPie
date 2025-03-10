@@ -1,15 +1,41 @@
+import sys
 import faulthandler
+import traceback
 
-faulthandler.enable()
-
-# Redirect crashes to a file for debugging
+# Open the file to write crash logs
 with open("crash_log.txt", "w") as f:
-    faulthandler.enable(f)
+    # Enable faulthandler to write crash info to this file
+    faulthandler.enable(file=f, all_threads=True)
+
+    # Store the original stderr
+    original_stderr = sys.stderr
+
+    # Redirect standard error to the file
+    sys.stderr = f
+
+    try:
+        # Your actual application code goes here
+        pass  # Replace with your real code
+    except Exception as e:
+        # Log the exception
+        print(f"ERROR: {type(e).__name__}: {e}", file=f)
+        traceback.print_exc(file=f)
+
+        # Manually dump traceback
+        faulthandler.dump_traceback(file=f)
+
+        # Restore original stderr before re-raising
+        sys.stderr = original_stderr
+
+        # Re-raise the exception
+        raise
+    finally:
+        # Make sure stderr is restored even if no exception occurs
+        sys.stderr = original_stderr
 
 import atexit
 import os
 import signal
-import sys
 import tempfile
 import threading
 import warnings
@@ -17,9 +43,6 @@ import warnings
 from src.events import ShowWindowEvent
 from src.global_mouse_filter import GlobalMouseFilter
 from src.helper.keyboard_listener import HotkeyListener
-
-# warnings.simplefilter("ignore", UserWarning)
-# sys.coinit_flags = 2
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -33,6 +56,7 @@ from src.gui.pie_window import PieWindow
 import ctypes
 
 import logging
+import argparse
 from logging.handlers import RotatingFileHandler
 
 
@@ -44,7 +68,7 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
     # Set up log file path
     log_file = os.path.join(log_dir, 'mightypie.log')
 
-    level = getattr(logging, log_level.upper(), logging.DEBUG)  # Convert string to logging level
+    level = getattr(logging, log_level.upper(), logging.INFO)  # Convert string to logging level
 
     # Configure logging
     handler = RotatingFileHandler(
@@ -69,6 +93,19 @@ def setup_logging(log_level: str = "INFO") -> logging.Logger:
     root_logger.addHandler(console)
 
     return root_logger
+
+
+def parse_args():
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description="MightyPie Application")
+    parser.add_argument(
+        "--loglevel",
+        type=str,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+        help="Set the logging level (default: INFO)"
+    )
+    return parser.parse_args()
 
 
 def signal_handler(signal, frame):
@@ -142,9 +179,9 @@ class SingleInstance:
 
 if __name__ == "__main__":
     # Initialize logging
-    log_level = sys.argv[1] if len(sys.argv) > 1 else "INFO"  # Default to INFO
-
-    logger = setup_logging(log_level)
+    args = parse_args()
+    logger = setup_logging(args.loglevel)
+    logger.info(f"Logging setup complete with level: {args.loglevel}")
     logger.info("Starting MightyPie application")
 
     # Store instance in sys for global access
