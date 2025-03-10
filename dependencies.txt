@@ -1,0 +1,8 @@
+keyboard==0.13.5
+mouse==0.7.1
+pillow==11.1.0
+psutil==6.1.1
+PyAutoGUI==0.9.54
+pynput==1.7.7
+PyQt6==6.8.0
+pywinauto==0.6.9
