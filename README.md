@@ -4,7 +4,7 @@ MightyPie started as a Window Switcher for Windows 11, inspired by Blender's pie
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/rayzorblade23)
 
-![Preview](assets\preview_images/Pie_Preview_1.png)
+![Preview](assets/preview_images/Pie_Preview_1.png)
 
 ### Disclaimer
 
@@ -81,7 +81,7 @@ MightyPie works with a cache (App Info Cache) that holds the info (name, path, i
  
 
 
-![Special Menu Preview](assets\preview_images/Special_Menu_Preview_1.png)
+![Special Menu Preview](assets/preview_images/Special_Menu_Preview_1.png)
 
 ## Build Instructions
 
