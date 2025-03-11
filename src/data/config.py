@@ -31,7 +31,7 @@ class BaseConfig:
     CENTER_BUTTON: str = "forward"
 
     # Monitor and display settings
-    SHOW_MONITOR_SECTION: bool = True
+    SHOW_MONITOR_SECTION: bool = False
     MONITOR_SHORTCUT_1: Tuple[str, str] = ("win", "num1")
     MONITOR_SHORTCUT_2: Tuple[str, str] = ("win", "num2")
     MONITOR_SHORTCUT_3: Tuple[str, str] = ("win", "num3")

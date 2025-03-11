@@ -62,11 +62,11 @@ MightyPie works with a cache (App Info Cache) that holds the info (name, path, i
      - Open Task Manager
      - Open Sound Settings
      - Open Network Settings
-     - Open Projection Settings (monitor switching)
+     - Open Projection Settings (Windows monitor switching)
      - Open an explorer window
    
 
-   - **Monitor Switching:** The Monitor Switching area can be turned off in the settings. It uses my specific shortcuts set in DisplayFusion to switch screens and is probably of use for anyone else. (Win key + 1 to 3)
+   - **Monitor Switching:** The Monitor Switching area is turned off in the settings by default. It uses my specific shortcuts set in DisplayFusion to switch screens and is probably of use for anyone else. (You can change the shortcuts though.)
 
 
    - **MightyPie Shortcuts:**
