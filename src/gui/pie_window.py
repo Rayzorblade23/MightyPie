@@ -273,7 +273,6 @@ class PieWindow(QMainWindow):
         index = self.active_child - 1 - offset
 
         if 0 <= index < max_menus and index < len(menus):  # Ensure index is within both CONFIG and actual menu list
-            print(index)
             return menus[index]
 
         logger.error(f"Active child index is out of range for {pie_menu_type}: {index}")

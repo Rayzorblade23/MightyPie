@@ -1,5 +1,6 @@
 from typing import Tuple, TYPE_CHECKING, cast
 
+from PyQt6.QtGui import QRegion
 from pynput.mouse import Controller, Button
 
 from src.data.config import CONFIG
@@ -32,3 +33,13 @@ class PieMenuMiddleButton(ExpandedButton):
         self.middle_clicked.connect(lambda: self.main_window.open_special_menu())
 
         self.lower()
+
+    def resizeEvent(self, event):
+        """Reapply circular mask whenever the size changes."""
+        super().resizeEvent(event)
+        self.apply_circle_mask()
+
+    def apply_circle_mask(self):
+        """Apply a circular mask to the button."""
+        mask = QRegion(0, 0, self.width(), self.height(), QRegion.RegionType.Ellipse)
+        self.setMask(mask)

@@ -77,7 +77,7 @@ class PieMenu(QWidget):
         self.middle_button = PieMenuMiddleButton(
             text="",
             object_name="middleButton",
-            pos=(self.width() // 2 - CONFIG.INTERNAL_INNER_RADIUS, self.height() // 2 - CONFIG.INTERNAL_INNER_RADIUS),
+            pos=(self.rect().center().x() - CONFIG.INTERNAL_INNER_RADIUS, self.rect().center().y() - CONFIG.INTERNAL_INNER_RADIUS),
             parent=self
         )
 

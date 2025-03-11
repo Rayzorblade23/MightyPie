@@ -70,7 +70,7 @@ class AreaButton(QPushButton):
         # Compute distance and check if smaller than inner radius
         r = math.sqrt(dx ** 2 + dy ** 2)
 
-        if r < CONFIG.INTERNAL_INNER_RADIUS * 2:
+        if r < CONFIG.INTERNAL_INNER_RADIUS:
             return -1
 
         # Check if the angle is within the sector
