@@ -3,6 +3,7 @@ from typing import Callable, Union, Dict
 
 import pyautogui
 from PyQt6.QtWidgets import QApplication
+from pynput.mouse import Controller, Button
 
 from src.data.icon_paths import EXTERNAL_ICON_PATHS
 from src.utils.functions_utils import close_window_at_cursor, restore_last_minimized_window, minimize_window_at_cursor, \
@@ -26,6 +27,9 @@ class ButtonFunctions:
             return
         self.__initialized = True
 
+        # Create an instance of the mouse controller once
+        controller = Controller()
+
         self.functions: Dict[str, Dict[str, Union[str, Callable, str]]] = {
             "toggle_maximize_window": {
                 "text_1": "Maximize",
@@ -39,12 +43,12 @@ class ButtonFunctions:
             },
             "navigation_forward": {
                 "text_1": "Forward",
-                "action": lambda: pyautogui.hotkey("alt", "right"),
+                "action": lambda: (controller.press(Button.x2), controller.release(Button.x2)),
                 "icon": EXTERNAL_ICON_PATHS.get("arrow-right"),
             },
             "navigation_backwards": {
                 "text_1": "Backwards",
-                "action": lambda: pyautogui.hotkey("alt", "left"),
+                "action": lambda: (controller.press(Button.x1), controller.release(Button.x1)),
                 "icon": EXTERNAL_ICON_PATHS.get("arrow-left"),
             },
             "copy": {
