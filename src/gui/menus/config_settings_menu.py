@@ -134,13 +134,15 @@ class ConfigSettingsWindow(QMainWindow):
         elif setting['type'] == "<class 'str'>":  # Handle string type (color hex code)
             input_widget = QLineEdit(str(setting['value']))
 
+            color_palette_icon = get_icon("palette", is_inverted=True)
+
             # Create a color picker button if it's a hex color
             if input_widget.text().startswith("#"):
                 # Create a color picker button
                 color_picker_button = QPushButton()
                 color_picker_button.setToolTip("Pick Color")
-                color_picker_button.setIcon(get_icon("palette", is_inverted=True))
                 color_picker_button.setFixedSize(24, 20)
+                color_picker_button.setIcon(color_palette_icon)
                 color_picker_button.setObjectName("buttonConfigSingleResetButton")
 
                 color_picker_button.clicked.connect(lambda: self.pick_color(input_widget, color_picker_button))

@@ -2,12 +2,11 @@
 import logging
 from collections import defaultdict
 
-from PyQt6.QtGui import QPixmap, QIcon
+from PyQt6.QtGui import QPixmap, QIcon, QImage
 
 from src.data.icon_paths import EXTERNAL_ICON_PATHS
 
 logger = logging.getLogger(__name__)
-
 
 # Cache to hold icons
 icon_cache = defaultdict(dict)
@@ -44,40 +43,51 @@ def get_icon(icon_name: str, is_inverted: bool = False):
 def invert_icon(icon_path: str, return_pixmap: bool = False):
     """Invert the colors of the icon more efficiently, preserving the alpha channel."""
     logger.debug(f"inverting icon {icon_path}")
+
     # Load the icon as QPixmap
     pixmap = QPixmap(icon_path)
 
     # Convert QPixmap to QImage for manipulation
     image = pixmap.toImage()
 
-    # Access the raw pixel data using QImage.bits()
-    image_bits = image.bits()
-    image_bits.setsize(image.sizeInBytes())
+    # Convert the image to a format that supports 32-bit color with alpha (RGBA)
+    # Use:
+    if image.format() != QImage.Format.Format_ARGB32:
+        image = image.convertToFormat(QImage.Format.Format_ARGB32)
 
-    # Create a memoryview of the image bits cast as unsigned bytes.
-    data = memoryview(image_bits).cast("B")
-
+    # Access the pixel data directly using bits()
     width, height = image.width(), image.height()
+
+    # Get a pointer to the pixel data
+    ptr = image.bits()
+    ptr.setsize(image.bytesPerLine() * image.height())
+    data = memoryview(ptr).cast("B")
+
+    # Iterate over the pixels and modify them
     for y in range(height):
         for x in range(width):
-            # Calculate the index of the pixel in the data array (each pixel is 4 bytes: RGBA)
-            pixel_index = (y * width + x) * 4
+            # Calculate the position of the pixel in the raw data
+            pixel_index = (y * width + x) * 4  # 4 bytes per pixel (RGBA)
 
-            # Get the RGBA values (as integers)
+            # Use:
             r = data[pixel_index]
             g = data[pixel_index + 1]
             b = data[pixel_index + 2]
             a = data[pixel_index + 3]
 
-            # Skip fully transparent pixels
-            if a == 0:
+            if a == 0:  # Skip fully transparent pixels
                 continue
 
-            # Invert the RGB values
-            data[pixel_index] = 255 - r
-            data[pixel_index + 1] = 255 - g
-            data[pixel_index + 2] = 255 - b
-            # Alpha remains unchanged
+            # Invert RGB values
+            inverted_r = 255 - r
+            inverted_g = 255 - g
+            inverted_b = 255 - b
+
+            # Use:
+            data[pixel_index] = inverted_r
+            data[pixel_index + 1] = inverted_g
+            data[pixel_index + 2] = inverted_b
+            data[pixel_index + 3] = a
 
     # Convert the modified QImage back to QPixmap
     inverted_pixmap = QPixmap.fromImage(image)
