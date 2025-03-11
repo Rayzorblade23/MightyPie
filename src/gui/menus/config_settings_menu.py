@@ -4,9 +4,10 @@ from PyQt6.QtCore import Qt, QEvent
 from PyQt6.QtGui import QColor, QKeySequence
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
                              QLabel, QLineEdit, QCheckBox, QSpinBox, QWidget,
-                             QPushButton, QScrollArea, QMessageBox, QSizePolicy, QColorDialog)
+                             QPushButton, QScrollArea, QMessageBox, QSizePolicy, QColorDialog, QComboBox)
 
 from src.data.config import CONFIG, DefaultConfig
+from src.gui.buttons.pie_menu_middle_button import PieMenuMiddleButton
 from src.utils.file_handling_utils import get_resource_path
 from src.utils.icon_utils import get_icon
 from src.utils.program_utils import restart_program
@@ -95,6 +96,13 @@ class ConfigSettingsWindow(QMainWindow):
             input_widget = NoScrollSpinBox()
             input_widget.setRange(1, 9999)  # Set appropriate min/max range
             input_widget.setValue(setting['value'])
+            row_layout.addWidget(input_widget)
+
+        elif setting['name'] == "CENTER_BUTTON":  # Check if the setting is CENTER_BUTTON
+            input_widget = QComboBox()
+            for action in PieMenuMiddleButton.button_map.keys():
+                input_widget.addItem(action)
+            input_widget.setCurrentText(setting['value'])  # Set the current value
             row_layout.addWidget(input_widget)
 
 
@@ -273,6 +281,8 @@ class ConfigSettingsWindow(QMainWindow):
             return widget.value()
         elif isinstance(widget, QLineEdit):
             return widget.text()
+        elif isinstance(widget, QComboBox):  # Handle QComboBox
+            return widget.currentText()  # Get the current selected text of the combo box
         return None
 
     def eventFilter(self, obj, event):

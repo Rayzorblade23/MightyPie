@@ -10,8 +10,6 @@ MightyPie started as a Window Switcher for Windows 11, inspired by Blender's pie
 
 This is my first "real" program and there are almost certainly bugs and rough edges here and there, so use at your own discretion. MightyPie is functional, but I don't really plan on developing it into a full, polished release. I welcome feedback and contributions, but I may not actively maintain or expand the project beyond its current state.
 
-There are also some functions I included specifically for myself, like _Left-click_ on the center button of a Pie Menu just executes "forwards". This is because in my setup opening Pie Menus uses the Forward button on my mouse.
-
 ## Features
 
 *   **Multiple Pie Menus:** There are two Pie Menus with assignable hotkeys. Each has three layers of eight configurable buttons.
@@ -42,7 +40,7 @@ MightyPie works with a cache (App Info Cache) that holds the info (name, path, i
     - _Left-click_ is the normal function.
     - _Middle-click_ on Show Window Buttons will close that window.
     - _Right-click_ anywhere will close the Pie Menu.
-    - as stated in the [Disclaimer](#disclaimer), _Left-click_ on the Center Button of a Pie Menu executes "forward" action in most programs (it actually just triggers Alt + Right-Arrow)
+    - _Left-click_ on the Center Button of a Pie Menu triggers the "forward" mouse button by default (because I am using that for opening the Pie Menu and this way I still have that functionality). You can also set it to "backward" or nothing.
 
 
 5.  **Special Menu:** More Windows functions and settings.
@@ -75,7 +73,7 @@ MightyPie works with a cache (App Info Cache) that holds the info (name, path, i
      - Clear / Reset the App Info Cache
      - Re-assign all Buttons: will re-assign Show Any Window Buttons starting on the lower Pie Menu levels first. (normally windows will stay on one button, once assigned)
      - Open the Button Config: Here you can assign the functions of all buttons in all Pie Menus
-     - Open App Settings: General Settings of MightyPie
+     - Open App Settings: General Settings of MightyPie (settings require a restart to take effect)
      - Restart
      - Quit
  
