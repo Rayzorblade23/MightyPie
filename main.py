@@ -1,3 +1,21 @@
+# Copyright (C) 2025 Rayzorblade23
+#
+# This file is part of MightyPie.
+#
+# MightyPie is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+
 import argparse
 import atexit
 import ctypes
@@ -26,6 +44,7 @@ from src.utils.taskbar_hide_utils import set_taskbar_opacity, show_taskbar
 
 def setup_crash_logging(log_file: str) -> None:
     """Sets up crash logging to a specific file."""
+
     class DualOutput:
         def __init__(self, file1, file2):
             self.file1 = file1
@@ -63,6 +82,7 @@ def setup_crash_logging(log_file: str) -> None:
         faulthandler.disable()
 
     atexit.register(restore_stderr)
+
 
 def setup_logging(log_level: str = "INFO") -> logging.Logger:
     # Create logs directory if it doesn't exist
@@ -262,7 +282,7 @@ if __name__ == "__main__":
         sys.exit(app.exec())
 
     except Exception as e:
-            print(f"ERROR: {type(e).__name__}: {e}", file=sys.stderr)
-            traceback.print_exc(file=sys.stderr)
-            faulthandler.dump_traceback(file=sys.stderr)
-            raise
+        print(f"ERROR: {type(e).__name__}: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        faulthandler.dump_traceback(file=sys.stderr)
+        raise
