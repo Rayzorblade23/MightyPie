@@ -98,6 +98,13 @@ I built MightyPie from _main.py_ with PyInstaller with the following arguments:
 -y "$FileName$"
 ```
 
+## Known Issues / Limitations
+
+- Sometimes a window is not being focused first try. Tried a lot of things to get this consistent but it's still not a 100%
+
+
+- Starting MightyPie on a screen with DPI scaling works well, but switching to a screen with it causes blurriness. Thus, MightyPie  restarts any time the screen setup changes. I also tried spanning the Pie Window (fullscreen window that spawns the Pie Menu) across all screens so an opened menu can be interacted with from other screens. This leads to offset glitches as well as scaling/blurriness issues when one of the screen uses DPI scaling, so it's not implemented anymore.
+
 ## License
 
 MightyPie is licensed under the [GPL3.0 License](https://www.gnu.org/licenses/gpl-3.0.en.html), that can also be found here: [`licenses/GPL_3_0.txt`](licenses/GPL_3_0.txt).

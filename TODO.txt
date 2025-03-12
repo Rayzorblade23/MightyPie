@@ -1,4 +1,4 @@
-- right-click in the Pie Menu doesn't work between the slices and center button
+- Pie Menu is stuck in halfway-animation when drag selected too quick
 
 IDEA:
 We could run PWAs like YouTube Music via custom run commands. Would need a new type of pie menu button.
