@@ -134,7 +134,13 @@ class PieWindow(QMainWindow):
                 active_section = pie_menu.area_button.current_active_section
                 if active_section != -1:
                     pie_menu.pie_buttons[active_section].trigger_left_click_action()
-            self.hide()
+
+            try:
+                # call the customized self for reliable cleanup
+                self.hide()
+            except Exception as e:
+                logger.error(f"Error hiding pie window: {e}")
+
             return True
         return super().event(event)
 
@@ -149,6 +155,30 @@ class PieWindow(QMainWindow):
         """Hide the main_window instead of closing it."""
         self.hide()
         event.ignore()  # Prevent the default close behavior
+
+    def hide(self) -> None:
+        """Override hide() to ensure proper cleanup sequence."""
+        try:
+            # First, hide all pie menus
+            for child in self.children():
+                if isinstance(child, PieMenu):
+                    try:
+                        child.hide()
+                    except Exception as e:
+                        logger.error(f"Error hiding pie menu: {e}")
+
+            # Reset cursor displacement
+            self.cursor_displacement = (0, 0)
+
+            super().hide()
+
+            # Set window opacity to 0 for visual feedback
+            self.setWindowOpacity(0)
+
+        except Exception as e:
+            logger.error(f"Error in hide(): {e}")
+            self.setVisible(False)
+            super().hide()
 
     def open_special_menu(self):
         if hasattr(self, "special_menu"):

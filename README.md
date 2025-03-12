@@ -1,6 +1,6 @@
 # MightyPie - Customizable Pie Menu
 
-MightyPie started as a Window Switcher for Windows 11, inspired by Blender's pie menus. It now offers a few more useful functions.
+MightyPie started as a Window Switcher for Windows 11, inspired by Blender's pie menus. It now offers a few more useful functions, like launching programs, media control, minimizing/maximizing windows under the cursor and more.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/rayzorblade23)
 
