@@ -48,23 +48,27 @@ def setup_crash_logging(log_file: str) -> None:
     class DualOutput:
         def __init__(self, file1, file2):
             self.file1 = file1
-            self.file2 = file2
+            self.file2 = file2 if file2 else None
 
         def write(self, data):
             self.file1.write(data)
-            self.file2.write(data)
             self.file1.flush()
-            self.file2.flush()
+            if self.file2:
+                self.file2.write(data)
+                self.file2.flush()
 
         def flush(self):
             self.file1.flush()
-            self.file2.flush()
+            if self.file2:
+                self.file2.flush()
 
         def fileno(self):
-            return self.file1.fileno()
+            if self.file2:
+                return self.file2.fileno()  # Avoid invalid fileno calls
+            raise OSError("No valid stderr file descriptor")
 
-    # Store the original stderr
-    original_stderr = sys.stderr
+    # Store the original stderr if it exists
+    original_stderr = sys.stderr if sys.stderr else None
 
     # Create crash log file
     crash_file = open(log_file, "w")
@@ -78,7 +82,7 @@ def setup_crash_logging(log_file: str) -> None:
     def restore_stderr():
         if not crash_file.closed:
             crash_file.close()
-        sys.stderr = original_stderr
+        sys.stderr = original_stderr if original_stderr else open(os.devnull, "w")
         faulthandler.disable()
 
     atexit.register(restore_stderr)
