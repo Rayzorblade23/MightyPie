@@ -2,7 +2,7 @@ import logging
 
 from PyQt6.QtCore import Qt, QEvent
 from PyQt6.QtGui import QColor, QKeySequence
-from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout,
+from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout,
                              QLabel, QLineEdit, QCheckBox, QSpinBox, QWidget,
                              QPushButton, QScrollArea, QMessageBox, QSizePolicy, QColorDialog, QComboBox)
 
@@ -20,8 +20,10 @@ class NoScrollSpinBox(QSpinBox):
     def wheelEvent(self, event):
         event.ignore()  # Prevents the wheel from changing the selection
 
+
 class NoScrollComboBox(QComboBox):
     """QComboBox that ignores mouse wheel scrolling."""
+
     def wheelEvent(self, event) -> None:
         """Disables scrolling in the dropdown box."""
         event.ignore()
@@ -42,13 +44,17 @@ class ConfigSettingsWindow(QMainWindow):
         # Scroll area for settings
         scroll_area = QScrollArea()
         scroll_content = QWidget()
-        settings_layout = QVBoxLayout()
+
+        # Use a grid layout for uniform columns
+        settings_layout = QGridLayout()
+        settings_layout.setColumnStretch(0, 1)  # Label column
+        settings_layout.setColumnStretch(1, 2)  # Input field column
+        settings_layout.setColumnStretch(2, 0)  # Reset button column (minimal width)
 
         # Dynamic settings generation
         self.setting_widgets = {}
-        for setting in CONFIG.get_settings_for_ui():
-            setting_row = self._create_setting_input(setting)
-            settings_layout.addLayout(setting_row)
+        for row, setting in enumerate(CONFIG.get_settings_for_ui()):
+            self._create_setting_input(setting, settings_layout, row)
 
         scroll_content.setLayout(settings_layout)
         scroll_area.setWidget(scroll_content)
@@ -83,39 +89,37 @@ class ConfigSettingsWindow(QMainWindow):
         main_layout.addWidget(scroll_area)
         main_layout.addLayout(button_layout)
 
-
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
 
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
 
-    def _create_setting_input(self, setting):
-        row_layout = QHBoxLayout()
-
+    def _create_setting_input(self, setting, layout: QGridLayout, row):
         # Label
-        label = QLabel(setting['name'])
+        label = QLabel(CONFIG.INTERNAL_SETTING_DISPLAY_NAMES.get(setting['name'], setting['name']))
         label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        row_layout.addWidget(label)
+        label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        layout.addWidget(label, row, 0)
 
         # Input based on type
         if setting['type'] == "<class 'bool'>":
             input_widget = QCheckBox()
             input_widget.setChecked(setting['value'])
-            row_layout.addWidget(input_widget)
+            layout.addWidget(input_widget, row, 1)
+
         elif setting['type'] in ["<class 'int'>", "<class 'float'>"]:
             input_widget = NoScrollSpinBox()
             input_widget.setRange(1, 9999)  # Set appropriate min/max range
             input_widget.setValue(setting['value'])
-            row_layout.addWidget(input_widget)
+            layout.addWidget(input_widget, row, 1)
 
         elif setting['name'] == "CENTER_BUTTON":  # Check if the setting is CENTER_BUTTON
             input_widget = NoScrollComboBox()
             for action in PieMenuMiddleButton.button_map.keys():
                 input_widget.addItem(action)
             input_widget.setCurrentText(setting['value'])  # Set the current value
-            row_layout.addWidget(input_widget)
-
+            layout.addWidget(input_widget, row, 1)
 
         elif setting['name'] == "HOTKEY_PRIMARY":
             input_widget = QLineEdit(str(setting['value']))
@@ -124,8 +128,7 @@ class ConfigSettingsWindow(QMainWindow):
 
             # Temporarily store the hotkey input for HOTKEY_PRIMARY
             self._temp_hotkey["HOTKEY_PRIMARY"] = setting['value']
-
-            row_layout.addWidget(input_widget)
+            layout.addWidget(input_widget, row, 1)
 
         elif setting['name'] == "HOTKEY_SECONDARY":
             input_widget = QLineEdit(str(setting['value']))
@@ -134,23 +137,23 @@ class ConfigSettingsWindow(QMainWindow):
 
             # Temporarily store the hotkey input for HOTKEY_SECONDARY
             self._temp_hotkey["HOTKEY_SECONDARY"] = setting['value']
-
-            row_layout.addWidget(input_widget)
+            layout.addWidget(input_widget, row, 1)
 
         elif setting['type'] == "<class 'str'>":  # Handle string type (color hex code)
-            input_widget = QLineEdit(str(setting['value']))
+            if str(setting['value']).startswith("#"):  # It's a color
+                # Create a horizontal layout for color field and picker button
+                color_field_layout = QHBoxLayout()
+                color_field_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
 
-            color_palette_icon = get_icon("palette", is_inverted=True)
+                input_widget = QLineEdit(str(setting['value']))
+                color_palette_icon = get_icon("palette", is_inverted=True)
 
-            # Create a color picker button if it's a hex color
-            if input_widget.text().startswith("#"):
                 # Create a color picker button
                 color_picker_button = QPushButton()
                 color_picker_button.setToolTip("Pick Color")
                 color_picker_button.setFixedSize(24, 20)
                 color_picker_button.setIcon(color_palette_icon)
                 color_picker_button.setObjectName("buttonConfigSingleResetButton")
-
                 color_picker_button.clicked.connect(lambda: self.pick_color(input_widget, color_picker_button))
 
                 # Update the color preview
@@ -159,20 +162,22 @@ class ConfigSettingsWindow(QMainWindow):
                 # Connect the QLineEdit to update the color picker button
                 input_widget.textChanged.connect(lambda: self.update_color_preview(input_widget, color_picker_button))
 
-                # Create a layout specifically for the color field and the picker button
-                color_field_and_picker_layout = QHBoxLayout()
-                color_field_and_picker_layout.addWidget(input_widget)
-                color_field_and_picker_layout.addWidget(color_picker_button)
+                color_field_layout.addWidget(input_widget)
+                color_field_layout.addWidget(color_picker_button)
 
-                # Add the color picker layout to the main row layout
-                row_layout.addLayout(color_field_and_picker_layout)
+                # Add the layout to the grid
+                color_widget = QWidget()
+                color_widget.setLayout(color_field_layout)
+                layout.addWidget(color_widget, row, 1)
             else:
-                row_layout.addWidget(input_widget)
+                input_widget = QLineEdit(str(setting['value']))
+                layout.addWidget(input_widget, row, 1)
         else:
             input_widget = QLineEdit(str(setting['value']))
-            row_layout.addWidget(input_widget)
+            layout.addWidget(input_widget, row, 1)
 
         input_widget.setObjectName(setting['name'])
+        input_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setting_widgets[setting['name']] = input_widget
 
         # Reset button for this specific setting
@@ -183,14 +188,7 @@ class ConfigSettingsWindow(QMainWindow):
         reset_button.setObjectName("buttonConfigSingleResetButton")
         reset_button.clicked.connect(
             lambda _, widget=input_widget, setting_name=setting['name']: self.reset_single_setting(widget, setting_name))
-        row_layout.addWidget(reset_button)
-
-        # Ensure that all widgets in this row are stretched evenly
-        label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        input_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        reset_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-
-        return row_layout
+        layout.addWidget(reset_button, row, 2)
 
     @staticmethod
     def update_color_preview(input_widget, color_picker_button):
@@ -260,6 +258,8 @@ class ConfigSettingsWindow(QMainWindow):
                     widget.setText(str(default_value))
                     if name in {"HOTKEY_PRIMARY", "HOTKEY_SECONDARY"}:
                         self._temp_hotkey[name] = default_value
+                elif isinstance(widget, NoScrollComboBox):
+                    widget.setCurrentText(str(default_value))
 
                 # Update the actual configuration
                 CONFIG.update_setting(name, default_value)
@@ -282,6 +282,8 @@ class ConfigSettingsWindow(QMainWindow):
             # Update the temporary hotkey for hotkey fields
             if setting_name in {"HOTKEY_PRIMARY", "HOTKEY_SECONDARY"}:
                 self._temp_hotkey[setting_name] = default_value
+        elif isinstance(widget, NoScrollComboBox):
+            widget.setCurrentText(str(default_value))
 
         CONFIG.update_setting(setting_name, default_value)
         CONFIG.save_config()

@@ -24,7 +24,7 @@ class BaseConfig:
     SHOW_SETTINGS_AT_STARTUP: bool = True
     REFRESH_INTERVAL: int = 3000
     PIE_MENU_VIS_DELAY: int = 0
-    TASKBAR_OPACITY: int = 150
+    TASKBAR_OPACITY: int = 255
     HOTKEY_PRIMARY: str = "F14"
     HOTKEY_SECONDARY: str = "F13"
     HIDE_WINDOW_WHEN_ALREADY_FOCUSED: bool = True
@@ -62,6 +62,35 @@ class BaseConfig:
     SHOW_PROGRAM_BUTTON_BORDER_COLOR: str = "#fa9fa4"
     LAUNCH_PROGRAM_BUTTON_BORDER_COLOR: str = "#f37fc0"
     CALL_FUNCTION_BUTTON_BORDER_COLOR: str = "#71b8ed"
+
+    INTERNAL_SETTING_DISPLAY_NAMES = {
+        # Runtime configuration fields
+        "SHOW_SETTINGS_AT_STARTUP": "Show Settings at Startup",
+        "REFRESH_INTERVAL": "Refresh Interval (ms) for open windows",
+        "PIE_MENU_VIS_DELAY": "Delay showing Pie Menu (ms)",
+        "TASKBAR_OPACITY": "Taskbar Opacity (0-255)",
+        "HOTKEY_PRIMARY": "Hotkey to open Primary Pie Menu",
+        "HOTKEY_SECONDARY": "Hotkey to open Secondary Pie Menu",
+        "HIDE_WINDOW_WHEN_ALREADY_FOCUSED": "If Window is already focused, hide instead",
+        "REASSIGN_BTN_IDS_HIGHER_THAN": "Re-assign Button IDs Higher Than",
+        "CENTER_BUTTON": "Center Button Action",
+
+        # Monitor and display settings
+        "SHOW_MONITOR_SECTION": "Show Monitor Switching Section",
+        "MONITOR_SHORTCUT_1": "Monitor Shortcut 1",
+        "MONITOR_SHORTCUT_2": "Monitor Shortcut 2",
+        "MONITOR_SHORTCUT_3": "Monitor Shortcut 3",
+
+        # Color configurations
+        "ACCENT_COLOR": "Accent Color",
+        "BG_COLOR": "Background Color",
+        "RING_FILL": "Ring Fill Color",
+        "RING_STROKE": "Ring Stroke Color",
+        "SHOW_ANY_WINDOW_BUTTON_BORDER_COLOR": "Any-Window-Button Border Color",
+        "SHOW_PROGRAM_BUTTON_BORDER_COLOR": "Program-Button-Border Color",
+        "LAUNCH_PROGRAM_BUTTON_BORDER_COLOR": "Launch-Program-Button Border Color",
+        "CALL_FUNCTION_BUTTON_BORDER_COLOR": "Call-Function-Button Border Color"
+    }
 
 
 @dataclass

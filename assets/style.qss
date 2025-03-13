@@ -227,8 +227,12 @@ QComboBox QAbstractItemView::item {
     padding-bottom: 5px;
 }
 
-NoScrollSpinbox {
-    background-color: {{bg_color}};
+QSpinBox {
+    background-color: #101010;
+}
+
+QLineEdit {
+    background-color: #101010;
 }
 
 #titleLabel{
