@@ -14,6 +14,7 @@ class BaseConfig:
     """Base class with core, runtime, and UI configuration fields."""
 
     # Core configuration fields
+    VERSION = "1.0.0"
     INTERNAL_PROGRAM_NAME: str = "MightyPie"
     INTERNAL_CACHE_FILENAME: str = "apps_info_cache.json"
     INTERNAL_BUTTON_CONFIG_FILENAME: str = "button_config.json"

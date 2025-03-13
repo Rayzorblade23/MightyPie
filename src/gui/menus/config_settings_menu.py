@@ -74,9 +74,15 @@ class ConfigSettingsWindow(QMainWindow):
         button_layout.addWidget(save_and_restart_button)
         button_layout.addWidget(reset_button)
 
+        # Version label
+        version_label = QLabel(f"Version: {CONFIG.VERSION}")
+        version_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+
         # Assemble main layout
+        main_layout.addWidget(version_label)
         main_layout.addWidget(scroll_area)
         main_layout.addLayout(button_layout)
+
 
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
