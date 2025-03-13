@@ -150,6 +150,8 @@ def create_folder_buttons(parent: QWidget) -> QHBoxLayout:
     layout_app_folders.addWidget(app_config_folder_button)
     layout_app_folders.addWidget(program_folder_button)
 
+    layout_app_folders.setContentsMargins(10, 10, 10, 10)  # Adjust values as needed
+
     return layout_app_folders
 
 
@@ -173,7 +175,9 @@ def setup_startup_section(parent: QWidget) -> QHBoxLayout:
             )
             startup_toggle.toggle.setCheckedWithoutAction(is_in_startup())
     else:
-        label_not_admin = QLabel(" Run as admin to get 'Run At Startup' Toggle.")
+        label_not_admin = QLabel(f"<i>Run as admin to get 'Run At Startup' Toggle.</i>")
+        label_not_admin.setContentsMargins(50, 0, 0, 0)
+
     if startup_toggle:
         layout_startup.addWidget(startup_toggle)
     if label_not_admin:

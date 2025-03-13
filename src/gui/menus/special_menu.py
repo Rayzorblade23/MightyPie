@@ -31,6 +31,7 @@ class SpecialMenu(QWidget):
         layout = QVBoxLayout(self)
 
         self.toggles_layout = QVBoxLayout()
+        self.startup_layout = QVBoxLayout()
 
         # Taskbar toggle
         self.taskbar_toggle = self.setup_taskbar_toggle()
@@ -47,6 +48,9 @@ class SpecialMenu(QWidget):
 
         QTimer.singleShot(0, self.trigger_toggle)
 
+        # Invisible UI layout
+        self.setup_invisible_ui_layout()
+
         # Startup section layout
         self.setup_startup_section()
 
@@ -55,10 +59,14 @@ class SpecialMenu(QWidget):
 
         self.windows_settings_shortcuts = WindowsSettingsMenu(parent=self)
 
-        # Invisible UI layout
-        self.setup_invisible_ui_layout()
-
         layout.addLayout(self.toggles_layout)
+
+        add_separator_line(layout)
+
+        startup_label = create_label("Startup and Program Folders")
+        layout.addWidget(startup_label)
+
+        layout.addLayout(self.startup_layout)
 
         add_separator_line(layout)
 
@@ -132,12 +140,12 @@ class SpecialMenu(QWidget):
     def setup_startup_section(self):
         """Sets up the startup section layout and adds it to the main layout."""
         layout_startup = setup_startup_section(self)
-        self.toggles_layout.addLayout(layout_startup)
+        self.startup_layout.addLayout(layout_startup)
 
     def setup_folder_buttons(self):
         """Sets up the folder buttons layout and adds it to the main layout."""
         layout_app_folders = create_folder_buttons(self)
-        self.toggles_layout.addLayout(layout_app_folders)
+        self.startup_layout.addLayout(layout_app_folders)
 
     def setup_invisible_ui_layout(self):
         """Sets up the Invisible UI toggle layout and adds it to the main layout."""
