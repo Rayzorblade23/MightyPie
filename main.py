@@ -43,49 +43,28 @@ from src.utils.taskbar_hide_utils import set_taskbar_opacity, show_taskbar
 
 
 def setup_crash_logging(log_file: str) -> None:
-    """Sets up crash logging to a specific file."""
+    """Set up crash logging to a dedicated file for tracebacks."""
+    # Ensure sys.stderr is not None
+    if sys.stderr is None:
+        sys.stderr = sys.__stderr__  # Default to system's stderr if None
 
-    class DualOutput:
-        def __init__(self, file1, file2):
-            self.file1 = file1
-            self.file2 = file2 if file2 else None
-
-        def write(self, data):
-            self.file1.write(data)
-            self.file1.flush()
-            if self.file2:
-                self.file2.write(data)
-                self.file2.flush()
-
-        def flush(self):
-            self.file1.flush()
-            if self.file2:
-                self.file2.flush()
-
-        def fileno(self):
-            if self.file2:
-                return self.file2.fileno()  # Avoid invalid fileno calls
-            raise OSError("No valid stderr file descriptor")
-
-    # Store the original stderr if it exists
-    original_stderr = sys.stderr if sys.stderr else None
-
-    # Create crash log file
+    # Open a fresh crash log file.
     crash_file = open(log_file, "w")
 
-    # Set up dual output for normal errors
-    sys.stderr = DualOutput(crash_file, original_stderr)
-
-    # Enable faulthandler to write directly to the crash file
+    # Enable faulthandler to dump tracebacks for fatal signals into crash_file.
     faulthandler.enable(file=crash_file, all_threads=True)
 
-    def restore_stderr():
-        if not crash_file.closed:
-            crash_file.close()
-        sys.stderr = original_stderr if original_stderr else open(os.devnull, "w")
-        faulthandler.disable()
+    def custom_excepthook(exc_type: type, exc_value: BaseException, exc_traceback) -> None:
+        """Write unhandled exceptions to the crash log."""
+        crash_file.write("Unhandled exception:\n")
+        traceback.print_exception(exc_type, exc_value, exc_traceback, file=crash_file)
+        crash_file.flush()
+        # Also call the default excepthook so the exception prints normally.
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
-    atexit.register(restore_stderr)
+    sys.excepthook = custom_excepthook
+    # Register an atexit handler to close the crash_file on process exit.
+    atexit.register(lambda: crash_file.close())
 
 
 def setup_logging(log_level: str = "INFO") -> logging.Logger:
