@@ -30,7 +30,9 @@ MightyPie works with a cache (App Info Cache) that holds the info (name, path, i
 1.  **Run the application:** The program is portable so just run MightyPie.exe.
 
 
-2.  **Configure Hotkeys:** The settings open at the first start. Here you can configure your hotkeys. (Default are F14 for the Primary Pie Menu and F13 for the Secondary Pie Menu. The hotkeys are keyboard only -- I use AHK to map my mouse buttons to keys.
+2.  **Configure Hotkeys:** The settings open at the first start. Here you can configure your hotkeys. (Default are _Alt+F1_ for the Primary Pie Menu and _Alt+F2_ for the Secondary Pie Menu. The hotkeys are keyboard only and some restriction apply, i.e. Windows Key can't be used. 
+
+    (Be aware that many key combinations are already in use by programs, though MightyPie will suppress them. I personally use AHK to map mouse buttons to keys like _F13_ and _F14_ and use those as hotkeys.)
 
 
 3.  **Trigger the Pie Menu:** The Pie Menu opens on button-down. You can also hold the hotkey, hover over a button (or its section) and just release for triggering a button.

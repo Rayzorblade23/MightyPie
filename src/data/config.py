@@ -25,8 +25,8 @@ class BaseConfig:
     REFRESH_INTERVAL: int = 3000
     PIE_MENU_VIS_DELAY: int = 0
     TASKBAR_OPACITY: int = 255
-    HOTKEY_PRIMARY: str = "F14"
-    HOTKEY_SECONDARY: str = "F13"
+    HOTKEY_PRIMARY: str = "Alt+F1"
+    HOTKEY_SECONDARY: str = "Alt+F2"
     HIDE_WINDOW_WHEN_ALREADY_FOCUSED: bool = True
     REASSIGN_BTN_IDS_HIGHER_THAN: int = 8
     CENTER_BUTTON: str = "forward"
