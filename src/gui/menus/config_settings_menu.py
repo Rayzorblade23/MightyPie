@@ -30,8 +30,10 @@ class NoScrollComboBox(QComboBox):
 
 
 class ConfigSettingsWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, hotkey_listener=None):
         super().__init__()
+        self.hotkey_listener = hotkey_listener
+
         self.setWindowTitle(f"{CONFIG.INTERNAL_PROGRAM_NAME} Settings")
         self.setMinimumWidth(400)
 
@@ -329,3 +331,15 @@ class ConfigSettingsWindow(QMainWindow):
 
                 return True  # Prevent further processing of the event
         return super().eventFilter(obj, event)
+
+    def showEvent(self, event):
+        """Override the show event to pause hotkey listening when window becomes visible."""
+        if self.hotkey_listener:
+            self.hotkey_listener.pause_listening()
+        super().showEvent(event)
+
+    def closeEvent(self, event):
+        """Handle window close event to resume hotkey listening."""
+        if self.hotkey_listener:
+            self.hotkey_listener.resume_listening()
+        super().closeEvent(event)

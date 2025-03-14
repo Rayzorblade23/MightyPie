@@ -16,6 +16,8 @@ class AppSettingsMenu(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.app_settings = None
+
         # Set up the window
         self.setWindowTitle('Settings Menu')
         self.setGeometry(100, 100, 600, 100)  # Increased width for HBoxLayout
@@ -25,10 +27,7 @@ class AppSettingsMenu(QWidget):
 
         self.button_config = ButtonInfoEditor()
 
-        self.app_settings = ConfigSettingsWindow()
 
-        if CONFIG.SHOW_SETTINGS_AT_STARTUP:
-            self.app_settings.show()
 
         def create_button(parent, icon_name, tooltip, click_action, icon_size, button_height):
             button = QPushButton(parent)
@@ -77,6 +76,13 @@ class AppSettingsMenu(QWidget):
 
         # Set the layout for the window
         self.setLayout(layout)
+
+    def initialize_settings(self):
+        """Call this after hotkey_listener is assigned."""
+        self.app_settings = ConfigSettingsWindow(sys._instance.hotkey_listener)
+
+        if CONFIG.SHOW_SETTINGS_AT_STARTUP:
+            self.app_settings.show()
 
     def open_button_info_editor(self):
         if self.button_config is None:

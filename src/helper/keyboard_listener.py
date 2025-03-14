@@ -49,6 +49,28 @@ class HotkeyListener:
         except Exception as e:
             logger.error(f"Failed to register hotkeys: {e}", exc_info=True)
 
+    def pause_listening(self):
+        """Temporarily disables hotkey listening."""
+        logger.info("Pausing hotkey listener...")
+        try:
+            keyboard.unhook_all_hotkeys()  # Only unhook hotkeys, not all keyboard handlers
+            self.can_open_window = False
+            logger.info("Hotkey listener paused")
+        except Exception as e:
+            logger.error(f"Error during hotkey pause: {e}", exc_info=True)
+
+    def resume_listening(self):
+        """Resumes hotkey listening after being paused."""
+        logger.info("Resuming hotkey listener...")
+        try:
+            # Re-register hotkeys for press events
+            keyboard.add_hotkey(CONFIG.HOTKEY_PRIMARY, self.handle_press, args=(CONFIG.HOTKEY_PRIMARY,), suppress=True)
+            keyboard.add_hotkey(CONFIG.HOTKEY_SECONDARY, self.handle_press, args=(CONFIG.HOTKEY_SECONDARY,), suppress=True)
+            self.can_open_window = True
+            logger.info("Hotkey listener resumed")
+        except Exception as e:
+            logger.error(f"Error during hotkey resume: {e}", exc_info=True)
+
     def handle_press(self, hotkey_name: str):
         """Handles hotkey press events."""
         if not self.can_open_window:

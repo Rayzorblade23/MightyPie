@@ -268,8 +268,6 @@ if __name__ == "__main__":
         # Post the filtered_event to the main thread
         QApplication.postEvent(window, event)
 
-        # main_window.hide()  # Hide it right after showing
-
         # Hotkey Thread
         hotkey_listener = HotkeyListener(window)
         hotkey_thread = threading.Thread(
@@ -281,7 +279,7 @@ if __name__ == "__main__":
 
         sys._instance.hotkey_listener = hotkey_listener
 
-        # main_window.auto_refresh()
+        window.special_menu.app_shortcuts.initialize_settings()
 
         sys.exit(app.exec())
 
