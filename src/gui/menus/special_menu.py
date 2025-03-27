@@ -182,7 +182,7 @@ class SpecialMenu(QWidget):
             self.taskbar_toggle.toggle.setCheckedWithoutAction(False)
 
     def trigger_toggle(self):
-        self.invisible_UI_toggle.toggle.setChecked(True)  # or False
+        self.invisible_UI_toggle.toggle.setChecked(CONFIG.INVIS_UI_ENABLED_BY_DEFAULT)
         self.invisible_UI_toggle.toggle.toggle_switch()
 
     def setup_window(self):

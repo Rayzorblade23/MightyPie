@@ -22,6 +22,7 @@ class BaseConfig:
 
     # Runtime configuration fields
     SHOW_SETTINGS_AT_STARTUP: bool = True
+    INVIS_UI_ENABLED_BY_DEFAULT: bool = False
     REFRESH_INTERVAL: int = 3000
     PIE_MENU_VIS_DELAY: int = 0
     TASKBAR_OPACITY: int = 255
@@ -66,6 +67,7 @@ class BaseConfig:
     INTERNAL_SETTING_DISPLAY_NAMES = {
         # Runtime configuration fields
         "SHOW_SETTINGS_AT_STARTUP": "Show Settings at Startup",
+        "INVIS_UI_ENABLED_BY_DEFAULT": "Enable Invisible UI by Default",
         "REFRESH_INTERVAL": "Refresh Interval (ms) for open windows",
         "PIE_MENU_VIS_DELAY": "Delay showing Pie Menu (ms)",
         "TASKBAR_OPACITY": "Taskbar Opacity (0-255)",
