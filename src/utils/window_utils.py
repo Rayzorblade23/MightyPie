@@ -101,7 +101,7 @@ manager = WindowManager.get_instance()
 
 # List to store HWNDs to exclude
 hwnds_to_exclude = []
-EXCLUDED_CLASS_NAMES = {"Progman", "AutoHotkeyGUI"}
+EXCLUDED_CLASS_NAMES = {"Progman", "AutoHotkeyGUI", "RainmeterMeterWindow"}
 DWM_WINDOW_CLOAKED_STATE = 14
 
 # Custom type aliases
