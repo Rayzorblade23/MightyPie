@@ -24,6 +24,8 @@ if TYPE_CHECKING:
 
 last_minimized_hwnd = 0
 
+last_focused_explorer_hwnd = 0
+
 manager = WindowManager.get_instance()
 
 
@@ -167,6 +169,10 @@ def restore_last_minimized_window():
 
     else:
         logger.error("No valid window found.")
+
+
+def focus_last_explorer_window() -> None:
+    focus_window_by_handle(last_focused_explorer_hwnd)
 
 
 def minimize_window_at_cursor(pie_window: "PieWindow"):
@@ -373,6 +379,10 @@ def show_special_menu(menu: QWidget):
 
 def focus_window_by_handle(hwnd):
     """Bring a main_window to the foreground and restore/maximize as needed."""
+    if hwnd == 0:
+        logger.info("Tried focusing window with hwnd == 0.")
+        return
+
     logger.info(f"FOCUSING WINDOW {hwnd}")
 
     class_name = win32gui.GetClassName(hwnd)
@@ -383,6 +393,10 @@ def focus_window_by_handle(hwnd):
         logger.debug("Detected Task Manager, sending hotkey to open it.")
         pyautogui.hotkey('ctrl', 'shift', 'esc')
         return
+
+    if class_name == "CabinetWClass":
+        global last_focused_explorer_hwnd
+        last_focused_explorer_hwnd = hwnd
 
     if hwnd == win32gui.GetForegroundWindow() and not win32gui.IsIconic(hwnd):
         if CONFIG.HIDE_WINDOW_WHEN_ALREADY_FOCUSED:

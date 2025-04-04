@@ -7,7 +7,7 @@ from pynput.mouse import Controller, Button
 
 from src.data.icon_paths import EXTERNAL_ICON_PATHS
 from src.utils.functions_utils import close_window_at_cursor, restore_last_minimized_window, minimize_window_at_cursor, \
-    toggle_maximize_window_at_cursor, center_window_at_cursor, focus_all_explorer_windows, restart_explorer
+    toggle_maximize_window_at_cursor, center_window_at_cursor, focus_all_explorer_windows, restart_explorer, focus_last_explorer_window
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +115,11 @@ class ButtonFunctions:
                 "text_1": "Restart Explorer",
                 "action": restart_explorer,
                 "icon": EXTERNAL_ICON_PATHS.get("restart"),
+            },
+            "get_last_focused_explorer_window": {
+                "text_1": "Get Last Focused Explorer Window",
+                "action": focus_last_explorer_window,
+                "icon": EXTERNAL_ICON_PATHS.get("folder"),
             },
             # "open_pie_menu": {
             #     "text_1": "Open Pie",
