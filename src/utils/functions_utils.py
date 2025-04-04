@@ -1,6 +1,8 @@
 import logging
 import os
 import subprocess
+import time
+import urllib.parse
 from typing import TYPE_CHECKING
 
 import pyautogui
@@ -42,12 +44,16 @@ def get_explorer_windows_paths():
                 # Filter out empty or invalid paths
                 if path:
                     # Convert file:/// path to a regular file path
-                    path = path.replace("file:///", "").replace("/", "\\")
+                    if path.startswith("file:///"):
+                        path = path[8:]  # Remove the "file:///" prefix
+                        path = urllib.parse.unquote(path)  # Decode URL encoded paths (e.g., spaces as '%20')
+                        path = path.replace("/", "\\")  # Normalize slashes to Windows format
+
                     # Ensure the path is valid (i.e., it exists)
                     if os.path.exists(path):
                         explorer_windows.append(path)
         except Exception as e:
-            logger.error(f"Error accessing window: {e}")
+            print(f"Error accessing window: {e}")
 
     return explorer_windows
 
@@ -70,9 +76,11 @@ def restart_explorer():
         # Step 3: Kill and restart Explorer
         # Stop Explorer process
         subprocess.run(['powershell', 'Stop-Process', '-Name', 'explorer', '-Force'])
+        time.sleep(1)  # Allow Explorer to fully restart
 
         # Start Explorer process
         subprocess.run(['powershell', 'Start-Process', 'explorer.exe'])
+        time.sleep(1)  # Allow Explorer to fully restart
 
         # Step 4: Reopen previously open Explorer windows using the tracked paths
         for path in explorer_paths:
