@@ -31,17 +31,17 @@ last_focused_explorer_hwnd = 0
 manager = WindowManager.get_instance()
 
 
-def get_explorer_windows_paths():
-    """Get the paths of currently open Explorer windows."""
+def get_explorer_windows_paths() -> tuple[list[str], list[dict[str, tuple[str, tuple[int, int, int, int]]]]]:
+    """Get the paths and positions of currently open Explorer windows."""
     shell = win32com.client.Dispatch("Shell.Application")
     explorer_windows = []
+    window_positions = []
 
     for window in shell.Windows():
         try:
             if window.Name == "File Explorer":  # Only consider File Explorer windows
                 # This will get the current folder path in the Explorer window
                 path = window.LocationURL
-                # Filter out empty or invalid paths
                 if path:
                     # Convert file:/// path to a regular file path
                     if path.startswith("file:///"):
@@ -51,14 +51,89 @@ def get_explorer_windows_paths():
 
                     # Ensure the path is valid (i.e., it exists)
                     if os.path.exists(path):
+                        # Get window handle
+                        hwnd = window.HWND
+
+                        # Get the window position and size
+                        rect = win32gui.GetWindowRect(hwnd)  # Returns (left, top, right, bottom)
+                        window_positions.append({
+                            'path': path,
+                            'rect': rect
+                        })
+
                         explorer_windows.append(path)
+
+                        # Debugging: Print hwnd values
+                        print(f"Captured window: {path}, hwnd: {hwnd}, rect: {rect}")
+
         except Exception as e:
             print(f"Error accessing window: {e}")
 
-    return explorer_windows
+    return explorer_windows, window_positions
 
 
-def restart_explorer():
+def restore_explorer_windows(window_positions: list[dict[str, tuple[str, tuple[int, int, int, int]]]]) -> None:
+    """Restore Explorer windows to their saved positions."""
+    # Open all the saved paths one by one with a small delay between them
+    for window_info in window_positions:
+        path = window_info['path']
+        rect = window_info['rect']
+
+        print(f"Opening Explorer window for: {path}")
+        subprocess.run(['explorer', path])
+
+        # Allow some time for the window to open before continuing
+        time.sleep(1)  # Adjust this time if necessary, this gives a small gap
+
+    # Now check all open Explorer windows and match by path
+    shell = win32com.client.Dispatch("Shell.Application")
+    windows = []
+    for window in shell.Windows():
+        try:
+            if window.Name == "File Explorer":  # Only consider File Explorer windows
+                path = window.LocationURL
+                if path:
+                    # Convert file:/// path to a regular file path
+                    if path.startswith("file:///"):
+                        path = path[8:]  # Remove the "file:///" prefix
+                        path = urllib.parse.unquote(path)  # Decode URL encoded paths (e.g., spaces as '%20')
+                        path = path.replace("/", "\\")  # Normalize slashes to Windows format
+
+                    # Match the newly opened windows by path and restore position
+                    for window_info in window_positions:
+                        if window_info['path'] == path:
+                            hwnd = window.HWND
+                            rect = window_info['rect']
+                            print(f"Found window for {path}, hwnd: {hwnd}, restoring position: {rect}")
+                            win32gui.MoveWindow(hwnd, rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1], True)
+
+                            # Adding delay to avoid overwhelming the system
+                            time.sleep(0.5)  # You can adjust this delay if necessary
+                            break  # Once the match is found, stop searching
+        except Exception as e:
+            print(f"Error accessing window: {e}")
+
+
+def get_window_path_from_hwnd(hwnd: int) -> str | None:
+    """Try to extract the window path from the hwnd."""
+    try:
+        # Get the window title (this might give us the path or part of it)
+        window_title = win32gui.GetWindowText(hwnd)
+
+        # If the title contains a path (i.e., it looks like a folder), return it
+        # For instance, the title may look like "Folder - File Explorer (C:\Users\Username)"
+        if window_title:
+            if window_title.startswith("File Explorer"):
+                # Extract path from title (if applicable)
+                path = window_title.split(" - ")[-1]  # This assumes the path is at the end of the title
+                return path
+    except Exception as e:
+        print(f"Error extracting window path from hwnd {hwnd}: {e}")
+
+    return None  # If no path is found, return None
+
+
+def restart_explorer() -> None:
     """Ask for confirmation before restarting explorer and reopen open windows."""
     # Step 1: Ask for confirmation
     reply = QMessageBox.question(
@@ -70,23 +145,18 @@ def restart_explorer():
     )
 
     if reply == QMessageBox.StandardButton.Yes:
-        # Step 2: Get the paths of open Explorer windows
-        explorer_paths = get_explorer_windows_paths()
+        # Step 2: Get the paths and positions of open Explorer windows
+        explorer_paths, window_positions = get_explorer_windows_paths()
 
         # Step 3: Kill and restart Explorer
-        # Stop Explorer process
+        print("Stopping Explorer process...")
         subprocess.run(['powershell', 'Stop-Process', '-Name', 'explorer', '-Force'])
+        time.sleep(1)  # Wait for explorer process to fully stop
+        subprocess.Popen(['powershell', 'Start-Process', 'explorer.exe'])
         time.sleep(1)  # Allow Explorer to fully restart
 
-        # Start Explorer process
-        subprocess.run(['powershell', 'Start-Process', 'explorer.exe'])
-        time.sleep(1)  # Allow Explorer to fully restart
-
-        # Step 4: Reopen previously open Explorer windows using the tracked paths
-        for path in explorer_paths:
-            if path:
-                # Open the folder with explorer
-                subprocess.run(f'explorer "{path}"', shell=True)
+        # Step 4: Reopen previously open Explorer windows and restore positions
+        restore_explorer_windows(window_positions)
 
 
 def launch_app(exe_path):
